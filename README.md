@@ -12,4 +12,4 @@ This code is released under the Apache 2.0 License. See [LICENSE](LICENSE) for m
 
 ## Contributing
 
-Checkout the contributors guide [CONTRIBUTING.md](CONTRIBUTING.md).
+Check out the contributors guide [CONTRIBUTING.md](CONTRIBUTING.md).
