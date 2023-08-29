@@ -21,9 +21,16 @@ jobs:
       - name: Setup Terraform CLI
         uses: hashicorp/setup-terraform@v2
 
-      - name: Run format check
+      - name: Run Terraform format check
         run: terraform fmt --check
-        continue-on-error: true
+
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v3
+        with:
+          tflint_version: v0.44.1
+
+      - name: Run TFLint
+        run: tflint -f compact --recursive
 
       - name: Run tfsec
         uses: aquasecurity/tfsec-sarif-action@v0.1.4
