@@ -21,8 +21,14 @@ jobs:
       - name: Setup Terraform CLI
         uses: hashicorp/setup-terraform@v2
 
+      - name: Run Terraform init
+        run: terraform init
+
       - name: Run Terraform format check
         run: terraform fmt --check
+
+      - name: Run Terraform validate check
+        run: terraform validate
 
       - name: Setup TFLint
         uses: terraform-linters/setup-tflint@v3
