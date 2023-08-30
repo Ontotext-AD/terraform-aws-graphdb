@@ -1,0 +1,3 @@
+---
+exclude:
+  - aws-elb-alb-not-public
