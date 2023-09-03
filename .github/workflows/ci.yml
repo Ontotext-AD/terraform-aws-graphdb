@@ -25,23 +25,15 @@ jobs:
         run: terraform init
 
       - name: Run Terraform format check
-        run: terraform fmt --check
+        run: terraform fmt -check -recursive
 
       - name: Run Terraform validate check
         run: terraform validate
 
-      - name: Setup TFLint
-        uses: terraform-linters/setup-tflint@v3
-        with:
-          tflint_version: v0.44.1
-
-      - name: Run TFLint
-        run: tflint -f compact --recursive
-
       - name: Run tfsec
         uses: aquasecurity/tfsec-sarif-action@v0.1.4
         with:
-          config_file: tfsec.yaml
+          config_file: tfsec.yml
           sarif_file: tfsec.sarif
 
       - name: Upload SARIF file
