@@ -35,6 +35,9 @@ module "load_balancer" {
   lb_health_check_path          = var.lb_health_check_path
   lb_health_check_interval      = var.lb_health_check_interval
   lb_enable_deletion_protection = var.prevent_resource_deletion
+  tls_enabled                   = var.tls_enabled
+  tls_certificate_arn           = var.tls_certificate_arn
+  tls_policy                    = var.tls_policy
 }
 
 module "user_data" {

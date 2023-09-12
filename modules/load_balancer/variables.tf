@@ -46,3 +46,21 @@ variable "lb_enable_deletion_protection" {
   type        = bool
   default     = true
 }
+
+variable "tls_enabled" {
+  description = "If enabled, a certificate must be imported in ACM and its ARN to set in tls_certificate_arn. Certificates with RSA keys larger than 2048-bit or EC keys cannot be used."
+  type        = bool
+  default     = false
+}
+
+variable "tls_policy" {
+  description = "TLS security policy on the listener."
+  type        = string
+  default     = "ELBSecurityPolicy-TLS13-1-2-2021-06"
+}
+
+variable "tls_certificate_arn" {
+  description = "ARN of the certificate, imported in ACM, which will be used for the TLS listener on the load balancer."
+  type        = string
+  default     = null
+}
