@@ -1,6 +1,5 @@
 locals {
-  lb_protocol = "TCP"
-  lb_name     = "${var.resource_name_prefix}-graphdb"
+  lb_name = "${var.resource_name_prefix}-graphdb"
 }
 
 resource "aws_lb" "graphdb" {
@@ -17,7 +16,7 @@ resource "aws_lb_target_group" "graphdb" {
 
   target_type          = "instance"
   port                 = 7200
-  protocol             = local.lb_protocol
+  protocol             = "TCP"
   deregistration_delay = var.lb_deregistration_delay
 
   health_check {
@@ -31,9 +30,26 @@ resource "aws_lb_target_group" "graphdb" {
 }
 
 resource "aws_lb_listener" "graphdb" {
+  count = var.tls_enabled ? 0 : 1
+
   load_balancer_arn = aws_lb.graphdb.id
   port              = 80
-  protocol          = local.lb_protocol
+  protocol          = "TCP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.graphdb.arn
+  }
+}
+
+resource "aws_lb_listener" "graphdb_tls" {
+  count = var.tls_enabled ? 1 : 0
+
+  load_balancer_arn = aws_lb.graphdb.id
+  port              = 443
+  protocol          = "TLS"
+  certificate_arn   = var.tls_certificate_arn
+  ssl_policy        = var.tls_policy
 
   default_action {
     type             = "forward"
