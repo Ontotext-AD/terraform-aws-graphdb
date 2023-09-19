@@ -18,7 +18,7 @@ variable "common_tags" {
 
 variable "instance_type" {
   type        = string
-  default     = "r6i.2xlarge"
+  default     = "r6g.2xlarge"
   description = "EC2 instance type"
 }
 
@@ -79,10 +79,10 @@ variable "resource_name_prefix" {
   description = "Resource name prefix used for tagging and naming AWS resources"
 }
 
-variable "user_supplied_ami_id" {
+variable "ami_id" {
   type        = string
   description = "(Optional) User-provided AMI ID to use with GraphDB instances. If you provide this value, please ensure it will work with the default userdata script (assumes latest version of Ubuntu LTS). Otherwise, please provide your own userdata script using the user_supplied_userdata_path variable."
-  default     = null
+  default     = "ami-07c50e3bc1d166690"
 }
 
 variable "user_supplied_iam_role_name" {

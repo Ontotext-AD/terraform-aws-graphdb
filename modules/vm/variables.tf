@@ -58,7 +58,7 @@ variable "common_tags" {
 variable "instance_type" {
   description = "EC2 instance type"
   type        = string
-  default     = "m5.xlarge"
+  default     = "r6g.2xlarge"
 }
 
 variable "key_name" {
@@ -73,8 +73,7 @@ variable "node_count" {
   default     = 5
 }
 
-variable "user_supplied_ami_id" {
+variable "ami_id" {
   description = "AMI ID to use with GraphDB instances"
   type        = string
-  default     = null
 }

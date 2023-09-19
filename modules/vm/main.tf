@@ -1,20 +1,3 @@
-data "aws_ami" "ubuntu" {
-  count       = var.user_supplied_ami_id != null ? 0 : 1
-  most_recent = true
-
-  filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-*-22.04-amd64-server-*"]
-  }
-
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
-
-  owners = ["099720109477"] # Canonical
-}
-
 resource "aws_security_group" "graphdb" {
   name   = "${var.resource_name_prefix}-graphdb"
   vpc_id = var.vpc_id
@@ -105,13 +88,15 @@ resource "aws_security_group_rule" "graphdb_outbound" {
 
 resource "aws_launch_template" "graphdb" {
   name          = "${var.resource_name_prefix}-graphdb"
-  image_id      = var.user_supplied_ami_id != null ? var.user_supplied_ami_id : data.aws_ami.ubuntu[0].id
+  image_id      = var.ami_id
   instance_type = var.instance_type
   key_name      = var.key_name != null ? var.key_name : null
   user_data     = var.userdata_script
   vpc_security_group_ids = [
     aws_security_group.graphdb.id,
   ]
+
+  ebs_optimized = "true"
 
   iam_instance_profile {
     name = var.aws_iam_instance_profile

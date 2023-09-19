@@ -33,4 +33,6 @@ module "graphdb" {
   graphdb_license_path     = var.graphdb_license_path
 
   prevent_resource_deletion = false
+
+  ami_id = var.ami_id
 }

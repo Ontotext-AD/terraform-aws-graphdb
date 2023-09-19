@@ -7,25 +7,7 @@ until ping -c 1 google.com &> /dev/null; do
   sleep 5
 done
 
-timedatectl set-timezone UTC
-
-# install tools
-
-apt-get update
-apt-get -o DPkg::Lock::Timeout=300 install -y unzip jq nvme-cli openjdk-11-jdk bash-completion
-
-curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-unzip -q awscliv2.zip
-./aws/install
-rm -rf ./awscliv2.zip ./aws
-
-# Create the GraphDB user
-
-useradd --comment "GraphDB Service User" --create-home --system --shell /bin/bash --user-group graphdb
-
-# Create GraphDB directories
-
-mkdir -p /var/opt/graphdb/data /var/opt/graphdb/logs /etc/graphdb /etc/graphdb-cluster-proxy /var/opt/graphdb-cluster-proxy/logs
+systemctl stop graphdb
 
 # Set common variables used throughout the script.
 imds_token=$( curl -Ss -H "X-aws-ec2-metadata-token-ttl-seconds: 300" -XPUT 169.254.169.254/latest/api/token )
@@ -130,12 +112,15 @@ if ! mount | grep -q "$graphdb_device"; then
     sudo echo "$graphdb_device $disk_mount_point ext4 defaults 0 2" >> /etc/fstab
   fi
 
-  # Mount the disk 
+  # Mount the disk
   sudo mount "$disk_mount_point"
   echo "The disk at $graphdb_device is now mounted at $disk_mount_point."
 else
   echo "The disk at $graphdb_device is already mounted."
 fi
+
+# this is needed because after the disc attachment folder owner is reverted
+chown -R graphdb:graphdb /var/opt/graphdb/data
 
 # Register the instance in Route 53, using the volume id for the sub-domain
 
@@ -160,14 +145,11 @@ cat << EOF > /etc/graphdb/graphdb.properties
 graphdb.home.data=/var/opt/graphdb/data
 graphdb.home.logs=/var/opt/graphdb/logs
 
-graphdb.page.cache.size=10g
-
 graphdb.auth.token.secret=$graphdb_cluster_token
 
 graphdb.connector.port=7201
 graphdb.external-url=http://$${node_dns}:7201/
 graphdb.rpc.address=$${node_dns}:7301
-
 EOF
 
 load_balancer_dns=$(aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/lb_dns_name" | jq -r .Parameter.Value)
@@ -184,7 +166,6 @@ graphdb.vhosts=http://$${load_balancer_dns},http://$${node_dns}
 graphdb.rpc.address=$${node_dns}:7300
 
 graphdb.proxy.hosts=$${node_dns}:7301
-
 EOF
 
 # Configure the GraphDB backup cron job
@@ -243,71 +224,13 @@ EOF
 chmod +x /usr/bin/graphdb_backup
 echo "${backup_schedule} graphdb /usr/bin/graphdb_backup" > /etc/cron.d/graphdb_backup
 
-# Install GraphDB
-
 # https://docs.aws.amazon.com/elasticloadbalancing/latest/network/network-load-balancers.html#connection-idle-timeout
 echo 'net.ipv4.tcp_keepalive_time = 120' | tee -a /etc/sysctl.conf
 echo 'fs.file-max = 262144' | tee -a /etc/sysctl.conf
 
 sysctl -p
 
-cd /tmp
-# sometimes host cannot be resolved
-until curl -O https://maven.ontotext.com/repository/owlim-releases/com/ontotext/graphdb/graphdb/${graphdb_version}/graphdb-${graphdb_version}-dist.zip; do
-  sleep 5
-done
-
-unzip -q graphdb-${graphdb_version}-dist.zip
-rm graphdb-${graphdb_version}-dist.zip
-mv graphdb-${graphdb_version} /opt/graphdb-${graphdb_version}
-ln -s /opt/graphdb-${graphdb_version} /opt/graphdb
-
-chown -R graphdb:graphdb /var/opt/graphdb/data /var/opt/graphdb/logs /etc/graphdb /opt/graphdb /opt/graphdb-${graphdb_version} /etc/graphdb-cluster-proxy /var/opt/graphdb-cluster-proxy/logs
-
-cat << EOF > /lib/systemd/system/graphdb.service
-[Unit]
-Description="GraphDB Engine"
-Wants=network-online.target
-After=network-online.target
-
-[Service]
-Restart=on-failure
-RestartSec=5s
-User=graphdb
-Group=graphdb
-Environment="GDB_JAVA_OPTS=-Xmx30g -Dgraphdb.home.conf=/etc/graphdb -Dhttp.socket.keepalive=true"
-ExecStart="/opt/graphdb/bin/graphdb"
-TimeoutSec=120
-SuccessExitStatus=143
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-cat << EOF > /lib/systemd/system/graphdb-cluster-proxy.service
-[Unit]
-Description="GraphDB Cluster Proxy"
-Wants=network-online.target
-After=network-online.target
-
-[Service]
-Restart=on-failure
-RestartSec=5s
-User=graphdb
-Group=graphdb
-Environment="GDB_JAVA_OPTS=-Dgraphdb.home.conf=/etc/graphdb-cluster-proxy -Dhttp.socket.keepalive=true"
-ExecStart="/opt/graphdb/bin/cluster-proxy"
-TimeoutSec=120
-SuccessExitStatus=143
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-systemctl daemon-reload
-
-systemctl enable graphdb.service
-systemctl start graphdb.service
-
+# the proxy service is set up in the AMI but not enabled there, so we enable and start it
+systemctl start graphdb
 systemctl enable graphdb-cluster-proxy.service
 systemctl start graphdb-cluster-proxy.service
