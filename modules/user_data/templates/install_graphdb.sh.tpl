@@ -114,7 +114,28 @@ if [ "$graphdb_device: data" = "$(file -s $graphdb_device)" ]; then
   mkfs -t ext4 $graphdb_device
 fi
 
-mount $graphdb_device /var/opt/graphdb/data
+disk_mount_point="/var/opt/graphdb/data"
+
+# Check if the disk is already mounted
+if ! mount | grep -q "$graphdb_device"; then
+  echo "The disk at $graphdb_device is not mounted."
+
+  # Create the mount point if it doesn't exist
+  if [ ! -d "$disk_mount_point" ]; then
+    sudo mkdir -p "$disk_mount_point"
+  fi
+
+  # Add an entry to the fstab file to automatically mount the disk
+  if ! grep -q "$graphdb_device" /etc/fstab; then
+    sudo echo "$graphdb_device $disk_mount_point ext4 defaults 0 2" >> /etc/fstab
+  fi
+
+  # Mount the disk 
+  sudo mount "$disk_mount_point"
+  echo "The disk at $graphdb_device is now mounted at $disk_mount_point."
+else
+  echo "The disk at $graphdb_device is already mounted."
+fi
 
 # Register the instance in Route 53, using the volume id for the sub-domain
 
