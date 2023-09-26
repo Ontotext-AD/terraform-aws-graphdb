@@ -1,13 +1,3 @@
-resource "aws_security_group" "graphdb" {
-  name   = "${var.resource_name_prefix}-graphdb"
-  vpc_id = var.vpc_id
-
-  tags = merge(
-    { Name = "${var.resource_name_prefix}-graphdb-sg" },
-    var.common_tags,
-  )
-}
-
 data "aws_subnet" "subnet" {
   count = length(var.graphdb_subnets)
   id    = var.graphdb_subnets[count.index]
@@ -21,6 +11,12 @@ data "aws_subnet" "lb_subnets" {
 locals {
   subnet_cidr_blocks    = [for s in data.aws_subnet.subnet : s.cidr_block]
   lb_subnet_cidr_blocks = [for s in data.aws_subnet.lb_subnets : s.cidr_block]
+}
+
+resource "aws_security_group" "graphdb" {
+  name        = "${var.resource_name_prefix}-graphdb"
+  description = "Security group for GraphDB components"
+  vpc_id      = var.vpc_id
 }
 
 resource "aws_security_group_rule" "graphdb_network_lb_ingress" {
