@@ -130,7 +130,9 @@ data "aws_iam_policy_document" "s3_crud" {
     actions = [
       "s3:ListBucket",
       "s3:*Object",
-      "s3:GetAccelerateConfiguration"
+      "s3:GetAccelerateConfiguration",
+      "s3:ListMultipartUploadParts",
+      "s3:AbortMultipartUpload"
     ]
     resources = [
       # the exact ARN is needed for the list bucket action, star for put,get,delete
