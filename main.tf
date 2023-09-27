@@ -12,6 +12,13 @@ provider "aws" {
   }
 }
 
+module "dns" {
+  source = "./modules/dns"
+
+  vpc_id        = var.vpc_id
+  zone_dns_name = var.zone_dns_name
+}
+
 module "iam" {
   source = "./modules/iam"
 
@@ -19,6 +26,7 @@ module "iam" {
   resource_name_prefix        = var.resource_name_prefix
   user_supplied_iam_role_name = var.user_supplied_iam_role_name
   s3_bucket_name              = module.s3.backup_bucket_name
+  route53_zone_id             = module.dns.zone_id
 }
 
 module "config" {
@@ -27,13 +35,6 @@ module "config" {
   resource_name_prefix = var.resource_name_prefix
   graphdb_license_path = var.graphdb_license_path
   graphdb_lb_dns_name  = module.load_balancer.lb_dns_name
-}
-
-module "dns" {
-  source = "./modules/dns"
-
-  vpc_id        = var.vpc_id
-  zone_dns_name = var.zone_dns_name
 }
 
 module "load_balancer" {
