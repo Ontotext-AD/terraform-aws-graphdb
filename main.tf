@@ -93,7 +93,7 @@ module "vm" {
   node_count                = var.node_count
   resource_name_prefix      = var.resource_name_prefix
   userdata_script           = module.user_data.graphdb_userdata_base64_encoded
-  user_supplied_ami_id      = var.user_supplied_ami_id
+  ami_id                    = var.ami_id
   graphdb_subnets           = var.private_subnet_ids
   graphdb_target_group_arns = local.graphdb_target_group_arns
   vpc_id                    = var.vpc_id
