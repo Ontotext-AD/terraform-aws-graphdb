@@ -1,3 +1,5 @@
+data "aws_default_tags" "current" {}
+
 data "aws_subnet" "subnet" {
   count = length(var.graphdb_subnets)
   id    = var.graphdb_subnets[count.index]
@@ -119,11 +121,7 @@ resource "aws_autoscaling_group" "graphdb" {
   }
 
   dynamic "tag" {
-    for_each = merge(var.common_tags, {
-      "Name"                                = "${var.resource_name_prefix}-graphdb-node"
-      "${var.resource_name_prefix}-graphdb" = "node"
-    })
-
+    for_each = data.aws_default_tags.current.tags
     content {
       key                 = tag.key
       value               = tag.value

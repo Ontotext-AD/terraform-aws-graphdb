@@ -1,5 +1,17 @@
 data "aws_region" "current" {}
 
+provider "aws" {
+  default_tags {
+    tags = merge(
+      {
+        Release_Name = var.resource_name_prefix
+        Name         = "${var.resource_name_prefix}-graphdb"
+      },
+      var.common_tags
+    )
+  }
+}
+
 module "iam" {
   source = "./modules/iam"
 
