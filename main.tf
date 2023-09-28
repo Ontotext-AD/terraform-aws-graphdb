@@ -59,7 +59,6 @@ module "user_data" {
   aws_region                  = data.aws_region.current.name
   resource_name_prefix        = var.resource_name_prefix
   user_supplied_userdata_path = var.user_supplied_userdata_path
-  graphdb_version             = var.graphdb_version
   device_name                 = var.device_name
   backup_schedule             = var.backup_schedule
   backup_retention_count      = var.backup_retention_count
@@ -107,6 +106,7 @@ module "vm" {
   resource_name_prefix      = var.resource_name_prefix
   userdata_script           = module.user_data.graphdb_userdata_base64_encoded
   ami_id                    = var.ami_id
+  graphdb_version           = var.graphdb_version
   graphdb_subnets           = var.private_subnet_ids
   graphdb_target_group_arns = local.graphdb_target_group_arns
   vpc_id                    = var.vpc_id

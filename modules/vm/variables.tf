@@ -35,7 +35,18 @@ variable "lb_subnets" {
   type        = list(string)
 }
 
+variable "graphdb_version" {
+  description = "GraphDB version"
+  type        = string
+}
+
 # OPTIONAL parameters
+
+variable "ami_id" {
+  description = "AMI ID to use with GraphDB instances"
+  type        = string
+  default     = null
+}
 
 variable "allowed_inbound_cidrs" {
   description = "List of CIDR blocks to permit inbound traffic from to load balancer"
@@ -71,9 +82,4 @@ variable "node_count" {
   description = "Number of GraphDB nodes to deploy in ASG"
   type        = number
   default     = 5
-}
-
-variable "ami_id" {
-  description = "AMI ID to use with GraphDB instances"
-  type        = string
 }

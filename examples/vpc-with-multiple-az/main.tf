@@ -24,5 +24,7 @@ module "graphdb" {
 
   prevent_resource_deletion = false
 
-  ami_id = var.ami_id
+  instance_type   = var.instance_type
+  ami_id          = var.ami_id
+  graphdb_version = var.graphdb_version
 }

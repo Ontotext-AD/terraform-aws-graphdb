@@ -1,3 +1,33 @@
+data "aws_ec2_instance_type" "graphdb" {
+  count = var.ami_id != null ? 0 : 1
+
+  instance_type = var.instance_type
+}
+
+data "aws_ami" "graphdb" {
+  count = var.ami_id != null ? 0 : 1
+
+  owners      = ["770034820396"] # Ontotext
+  most_recent = true
+
+  filter {
+    name   = "name"
+    values = ["ami-ontotext-graphdb-${var.graphdb_version}-*"]
+  }
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+  filter {
+    name   = "root-device-type"
+    values = ["ebs"]
+  }
+  filter {
+    name   = "architecture"
+    values = data.aws_ec2_instance_type.graphdb[0].supported_architectures
+  }
+}
+
 data "aws_default_tags" "current" {}
 
 data "aws_subnet" "subnet" {
@@ -86,12 +116,12 @@ resource "aws_security_group_rule" "graphdb_outbound" {
 
 resource "aws_launch_template" "graphdb" {
   name          = "${var.resource_name_prefix}-graphdb"
-  image_id      = var.ami_id
+  image_id      = var.ami_id != null ? var.ami_id : data.aws_ami.graphdb[0].id
   instance_type = var.instance_type
   key_name      = var.key_name != null ? var.key_name : null
   user_data     = var.userdata_script
   vpc_security_group_ids = [
-    aws_security_group.graphdb.id,
+    aws_security_group.graphdb.id
   ]
 
   ebs_optimized = "true"

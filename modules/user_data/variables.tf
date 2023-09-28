@@ -10,11 +10,6 @@ variable "resource_name_prefix" {
   type        = string
 }
 
-variable "graphdb_version" {
-  description = "GraphDB version"
-  type        = string
-}
-
 variable "device_name" {
   description = "The device to which EBS volumes for the GraphDB data directory will be mapped."
   type        = string
