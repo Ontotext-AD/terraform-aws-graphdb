@@ -176,7 +176,7 @@ cat <<-EOF > /usr/bin/graphdb_backup
 set -euxo pipefail
 
 GRAPHDB_ADMIN_PASSWORD="\$(aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/admin_password" --with-decryption | jq -r .Parameter.Value)"
-NODE_STATE="\$(curl --silent --fail --user "admin:\$GRAPHDB_ADMIN_PASSWORD" localhost:7200/rest/cluster/node/status | jq -r .nodeState)"
+NODE_STATE="\$(curl --silent --fail --user "admin:\$GRAPHDB_ADMIN_PASSWORD" localhost:7201/rest/cluster/node/status | jq -r .nodeState)"
 
 if [ "\$NODE_STATE" != "LEADER" ]; then
   echo "current node is not a leader, but \$NODE_STATE"
@@ -189,7 +189,7 @@ function trigger_backup {
   curl \
     -vvv --fail \
     --user "admin:\$GRAPHDB_ADMIN_PASSWORD" \
-    --url localhost:7200/rest/recovery/cloud-backup \
+    --url localhost:7201/rest/recovery/cloud-backup \
     --header 'Content-Type: application/json' \
     --header 'Accept: application/json' \
     --data-binary @- <<-DATA
