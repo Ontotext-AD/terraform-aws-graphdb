@@ -1,3 +1,9 @@
 ---
+minimum_severity: MEDIUM
 exclude:
+  # We want to access it by default
   - aws-elb-alb-not-public
+  # Bucket logging depends on the deployment/use case, should be provided additionally with aws_s3_bucket_logging
+  - aws-s3-enable-bucket-logging
+  # We want GraphDB to access the internet by default
+  - aws-ec2-no-public-egress-sgr

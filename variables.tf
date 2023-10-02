@@ -20,6 +20,7 @@ variable "instance_type" {
   type        = string
   default     = "r6g.2xlarge"
   description = "EC2 instance type"
+  nullable    = false
 }
 
 variable "key_name" {
@@ -82,7 +83,14 @@ variable "resource_name_prefix" {
 variable "ami_id" {
   type        = string
   description = "(Optional) User-provided AMI ID to use with GraphDB instances. If you provide this value, please ensure it will work with the default userdata script (assumes latest version of Ubuntu LTS). Otherwise, please provide your own userdata script using the user_supplied_userdata_path variable."
-  default     = "ami-07c50e3bc1d166690"
+  default     = null
+}
+
+variable "graphdb_version" {
+  description = "GraphDB version"
+  type        = string
+  default     = "10.3.3"
+  nullable    = false
 }
 
 variable "user_supplied_iam_role_name" {
@@ -95,12 +103,6 @@ variable "user_supplied_userdata_path" {
   type        = string
   description = "(Optional) File path to custom userdata script being supplied by the user"
   default     = null
-}
-
-variable "graphdb_version" {
-  type        = string
-  default     = "10.3.1"
-  description = "GraphDB version"
 }
 
 variable "vpc_id" {

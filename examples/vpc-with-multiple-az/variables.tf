@@ -29,3 +29,15 @@ variable "ami_id" {
   type        = string
   default     = null
 }
+
+variable "instance_type" {
+  description = "EC2 instance type"
+  type        = string
+  default     = null
+}
+
+variable "graphdb_version" {
+  description = "GraphDB version"
+  type        = string
+  default     = null
+}

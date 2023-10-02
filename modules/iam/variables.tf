@@ -5,6 +5,11 @@ variable "resource_name_prefix" {
   type        = string
 }
 
+variable "route53_zone_id" {
+  description = "ID of the Route 53 hosted zone, where GraphDB instances are registered"
+  type        = string
+}
+
 # OPTIONAL parameters
 
 variable "permissions_boundary" {

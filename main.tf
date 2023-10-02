@@ -1,5 +1,24 @@
 data "aws_region" "current" {}
 
+provider "aws" {
+  default_tags {
+    tags = merge(
+      {
+        Release_Name = var.resource_name_prefix
+        Name         = "${var.resource_name_prefix}-graphdb"
+      },
+      var.common_tags
+    )
+  }
+}
+
+module "dns" {
+  source = "./modules/dns"
+
+  vpc_id        = var.vpc_id
+  zone_dns_name = var.zone_dns_name
+}
+
 module "iam" {
   source = "./modules/iam"
 
@@ -7,6 +26,7 @@ module "iam" {
   resource_name_prefix        = var.resource_name_prefix
   user_supplied_iam_role_name = var.user_supplied_iam_role_name
   s3_bucket_name              = module.s3.backup_bucket_name
+  route53_zone_id             = module.dns.zone_id
 }
 
 module "config" {
@@ -15,13 +35,6 @@ module "config" {
   resource_name_prefix = var.resource_name_prefix
   graphdb_license_path = var.graphdb_license_path
   graphdb_lb_dns_name  = module.load_balancer.lb_dns_name
-}
-
-module "dns" {
-  source = "./modules/dns"
-
-  vpc_id        = var.vpc_id
-  zone_dns_name = var.zone_dns_name
 }
 
 module "load_balancer" {
@@ -46,7 +59,6 @@ module "user_data" {
   aws_region                  = data.aws_region.current.name
   resource_name_prefix        = var.resource_name_prefix
   user_supplied_userdata_path = var.user_supplied_userdata_path
-  graphdb_version             = var.graphdb_version
   device_name                 = var.device_name
   backup_schedule             = var.backup_schedule
   backup_retention_count      = var.backup_retention_count
@@ -94,6 +106,7 @@ module "vm" {
   resource_name_prefix      = var.resource_name_prefix
   userdata_script           = module.user_data.graphdb_userdata_base64_encoded
   ami_id                    = var.ami_id
+  graphdb_version           = var.graphdb_version
   graphdb_subnets           = var.private_subnet_ids
   graphdb_target_group_arns = local.graphdb_target_group_arns
   vpc_id                    = var.vpc_id

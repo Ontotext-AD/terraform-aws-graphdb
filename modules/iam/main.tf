@@ -24,13 +24,6 @@ data "aws_iam_policy_document" "instance_role" {
   }
 }
 
-resource "aws_iam_role_policy" "cloud_auto_join" {
-  count  = var.user_supplied_iam_role_name != null ? 0 : 1
-  name   = "${var.resource_name_prefix}-graphdb-auto-join"
-  role   = aws_iam_role.instance_role[0].id
-  policy = data.aws_iam_policy_document.cloud_auto_join.json
-}
-
 resource "aws_iam_role_policy" "s3_crud" {
   count  = var.user_supplied_iam_role_name != null ? 0 : 1
   name   = "${var.resource_name_prefix}-graphdb-s3-crud"
@@ -52,15 +45,31 @@ resource "aws_iam_role_policy" "instance_volume_tagging" {
   policy = data.aws_iam_policy_document.instance_volume_tagging.json
 }
 
-data "aws_iam_policy_document" "cloud_auto_join" {
+resource "aws_iam_role_policy" "route53_instance_registration" {
+  count  = var.user_supplied_iam_role_name != null ? 0 : 1
+  name   = "${var.resource_name_prefix}-graphdb-route53-instance-registration"
+  role   = aws_iam_role.instance_role[0].id
+  policy = data.aws_iam_policy_document.route53_instance_registration.json
+}
+
+data "aws_iam_policy_document" "s3_crud" {
   statement {
     effect = "Allow"
-
     actions = [
-      "ec2:DescribeInstances",
+      "s3:ListBucket",
+      "s3:DeleteObject",
+      "s3:GetObject",
+      "s3:ListObjects",
+      "s3:PutObject",
+      "s3:GetAccelerateConfiguration",
+      "s3:ListMultipartUploadParts",
+      "s3:AbortMultipartUpload"
     ]
-
-    resources = ["*"]
+    resources = [
+      # the exact ARN is needed for the list bucket action, star for put,get,delete
+      "arn:aws:s3:::${var.s3_bucket_name}",
+      "arn:aws:s3:::${var.s3_bucket_name}/*"
+    ]
   }
 }
 
@@ -94,7 +103,6 @@ data "aws_iam_policy_document" "instance_volume_tagging" {
     condition {
       test     = "StringEquals"
       variable = "ec2:CreateAction"
-
       values = [
         "CreateVolume",
         "CreateSnapshot",
@@ -103,48 +111,32 @@ data "aws_iam_policy_document" "instance_volume_tagging" {
   }
 }
 
-resource "aws_iam_role_policy_attachment" "systems-manager-policy" {
-  role       = aws_iam_role.instance_role[0].id
-  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMFullAccess"
+data "aws_iam_policy_document" "route53_instance_registration" {
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "route53:ChangeResourceRecordSets"
+    ]
+
+    resources = ["arn:aws:route53:::hostedzone/${var.route53_zone_id}"]
+  }
 }
 
-resource "aws_iam_role_policy_attachment" "route53" {
+resource "aws_iam_role_policy_attachment" "systems-manager-policy" {
   role       = aws_iam_role.instance_role[0].id
-  policy_arn = "arn:aws:iam::aws:policy/AmazonRoute53FullAccess"
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
 # IAM user needed for the backup upload to S3
-
-resource "aws_iam_access_key" "this" {
-  user = aws_iam_user.this.name
-}
 
 resource "aws_iam_user" "this" {
   name = "${var.resource_name_prefix}-backup"
   path = "/system/"
 }
 
-data "aws_iam_policy_document" "s3_crud" {
-  statement {
-    effect = "Allow"
-    actions = [
-      "s3:ListBucket",
-      "s3:*Object",
-      "s3:GetAccelerateConfiguration",
-      "s3:ListMultipartUploadParts",
-      "s3:AbortMultipartUpload"
-    ]
-    resources = [
-      # the exact ARN is needed for the list bucket action, star for put,get,delete
-      "arn:aws:s3:::${var.s3_bucket_name}",
-      "arn:aws:s3:::${var.s3_bucket_name}/*"
-    ]
-  }
-}
-
-resource "aws_iam_role_policy_attachment" "inspector-policy" {
-  role       = aws_iam_role.instance_role[0].id
-  policy_arn = "arn:aws:iam::aws:policy/AmazonInspector2FullAccess"
+resource "aws_iam_access_key" "this" {
+  user = aws_iam_user.this.name
 }
 
 resource "aws_iam_user_policy" "this" {

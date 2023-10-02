@@ -4,7 +4,6 @@ locals {
     {
       region                 = var.aws_region
       name                   = var.resource_name_prefix
-      graphdb_version        = var.graphdb_version
       device_name            = var.device_name
       backup_schedule        = var.backup_schedule
       backup_iam_key_id      = var.backup_iam_key_id

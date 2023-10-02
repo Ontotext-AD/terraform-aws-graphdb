@@ -1,15 +1,5 @@
 provider "aws" {
   region = var.aws_region
-
-  default_tags {
-    tags = merge(
-      {
-        Release_Name = var.resource_name_prefix
-        Name         = "${var.resource_name_prefix}-graphdb"
-      },
-      var.tags
-    )
-  }
 }
 
 module "vpc" {
@@ -34,5 +24,7 @@ module "graphdb" {
 
   prevent_resource_deletion = false
 
-  ami_id = var.ami_id
+  instance_type   = var.instance_type
+  ami_id          = var.ami_id
+  graphdb_version = var.graphdb_version
 }
