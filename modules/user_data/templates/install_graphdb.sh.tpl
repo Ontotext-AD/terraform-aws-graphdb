@@ -96,7 +96,7 @@ if [ "$graphdb_device: data" = "$(file -s $graphdb_device)" ]; then
   mkfs -t ext4 $graphdb_device
 fi
 
-disk_mount_point="/var/opt/graphdb/data"
+disk_mount_point="/var/opt/graphdb"
 
 # Check if the disk is already mounted
 if ! mount | grep -q "$graphdb_device"; then
@@ -104,23 +104,26 @@ if ! mount | grep -q "$graphdb_device"; then
 
   # Create the mount point if it doesn't exist
   if [ ! -d "$disk_mount_point" ]; then
-    sudo mkdir -p "$disk_mount_point"
+    mkdir -p "$disk_mount_point"
   fi
 
   # Add an entry to the fstab file to automatically mount the disk
   if ! grep -q "$graphdb_device" /etc/fstab; then
-    sudo echo "$graphdb_device $disk_mount_point ext4 defaults 0 2" >> /etc/fstab
+    echo "$graphdb_device $disk_mount_point ext4 defaults 0 2" >> /etc/fstab
   fi
 
   # Mount the disk
-  sudo mount "$disk_mount_point"
+  mount "$disk_mount_point"
   echo "The disk at $graphdb_device is now mounted at $disk_mount_point."
 else
   echo "The disk at $graphdb_device is already mounted."
 fi
 
+# Ensure data folders exist
+mkdir -p $disk_mount_point/node $disk_mount_point/cluster-proxy
+
 # this is needed because after the disc attachment folder owner is reverted
-chown -R graphdb:graphdb /var/opt/graphdb/data
+chown -R graphdb:graphdb $disk_mount_point
 
 # Register the instance in Route 53, using the volume id for the sub-domain
 
@@ -142,11 +145,7 @@ aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${na
 graphdb_cluster_token="$(aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/cluster_token" --with-decryption | jq -r .Parameter.Value)"
 
 cat << EOF > /etc/graphdb/graphdb.properties
-graphdb.home.data=/var/opt/graphdb/data
-graphdb.home.logs=/var/opt/graphdb/logs
-
 graphdb.auth.token.secret=$graphdb_cluster_token
-
 graphdb.connector.port=7201
 graphdb.external-url=http://$${node_dns}:7201/
 graphdb.rpc.address=$${node_dns}:7301
@@ -155,16 +154,11 @@ EOF
 load_balancer_dns=$(aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/lb_dns_name" | jq -r .Parameter.Value)
 
 cat << EOF > /etc/graphdb-cluster-proxy/graphdb.properties
-graphdb.home.logs=/var/opt/graphdb-cluster-proxy/logs
-
 graphdb.auth.token.secret=$graphdb_cluster_token
-
 graphdb.connector.port=7200
-
 graphdb.external-url=http://$${load_balancer_dns}
 graphdb.vhosts=http://$${load_balancer_dns},http://$${node_dns}
 graphdb.rpc.address=$${node_dns}:7300
-
 graphdb.proxy.hosts=$${node_dns}:7301
 EOF
 
