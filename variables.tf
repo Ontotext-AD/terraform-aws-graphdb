@@ -149,13 +149,13 @@ variable "ebs_volume_size" {
 variable "ebs_volume_throughput" {
   description = "Throughput for the EBS volumes, used by the GraphDB nodes."
   type        = number
-  default     = 125
+  default     = 250
 }
 
 variable "ebs_volume_iops" {
   description = "IOPS for the EBS volumes, used by the GraphDB nodes."
   type        = number
-  default     = 16000
+  default     = 8000
 }
 
 variable "ebs_kms_key_arn" {
