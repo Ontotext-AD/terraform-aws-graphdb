@@ -162,6 +162,13 @@ graphdb.rpc.address=$${node_dns}:7300
 graphdb.proxy.hosts=$${node_dns}:7301
 EOF
 
+mkdir -p /etc/systemd/system/graphdb.service.d/
+
+cat << EOF > /etc/systemd/system/graphdb.service.d/overrides.conf
+[Service]
+Environment="GDB_HEAP_SIZE=${jvm_max_memory}g"
+EOF
+
 # Configure the GraphDB backup cron job
 
 cat <<-EOF > /usr/bin/graphdb_backup
@@ -225,6 +232,7 @@ echo 'fs.file-max = 262144' | tee -a /etc/sysctl.conf
 sysctl -p
 
 # the proxy service is set up in the AMI but not enabled there, so we enable and start it
+systemctl daemon-reload
 systemctl start graphdb
 systemctl enable graphdb-cluster-proxy.service
 systemctl start graphdb-cluster-proxy.service

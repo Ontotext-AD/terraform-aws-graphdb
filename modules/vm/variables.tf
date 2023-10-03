@@ -40,6 +40,11 @@ variable "graphdb_version" {
   type        = string
 }
 
+variable "instance_type" {
+  description = "EC2 instance type"
+  type        = string
+}
+
 # OPTIONAL parameters
 
 variable "ami_id" {
@@ -64,12 +69,6 @@ variable "common_tags" {
   description = "(Optional) Map of common tags for all taggable AWS resources."
   type        = map(string)
   default     = {}
-}
-
-variable "instance_type" {
-  description = "EC2 instance type"
-  type        = string
-  default     = "r6g.2xlarge"
 }
 
 variable "key_name" {

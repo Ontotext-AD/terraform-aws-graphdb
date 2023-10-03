@@ -74,6 +74,8 @@ module "user_data" {
   zone_id       = module.dns.zone_id
   zone_dns_name = var.zone_dns_name
 
+  instance_type = var.instance_type
+
   depends_on = [
     module.config,
   ]

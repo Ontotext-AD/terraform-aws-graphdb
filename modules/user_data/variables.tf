@@ -65,6 +65,11 @@ variable "zone_id" {
   type        = string
 }
 
+variable "instance_type" {
+  description = "EC2 instance type"
+  type        = string
+}
+
 # OPTIONAL parameters
 
 variable "user_supplied_userdata_path" {
