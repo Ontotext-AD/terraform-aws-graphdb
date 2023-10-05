@@ -196,20 +196,20 @@ function trigger_backup {
     --data-binary @- <<-DATA
     {
       "backupOptions": { "backupSystemData": true },
-      "bucketUri": "s3:///${name}-graphdb-backup/\$backup_name?region=${region}&AWS_ACCESS_KEY_ID=${backup_iam_key_id}&AWS_SECRET_ACCESS_KEY=${backup_iam_key_secret}"
+      "bucketUri": "s3:///${backup_bucket_name}/\$backup_name?region=${region}"
     }
 DATA
 }
 
 function rotate_backups {
-  all_files="\$(aws --cli-connect-timeout 300 s3api list-objects --bucket ${name}-graphdb-backup --query 'Contents' | jq .)"
+  all_files="\$(aws --cli-connect-timeout 300 s3api list-objects --bucket ${backup_bucket_name} --query 'Contents' | jq .)"
   count="\$(echo \$all_files | jq length)"
   delete_count="\$((count - ${backup_retention_count} - 1))"
 
   for i in \$(seq 0 \$delete_count); do
     key="\$(echo \$all_files | jq -r .[\$i].Key)"
 
-    aws --cli-connect-timeout 300 s3 rm s3://${name}-graphdb-backup/\$key
+    aws --cli-connect-timeout 300 s3 rm s3://${backup_bucket_name}/\$key
   done
 }
 

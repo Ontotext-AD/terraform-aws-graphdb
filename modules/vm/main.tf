@@ -127,7 +127,7 @@ resource "aws_launch_template" "graphdb" {
   ebs_optimized = "true"
 
   iam_instance_profile {
-    name = var.aws_iam_instance_profile
+    name = var.iam_instance_profile
   }
 
   metadata_options {

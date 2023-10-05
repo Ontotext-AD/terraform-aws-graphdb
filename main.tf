@@ -12,21 +12,28 @@ provider "aws" {
   }
 }
 
-module "dns" {
-  source = "./modules/dns"
-
-  vpc_id        = var.vpc_id
-  zone_dns_name = var.zone_dns_name
-}
-
 module "iam" {
   source = "./modules/iam"
 
-  permissions_boundary        = var.permissions_boundary
   resource_name_prefix        = var.resource_name_prefix
+  permissions_boundary        = var.permissions_boundary
   user_supplied_iam_role_name = var.user_supplied_iam_role_name
-  s3_bucket_name              = module.s3.backup_bucket_name
-  route53_zone_id             = module.dns.zone_id
+}
+
+module "dns" {
+  source = "./modules/dns"
+
+  vpc_id               = var.vpc_id
+  resource_name_prefix = var.resource_name_prefix
+  zone_dns_name        = var.zone_dns_name
+  iam_role_id          = module.iam.iam_role_id
+}
+
+module "backup" {
+  source = "./modules/backup"
+
+  resource_name_prefix = var.resource_name_prefix
+  iam_role_id          = module.iam.iam_role_id
 }
 
 module "config" {
@@ -48,9 +55,8 @@ module "load_balancer" {
   lb_health_check_path          = var.lb_health_check_path
   lb_health_check_interval      = var.lb_health_check_interval
   lb_enable_deletion_protection = var.prevent_resource_deletion
-  tls_enabled                   = var.tls_enabled
-  tls_certificate_arn           = var.tls_certificate_arn
-  tls_policy                    = var.tls_policy
+  lb_tls_certificate_arn        = var.lb_tls_certificate_arn
+  lb_tls_policy                 = var.lb_tls_policy
 }
 
 module "user_data" {
@@ -60,10 +66,10 @@ module "user_data" {
   resource_name_prefix        = var.resource_name_prefix
   user_supplied_userdata_path = var.user_supplied_userdata_path
   device_name                 = var.device_name
-  backup_schedule             = var.backup_schedule
-  backup_retention_count      = var.backup_retention_count
-  backup_iam_key_id           = module.iam.backups_bucket_key_id
-  backup_iam_key_secret       = module.iam.backups_bucket_key_secret
+
+  backup_schedule        = var.backup_schedule
+  backup_retention_count = var.backup_retention_count
+  backup_bucket_name     = module.backup.bucket_name
 
   ebs_volume_type       = var.ebs_volume_type
   ebs_volume_size       = var.ebs_volume_size
@@ -77,20 +83,13 @@ module "user_data" {
   instance_type = var.instance_type
 
   depends_on = [
-    module.config,
+    module.config
   ]
-}
-
-module "s3" {
-  source = "./modules/s3"
-
-  resource_name_prefix = var.resource_name_prefix
-  access_log_bucket    = var.s3_access_log_bucket
 }
 
 locals {
   graphdb_target_group_arns = concat(
-    [module.load_balancer.lb_target_group_arn],
+    [module.load_balancer.lb_target_group_arn]
   )
 }
 
@@ -99,8 +98,8 @@ module "vm" {
 
   allowed_inbound_cidrs     = var.allowed_inbound_cidrs_lb
   allowed_inbound_cidrs_ssh = var.allowed_inbound_cidrs_ssh
-  aws_iam_instance_profile  = module.iam.aws_iam_instance_profile
-  common_tags               = var.common_tags
+  iam_instance_profile      = module.iam.iam_instance_profile
+  iam_role_id               = module.iam.iam_role_id
   instance_type             = var.instance_type
   key_name                  = var.key_name
   lb_subnets                = var.lb_internal ? var.private_subnet_ids : var.public_subnet_ids

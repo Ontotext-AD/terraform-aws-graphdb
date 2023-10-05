@@ -1,5 +1,11 @@
+data "aws_caller_identity" "current" {}
+
+locals {
+  account_id = data.aws_caller_identity.current.account_id
+}
+
 resource "aws_s3_bucket" "backup" {
-  bucket = "${var.resource_name_prefix}-graphdb-backup"
+  bucket = "${var.resource_name_prefix}-graphdb-backup-${local.account_id}"
 }
 
 # Explicitly disable public access
@@ -33,13 +39,6 @@ resource "aws_s3_bucket_versioning" "backup" {
   }
 }
 
-resource "aws_s3_bucket_logging" "backup" {
-  count         = var.access_log_bucket != null ? 1 : 0
-  bucket        = aws_s3_bucket.backup.id
-  target_bucket = var.access_log_bucket
-  target_prefix = "${var.resource_name_prefix}-graphdb-backup-access-logs/"
-}
-
 resource "aws_s3_bucket_policy" "disallow-non-tls-access-to-bucket" {
   bucket = aws_s3_bucket.backup.id
   policy = data.aws_iam_policy_document.disallow-non-tls-access-to-bucket.json
@@ -65,5 +64,32 @@ data "aws_iam_policy_document" "disallow-non-tls-access-to-bucket" {
       test     = "Bool"
       values   = [false]
     }
+  }
+}
+
+resource "aws_iam_role_policy" "s3_crud" {
+  name   = "${var.resource_name_prefix}-graphdb-s3-crud"
+  role   = var.iam_role_id
+  policy = data.aws_iam_policy_document.backup_s3_crud.json
+}
+
+data "aws_iam_policy_document" "backup_s3_crud" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "s3:ListBucket",
+      "s3:DeleteObject",
+      "s3:GetObject",
+      "s3:ListObjects",
+      "s3:PutObject",
+      "s3:GetAccelerateConfiguration",
+      "s3:ListMultipartUploadParts",
+      "s3:AbortMultipartUpload"
+    ]
+    resources = [
+      # the exact ARN is needed for the list bucket action, star for put,get,delete
+      "arn:aws:s3:::${aws_s3_bucket.backup.bucket}",
+      "arn:aws:s3:::${aws_s3_bucket.backup.bucket}/*"
+    ]
   }
 }

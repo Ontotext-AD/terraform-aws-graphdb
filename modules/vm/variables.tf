@@ -5,13 +5,18 @@ variable "vpc_id" {
   type        = string
 }
 
-variable "aws_iam_instance_profile" {
+variable "resource_name_prefix" {
+  description = "Resource name prefix used for tagging and naming AWS resources"
+  type        = string
+}
+
+variable "iam_instance_profile" {
   description = "IAM instance profile name to use for GraphDB instances"
   type        = string
 }
 
-variable "resource_name_prefix" {
-  description = "Resource name prefix used for tagging and naming AWS resources"
+variable "iam_role_id" {
+  description = "IAM role ID to attach permission policies to"
   type        = string
 }
 
@@ -65,12 +70,6 @@ variable "allowed_inbound_cidrs_ssh" {
   default     = null
 }
 
-variable "common_tags" {
-  description = "(Optional) Map of common tags for all taggable AWS resources."
-  type        = map(string)
-  default     = {}
-}
-
 variable "key_name" {
   description = "key pair to use for SSH access to instance"
   type        = string
@@ -80,5 +79,5 @@ variable "key_name" {
 variable "node_count" {
   description = "Number of GraphDB nodes to deploy in ASG"
   type        = number
-  default     = 5
+  default     = 3
 }

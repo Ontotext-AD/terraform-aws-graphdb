@@ -20,13 +20,8 @@ variable "backup_schedule" {
   type        = string
 }
 
-variable "backup_iam_key_id" {
-  description = "Access key id of the IAM user to be used when uploading the backup to S3."
-  type        = string
-}
-
-variable "backup_iam_key_secret" {
-  description = "Access key secret of the IAM user to be used when uploading the backup to S3."
+variable "backup_bucket_name" {
+  description = "Name of the S3 bucket for storing GraphDB backups"
   type        = string
 }
 

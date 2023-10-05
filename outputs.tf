@@ -1,3 +1,8 @@
+output "backup_bucket_name" {
+  description = "Name of the S3 bucket for storing GraphDB backups"
+  value       = module.backup.bucket_name
+}
+
 output "asg_name" {
   value = module.vm.asg_name
 }
