@@ -26,7 +26,8 @@ locals {
       zone_dns_name = var.zone_dns_name
       zone_id       = var.zone_id
 
-      jvm_max_memory = local.jvm_max_memory
+      jvm_max_memory       = local.jvm_max_memory
+      resource_name_prefix = var.resource_name_prefix
     }
   )
 }

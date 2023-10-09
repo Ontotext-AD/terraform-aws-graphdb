@@ -231,6 +231,14 @@ echo 'fs.file-max = 262144' | tee -a /etc/sysctl.conf
 
 sysctl -p
 
+tmp=$(mktemp)
+jq '.logs.metrics_collected.prometheus.log_group_name = "${resource_name_prefix}-graphdb"' /etc/graphdb/cloudwatch-agent-config.json > "$tmp" && mv "$tmp" /etc/graphdb/cloudwatch-agent-config.json
+jq '.logs.metrics_collected.prometheus.emf_processor.metric_namespace = "${resource_name_prefix}-graphdb"' /etc/graphdb/cloudwatch-agent-config.json > "$tmp" && mv "$tmp" /etc/graphdb/cloudwatch-agent-config.json
+cat /etc/prometheus/prometheus.yaml | yq '.scrape_configs[].static_configs[].targets = ["localhost:7201"]' > "$tmp" && mv "$tmp" /etc/prometheus/prometheus.yaml
+
+amazon-cloudwatch-agent-ctl -a start
+amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/etc/graphdb/cloudwatch-agent-config.json
+
 # the proxy service is set up in the AMI but not enabled there, so we enable and start it
 systemctl daemon-reload
 systemctl start graphdb
