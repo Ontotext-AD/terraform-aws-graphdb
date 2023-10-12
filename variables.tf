@@ -1,14 +1,4 @@
-variable "allowed_inbound_cidrs_lb" {
-  type        = list(string)
-  description = "(Optional) List of CIDR blocks to permit inbound traffic from to load balancer"
-  default     = null
-}
-
-variable "allowed_inbound_cidrs_ssh" {
-  type        = list(string)
-  description = "(Optional) List of CIDR blocks to permit for SSH to GraphDB nodes"
-  default     = null
-}
+# Common configurations
 
 variable "common_tags" {
   type        = map(string)
@@ -16,17 +6,26 @@ variable "common_tags" {
   default     = {}
 }
 
-variable "instance_type" {
+# Backup configurations
+
+variable "backup_schedule" {
+  description = "Cron expression for the backup job."
   type        = string
-  default     = "r6g.2xlarge"
-  description = "EC2 instance type"
-  nullable    = false
+  default     = "0 0 * * *"
 }
 
-variable "key_name" {
-  type        = string
-  default     = null
-  description = "(Optional) key pair to use for SSH access to instance"
+variable "backup_retention_count" {
+  description = "Number of backups to keep."
+  type        = number
+  default     = 7
+}
+
+# Load balancer & TLS
+
+variable "lb_internal" {
+  description = "Whether the load balancer will be internal or public"
+  type        = bool
+  default     = false
 }
 
 variable "lb_deregistration_delay" {
@@ -47,10 +46,43 @@ variable "lb_health_check_interval" {
   default     = 10
 }
 
-variable "lb_internal" {
-  description = "Whether the load balancer will be internal or public"
-  type        = bool
-  default     = false
+variable "lb_tls_certificate_arn" {
+  description = "ARN of the TLS certificate, imported in ACM, which will be used for the TLS listener on the load balancer."
+  type        = string
+  default     = null
+}
+
+variable "lb_tls_policy" {
+  description = "TLS security policy on the listener."
+  type        = string
+  default     = "ELBSecurityPolicy-TLS13-1-2-2021-06"
+}
+
+#
+
+variable "allowed_inbound_cidrs_lb" {
+  type        = list(string)
+  description = "(Optional) List of CIDR blocks to permit inbound traffic from to load balancer"
+  default     = null
+}
+
+variable "allowed_inbound_cidrs_ssh" {
+  type        = list(string)
+  description = "(Optional) List of CIDR blocks to permit for SSH to GraphDB nodes"
+  default     = null
+}
+
+variable "instance_type" {
+  type        = string
+  default     = "r6g.2xlarge"
+  description = "EC2 instance type"
+  nullable    = false
+}
+
+variable "key_name" {
+  type        = string
+  default     = null
+  description = "(Optional) key pair to use for SSH access to instance"
 }
 
 variable "node_count" {
@@ -89,7 +121,7 @@ variable "ami_id" {
 variable "graphdb_version" {
   description = "GraphDB version"
   type        = string
-  default     = "10.3.3"
+  default     = "10.4.0-RC5"
   nullable    = false
 }
 
@@ -114,24 +146,6 @@ variable "device_name" {
   description = "The device to which EBS volumes for the GraphDB data directory will be mapped."
   type        = string
   default     = "/dev/sdf"
-}
-
-variable "backup_schedule" {
-  description = "Cron expression for the backup job."
-  type        = string
-  default     = "0 0 * * *"
-}
-
-variable "backup_retention_count" {
-  description = "Number of backups to keep."
-  type        = number
-  default     = 7
-}
-
-variable "s3_access_log_bucket" {
-  description = "S3 bucket ID for storing access logs of the GraphDB backup bucket"
-  type        = string
-  default     = null
 }
 
 variable "ebs_volume_type" {
@@ -180,22 +194,4 @@ variable "zone_dns_name" {
   description = "DNS name for the private hosted zone in Route 53"
   type        = string
   default     = "graphdb.cluster"
-}
-
-variable "tls_enabled" {
-  description = "If enabled, a certificate must be imported in ACM and its ARN set in the tls_certificate_arn variable. Certificates with RSA keys larger than 2048-bit or EC keys cannot be used."
-  type        = bool
-  default     = false
-}
-
-variable "tls_policy" {
-  description = "TLS security policy on the listener."
-  type        = string
-  default     = "ELBSecurityPolicy-TLS13-1-2-2021-06"
-}
-
-variable "tls_certificate_arn" {
-  description = "ARN of the certificate, imported in ACM, which will be used for the TLS listener on the load balancer."
-  type        = string
-  default     = null
 }

@@ -14,9 +14,8 @@ locals {
       device_name = var.device_name
 
       backup_schedule        = var.backup_schedule
-      backup_iam_key_id      = var.backup_iam_key_id
-      backup_iam_key_secret  = var.backup_iam_key_secret
       backup_retention_count = var.backup_retention_count
+      backup_bucket_name     = var.backup_bucket_name
 
       ebs_volume_type       = var.ebs_volume_type
       ebs_volume_size       = var.ebs_volume_size

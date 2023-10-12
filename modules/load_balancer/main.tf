@@ -1,5 +1,6 @@
 locals {
-  lb_name = "${var.resource_name_prefix}-graphdb"
+  lb_name        = "${var.resource_name_prefix}-graphdb"
+  lb_tls_enabled = var.lb_tls_certificate_arn != null ? true : false
 }
 
 resource "aws_lb" "graphdb" {
@@ -8,6 +9,7 @@ resource "aws_lb" "graphdb" {
   load_balancer_type         = "network"
   subnets                    = var.lb_subnets
   enable_deletion_protection = var.lb_enable_deletion_protection
+  security_groups            = var.lb_security_groups
 }
 
 resource "aws_lb_target_group" "graphdb" {
@@ -20,8 +22,8 @@ resource "aws_lb_target_group" "graphdb" {
   deregistration_delay = var.lb_deregistration_delay
 
   health_check {
-    healthy_threshold   = 3
-    unhealthy_threshold = 3
+    healthy_threshold   = var.lb_healthy_threshold
+    unhealthy_threshold = var.lb_unhealthy_threshold
     protocol            = "HTTP"
     port                = 7201
     path                = var.lb_health_check_path
@@ -30,7 +32,7 @@ resource "aws_lb_target_group" "graphdb" {
 }
 
 resource "aws_lb_listener" "graphdb" {
-  count = var.tls_enabled ? 0 : 1
+  count = local.lb_tls_enabled ? 0 : 1
 
   load_balancer_arn = aws_lb.graphdb.id
   port              = 80
@@ -43,13 +45,13 @@ resource "aws_lb_listener" "graphdb" {
 }
 
 resource "aws_lb_listener" "graphdb_tls" {
-  count = var.tls_enabled ? 1 : 0
+  count = local.lb_tls_enabled ? 1 : 0
 
   load_balancer_arn = aws_lb.graphdb.id
   port              = 443
   protocol          = "TLS"
-  certificate_arn   = var.tls_certificate_arn
-  ssl_policy        = var.tls_policy
+  certificate_arn   = var.lb_tls_certificate_arn
+  ssl_policy        = var.lb_tls_policy
 
   default_action {
     type             = "forward"
