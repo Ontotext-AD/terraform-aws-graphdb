@@ -160,25 +160,25 @@ This repository includes usage examples in the `examples/` directory, such as:
 
 ## Modules
 
-#### [Backup](backup.md)
+#### [Backup](modules/backup/README.md)
 This Terraform module creates an Amazon S3 bucket for storing backups.
 
-#### [Config](config.MD)
+#### [Config](modules/config/README.md)
 This Terraform module creates AWS Systems Manager (SSM) parameters for managing sensitive data and configuration settings used by GraphDB in an AWS environment.
 
-#### [DNS](dns.MD)
+#### [DNS](modules/dns/README.md)
 This Terraform module creates a private hosted zone in Amazon Route 53 for DNS resolution in your Virtual Private Cloud (VPC).
 
-#### [IAM](IAM.MD)
+#### [IAM](modules/iam/README.md)
 This Terraform module creates an AWS Identity and Access Management (IAM) role and an instance profile that can be used for EC2 instances. It also supports the option to set a permissions boundary on the IAM role. 
 
-#### [Load Balancer](load_balancer.md)
+#### [Load Balancer](modules/load_balancer/README.md)
 This Terraform module sets up an AWS Elastic Load Balancer (Network Load Balancer) with optional TLS listeners. The module is designed to be flexible and customizable by accepting various input variables to tailor the NLB configuration to your specific requirements.
 
-#### [User Data](user_data.md)
+#### [User Data](modules/user_data/README.md)
 This Terraform module configures an AWS EC2 instance for running GraphDB with various optional parameters and user-supplied userdata.
 
-#### [VM](vm.md)
+#### [VM](modules/vm/README.md)
 This Terraform module configures IAM roles, EC2 instances, and associated security groups for running GraphDB with optional parameters and customization.
 
 
