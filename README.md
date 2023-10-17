@@ -77,7 +77,7 @@ The following are the important variables you should configure when using this m
 
 - `instance_type`: The instance type for the GDB cluster nodes. This should match your performance and cost requirements.
 
-- `cluster_size`: The number of instances in the cluster. Recommended is 3, 5 or 7 in order to have consensus according to the RAFT algorithm. 
+- `cluster_size`: The number of instances in the cluster. Recommended is 3, 5 or 7 in order to have consensus according to the [RAFT algorithm](https://raft.github.io/). 
 
 - `subnet_ids`: A list of subnet IDs in your VPC to place the Neptune instances. Ensure that these subnets have proper route tables and security groups configured.
 
