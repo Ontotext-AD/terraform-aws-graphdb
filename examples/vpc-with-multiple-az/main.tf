@@ -28,3 +28,10 @@ module "graphdb" {
   ami_id          = var.ami_id
   graphdb_version = var.graphdb_version
 }
+
+module "monitoring" {
+  source = "./monitoring"
+
+  aws_region           = var.aws_region
+  resource_name_prefix = var.resource_name_prefix
+}
