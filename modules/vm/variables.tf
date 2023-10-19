@@ -5,8 +5,8 @@ variable "vpc_id" {
   type        = string
 
   validation {
-    condition     = can(regex(""^[a-zA-Z0-9-]+$"", var.vpc_id))
-    error_message = ""VPC ID can only contain letters, numbers, and hyphens.""
+    condition     = can(regex("^[a-zA-Z0-9-]+$", var.vpc_id))
+    error_message = "VPC ID can only contain letters, numbers, and hyphens."
   }
 }
 
