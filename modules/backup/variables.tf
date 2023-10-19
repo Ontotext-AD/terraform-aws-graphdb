@@ -1,6 +1,11 @@
 variable "resource_name_prefix" {
   description = "Resource name prefix used for tagging and naming AWS resources"
   type        = string
+
+  validation {
+    condition     = can(regex("^[a-zA-Z0-9_-]+$", var.resource_name_prefix))
+    error_message = "Resource name prefix can only contain letters, numbers, underscores, and hyphens."
+  }
 }
 
 variable "iam_role_id" {

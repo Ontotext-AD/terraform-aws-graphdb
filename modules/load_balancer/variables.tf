@@ -6,6 +6,11 @@ variable "vpc_id" {
 variable "resource_name_prefix" {
   description = "Resource name prefix used for tagging and naming AWS resources."
   type        = string
+
+  validation {
+    condition     = can(regex("^[a-zA-Z0-9-]+$", var.vpc_id))
+    error_message = "VPC ID can only contain letters, numbers, and hyphens."
+  }
 }
 
 variable "lb_subnets" {
@@ -27,7 +32,7 @@ variable "lb_internal" {
 
 variable "lb_deregistration_delay" {
   description = "(Optional) Amount time, in seconds, for GraphDB LB target group to wait before changing the state of a deregistering target from draining to unused. Defaults to 300."
-  type        = string
+  type        = number
   default     = 300
 }
 

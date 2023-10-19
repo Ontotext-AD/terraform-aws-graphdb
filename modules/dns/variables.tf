@@ -1,11 +1,20 @@
 variable "vpc_id" {
   description = "VPC ID where GraphDB will be deployed"
   type        = string
+
+  validation {
+    condition     = can(regex("^[a-zA-Z0-9-]+$", var.vpc_id))
+    error_message = "VPC ID can only contain letters, numbers, and hyphens."
+  }
 }
 
 variable "resource_name_prefix" {
   description = "Resource name prefix used for tagging and naming AWS resources"
   type        = string
+  validation {
+    condition     = can(regex("^[a-zA-Z0-9-]+$", var.resource_name_prefix))
+    error_message = "Resource name prefix can only contain letters, numbers, and hyphens."
+  }
 }
 
 variable "zone_dns_name" {
