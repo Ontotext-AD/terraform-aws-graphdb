@@ -1,11 +1,9 @@
 # GraphDB AWS Terraform Module
 
 This Terraform module allows you to provision an GraphDB cluster within a Virtual Private Cloud (VPC). The module provides a flexible way to configure the cluster and the associated VPC components.
-
-—
 ## Prerequisites
 
-Before you begin using this Terraform module, ensure you have the following prerequisites:
+Before you begin using this Terraform module, ensure you meet the following prerequisites:
 
 - **Terraform Installed**: You should have Terraform installed on your local machine. You can download Terraform from the [official website](https://www.terraform.io/downloads.html).
 
@@ -15,54 +13,18 @@ Before you begin using this Terraform module, ensure you have the following prer
 
 - **Terraform Configuration File**: Create a new Terraform configuration file in your project, and use this module by specifying its source.
 
-—
-
 ## Usage
 
 To use this module, follow these steps:
 
-1. Clone the repository to your local machine:
+Copy and paste into your Terraform configuration, insert the variables, and run ``terraform init``:
 
-   ```shell
-   git clone https://github.com/Ontotext-AD/terraform-aws-graphdb.git
-   ```
-
-2. Navigate to the module directory:
-
-   ```shell
-   cd terraform-aws-graphdb/modules/aws-graphdb-cluster
-   ```
-
-3. Create a new Terraform configuration in your project, and use this module by specifying its source:
-
-   ```hcl
-   module "graphdb_cluster" {
-     source = "../../modules/aws-graphdb-cluster"
-
-     # Define your configuration variables here, such as cluster size, VPC settings, and other parameters.
-
-
-   }
-
-   # Configure the required variables for the module.
-   ```
-
-4. Initialize your Terraform workspace and apply the changes:
-
-  ```shell
-    terraform init
-    terraform plan
-  ```
-
-5. Review and confirm the changes when prompted and apply if everything is okay.
-
-  ```shell
-    terraform apply
-  ```
-
-
-
-
+```hcl
+module "graphdb" {
+  source  = "Ontotext-AD/graphdb/aws"
+  version = "0.0.1"
+}
+```
 
 ## Configuration
 
@@ -71,6 +33,8 @@ This README provides more detailed information about the important variables and
 ### Important Variables (Inputs)
 
 The following are the important variables you should configure when using this module:
+
+- `aws_region`: The region in which GraphDB will be deployed.
 
 - `vpc_id`: The ID of the Virtual Private Cloud (VPC) where you want to create the AWS GraphDB cluster. This is a required variable.
 
@@ -84,9 +48,6 @@ The following are the important variables you should configure when using this m
 
 
 
-
-
-
 ## Examples
 
 This repository includes usage examples in the `examples/` directory, such as:
@@ -97,63 +58,27 @@ Here's an example of how to configure the module in your Terraform project:
 
 #### Example Configuration
 
+##### terraform.tfvars
 ```hcl
-variable "aws_region" {
-  description = "AWS region to deploy resources into"
-  type        = string
-  default     = "us-east-1"
+
+aws_region = "us-east-1"
+
+azs = ["us-east-1a", "us-east-1b", "us-east-1c"]
+
+resource_name_prefix = "my-prefix"
+
+graphdb_license_path = "/path/to/your/license.license"
+
+tags = {
+  Name = "MyInstance"
+  Environment = "Production"
 }
 
+ami_id = "GraphDB-AMI"
 
-variable "azs" {
-  description = "Availability zones to use in AWS region"
-  type        = list(string)
-  default = [	"us-east-1a",
-    			"us-east-1b",
-  			"us-east-1c", ]
-}
+instance_type = "instance type"
 
-
-variable "resource_name_prefix" {
-  description = "Prefix for resource names"
-  type        = string
-}
-
-
-variable "graphdb_license_path" {
-  description = “Path to your license file” 
-  type        = string
-  default 	   = "$PATH/$TO/Your/License.license"
-
-
-}
-
-
-variable "tags" {
-  description = "Common tags for all resources"
-  type        = map(string)
-  default     = {}
-}
-
-
-variable "ami_id" {
-  description = "AMI id"
-  type        = string
-  default     = null
-}
-#from Module VM
-variable "instance_type" {
-  description = "EC2 instance type"
-  type        = string
-  default     = null
-}
-
-
-variable "graphdb_version" {
-  description = "GraphDB version"
-  type        = string
-  default     = null
-}
+graphdb_version = "10.4.0"
 ```
 
 Ensure that you adjust the values of the variables to match your specific requirements.
