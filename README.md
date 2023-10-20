@@ -1,6 +1,6 @@
-# Terraform AWS GraphDB Module
+# GraphDB AWS Terraform Module
 
-This Terraform module allows you to provision an AWS GraphDB cluster within a Virtual Private Cloud (VPC) in AWS. The module provides a flexible way to configure the cluster and the associated VPC components.
+This Terraform module allows you to provision an GraphDB cluster within a Virtual Private Cloud (VPC). The module provides a flexible way to configure the cluster and the associated VPC components.
 
 —
 ## Prerequisites
@@ -47,9 +47,6 @@ To use this module, follow these steps:
    # Configure the required variables for the module.
    ```
 
-
-
-
 4. Initialize your Terraform workspace and apply the changes:
 
   ```shell
@@ -69,6 +66,8 @@ To use this module, follow these steps:
 
 ## Configuration
 
+This README provides more detailed information about the important variables and how to configure them for the Terraform AWS GraphDB module. Please ensure that you adapt the configuration to match your specific use case and requirements.
+
 ### Important Variables (Inputs)
 
 The following are the important variables you should configure when using this module:
@@ -83,11 +82,20 @@ The following are the important variables you should configure when using this m
 
 - `security_group_ids`: A list of security group IDs to associate with the instances for network security.
 
-TODO MORE
 
-### Example Configuration
+
+
+
+
+## Examples
+
+This repository includes usage examples in the `examples/` directory, such as:
+
+- [VPC with Multiple Availability Zones](./examples/vpc-with-multiple-az): Demonstrates creating a VPC with multiple Availability Zones and provisioning an AWS GraphDB cluster.
 
 Here's an example of how to configure the module in your Terraform project:
+
+#### Example Configuration
 
 ```hcl
 variable "aws_region" {
@@ -150,14 +158,6 @@ variable "graphdb_version" {
 
 Ensure that you adjust the values of the variables to match your specific requirements.
 
-
-
-## Examples
-
-This repository includes usage examples in the `examples/` directory, such as:
-
-- [VPC with Multiple Availability Zones](./examples/vpc-with-multiple-az): Demonstrates creating a VPC with multiple Availability Zones and provisioning an AWS GraphDB cluster.
-
 ## Modules
 
 #### [Backup](modules/backup/README.md)
@@ -189,7 +189,4 @@ Check out the contributors guide [CONTRIBUTING.md](CONTRIBUTING.md).
 ## License
 
 This code is released under the Apache 2.0 License. See [LICENSE](LICENSE) for more details.
-
-
-This README provides more detailed information about the important variables and how to configure them for the Terraform AWS GraphDB module. Please ensure that you adapt the configuration to match your specific use case and requirements.
 
