@@ -5,8 +5,8 @@ variable "vpc_id" {
   type        = string
 
   validation {
-    condition     = can(regex("^[a-zA-Z0-9-]+$", var.vpc_id))
-    error_message = "VPC ID can only contain letters, numbers, and hyphens."
+    condition     = can(regex("^vpc-[a-zA-Z0-9-]+$", var.vpc_id))
+    error_message = "VPC ID must start with 'vpc-' and can only contain letters, numbers, and hyphens."
   }
 }
 
@@ -87,7 +87,7 @@ variable "node_count" {
   default     = 3
 
   validation {
-    condition     = var.node_count % 2 == 1 && var.node_count >= 3 && var.node_count <= 7
-    error_message = "Node count must be an odd number between 3 and 7."
+    condition     = var.node_count % 2 == 1 && var.node_count > 1
+    error_message = "Node count must be an odd number. Suggested to be 3, 5 or 7"
   }
 }
