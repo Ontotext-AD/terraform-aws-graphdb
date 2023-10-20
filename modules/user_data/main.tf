@@ -3,8 +3,8 @@ data "aws_ec2_instance_type" "graphdb" {
 }
 
 locals {
-  # MiB to GiB - 4
-  jvm_max_memory = ceil(data.aws_ec2_instance_type.graphdb.memory_size * 0.0009765625 - 4)
+  # MiB to GiB - 10
+  jvm_max_memory = ceil(data.aws_ec2_instance_type.graphdb.memory_size * 0.0009765625 - 10)
 
   graphdb_user_data = templatefile(
     var.user_supplied_userdata_path != null ? var.user_supplied_userdata_path : "${path.module}/templates/start_graphdb.sh.tpl",
