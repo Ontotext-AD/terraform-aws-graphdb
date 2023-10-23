@@ -40,11 +40,7 @@ The following are the important variables you should configure when using this m
 
 - `instance_type`: The instance type for the GDB cluster nodes. This should match your performance and cost requirements.
 
-- `cluster_size`: The number of instances in the cluster. Recommended is 3, 5 or 7 in order to have consensus according to the [RAFT algorithm](https://raft.github.io/). 
-
-- `subnet_ids`: A list of subnet IDs in your VPC to place the Neptune instances. Ensure that these subnets have proper route tables and security groups configured.
-
-- `security_group_ids`: A list of security group IDs to associate with the instances for network security.
+- `node_count`: The number of instances in the cluster. Recommended is 3, 5 or 7 in order to have consensus according to the [Raft algorithm](https://raft.github.io/). 
 
 
 
@@ -75,10 +71,6 @@ tags = {
 }
 
 ami_id = "GraphDB-AMI"
-
-instance_type = "instance type"
-
-graphdb_version = "10.4.0"
 ```
 
 Ensure that you adjust the values of the variables to match your specific requirements.
