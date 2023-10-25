@@ -5,8 +5,8 @@ variable "resource_name_prefix" {
   type        = string
 
   validation {
-    condition     = can(regex("^[a-zA-Z0-9_-]+$", var.resource_name_prefix))
-    error_message = "Resource name prefix can only contain letters, numbers, underscores, and hyphens."
+    condition     = can(regex("^[a-zA-Z0-9-]+$", var.resource_name_prefix)) && !can(regex("^-", var.resource_name_prefix))
+    error_message = "Resource name prefix cannot start with a hyphen and can only contain letters, numbers, and hyphens."
   }
 }
 
