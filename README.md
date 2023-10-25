@@ -1,6 +1,6 @@
 # GraphDB AWS Terraform Module
 
-This Terraform module allows you to provision an GraphDB cluster within a Virtual Private Cloud (VPC). The module provides a flexible way to configure the cluster and the associated VPC components.
+This Terraform module allows you to provision an GraphDB cluster within a Virtual Private Cloud (VPC). The module provides a flexible way to configure the cluster and the associated VPC components. It mplements the GraphDB reference architecture. Check the official [documentation](https://graphdb.ontotext.com/documentation/10.4/aws-deployment.html) for more detrails.
 ## Prerequisites
 
 Before you begin using this Terraform module, ensure you meet the following prerequisites:
