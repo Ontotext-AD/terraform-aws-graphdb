@@ -121,7 +121,7 @@ variable "ami_id" {
 variable "graphdb_version" {
   description = "GraphDB version"
   type        = string
-  default     = "10.4.0-RC5"
+  default     = "10.4.0"
   nullable    = false
 }
 
