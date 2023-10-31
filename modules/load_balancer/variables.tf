@@ -1,11 +1,22 @@
 variable "vpc_id" {
-  description = "Identifier of the VPC where GraphDB will be deployed."
+  description = "VPC ID where GraphDB will be deployed"
   type        = string
+
+  validation {
+    condition     = can(regex("^vpc-[a-zA-Z0-9-]+$", var.vpc_id))
+    error_message = "VPC ID must start with 'vpc-' and can only contain letters, numbers, and hyphens."
+  }
 }
 
 variable "resource_name_prefix" {
   description = "Resource name prefix used for tagging and naming AWS resources."
   type        = string
+
+  validation {
+    condition     = can(regex("^[a-zA-Z0-9-]+$", var.resource_name_prefix)) && !can(regex("^-", var.resource_name_prefix))
+    error_message = "Resource name prefix cannot start with a hyphen and can only contain letters, numbers, and hyphens."
+  }
+
 }
 
 variable "lb_subnets" {
@@ -27,7 +38,7 @@ variable "lb_internal" {
 
 variable "lb_deregistration_delay" {
   description = "(Optional) Amount time, in seconds, for GraphDB LB target group to wait before changing the state of a deregistering target from draining to unused. Defaults to 300."
-  type        = string
+  type        = number
   default     = 300
 }
 

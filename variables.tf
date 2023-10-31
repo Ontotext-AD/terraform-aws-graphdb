@@ -194,4 +194,9 @@ variable "zone_dns_name" {
   description = "DNS name for the private hosted zone in Route 53"
   type        = string
   default     = "graphdb.cluster"
+
+  validation {
+    condition     = !can(regex(".*\\.local$", var.zone_dns_name))
+    error_message = "The DNS name cannot end with '.local'."
+  }
 }

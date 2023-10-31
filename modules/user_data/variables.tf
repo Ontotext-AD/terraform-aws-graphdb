@@ -8,6 +8,11 @@ variable "aws_region" {
 variable "resource_name_prefix" {
   description = "Resource name prefix used for tagging and naming AWS resources"
   type        = string
+
+  validation {
+    condition     = can(regex("^[a-zA-Z0-9-]+$", var.resource_name_prefix)) && !can(regex("^-", var.resource_name_prefix))
+    error_message = "Resource name prefix cannot start with a hyphen and can only contain letters, numbers, and hyphens."
+  }
 }
 
 variable "device_name" {
@@ -23,6 +28,11 @@ variable "backup_schedule" {
 variable "backup_bucket_name" {
   description = "Name of the S3 bucket for storing GraphDB backups"
   type        = string
+
+  validation {
+    condition     = can(regex("^[a-z0-9_-]+$", var.backup_bucket_name))
+    error_message = "Bucket name can only contain lowercase letters, numbers, hyphens, and underscores."
+  }
 }
 
 variable "ebs_volume_type" {
