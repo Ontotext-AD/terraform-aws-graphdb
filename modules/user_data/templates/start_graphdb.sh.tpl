@@ -38,6 +38,8 @@ zone_id="${zone_id}"
 jvm_max_memory="${jvm_max_memory}"
 resource_name_prefix="${resource_name_prefix}"
 
+GRAPHDB_CONNECTOR_PORT=""
+
 # Search for an available EBS volume to attach to the instance. If no volume is found - create new one, attach, format and mount the volume.
 source /opt/helpers-scripts/ebs_volume.sh
 
