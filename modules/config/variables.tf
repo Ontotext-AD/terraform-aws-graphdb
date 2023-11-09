@@ -34,3 +34,15 @@ variable "graphdb_lb_dns_name" {
   type        = string
   default     = ""
 }
+
+variable "graphdb_config" {
+  description = "Path to the initial config to add for GraphDB."
+  type        = string
+  default     = "/home/kristian/Ontotext/terraform-aws-graphdb/modules/config/example_config" #to delete and 
+}
+
+variable "GDB_JAVA_OPTS" {
+  description = "GDB_JAVA_OPTS Options to add for GraphDB configuration"
+  type        = string
+  default     = "test"  #Need to find what to put in default since it is required to have something
+}
