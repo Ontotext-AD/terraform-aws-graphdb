@@ -44,5 +44,5 @@ variable "graphdb_config" {
 variable "GDB_JAVA_OPTS" {
   description = "GDB_JAVA_OPTS Options to add for GraphDB configuration"
   type        = string
-  default     = "test"  #Need to find what to put in default since it is required to have something
+  default     = "test" #Need to find what to put in default since it is required to have something
 }
