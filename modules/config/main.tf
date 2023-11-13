@@ -27,16 +27,16 @@ resource "aws_ssm_parameter" "graphdb_lb_dns_name" {
   value       = var.graphdb_lb_dns_name
 }
 
-resource "aws_ssm_parameter" "graphdb_config" {
-  name        = "/${var.resource_name_prefix}/graphdb/graphdb_config"
-  description = "Initial configuration for graphdb."
+resource "aws_ssm_parameter" "graphdb_properties" {
+  name        = "/${var.resource_name_prefix}/graphdb/graphdb_properties"
+  description = "Contents of graphdb.properties file."
   type        = "SecureString"
   value       = filebase64(var.graphdb_config)
 }
 
-resource "aws_ssm_parameter" "GDB_JAVA_OPTS" {
-  name        = "/${var.resource_name_prefix}/graphdb/GDB_JAVA_OPTS"
+resource "aws_ssm_parameter" "gdb_java_opts" {
+  name        = "/${var.resource_name_prefix}/graphdb/gdb_java_opts"
   description = "Additional configurations for GraphDB."
   type        = "String"
-  value       = var.GDB_JAVA_OPTS
+  value       = var.gdb_java_opts
 }
