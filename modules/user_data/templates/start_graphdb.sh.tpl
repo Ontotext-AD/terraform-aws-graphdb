@@ -148,9 +148,9 @@ aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${na
   base64 -d > /etc/graphdb/graphdb.properties
 
 
-GDB_CONFIG="$(aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/GDB_JAVA_OPTS" --with-decryption | jq -r .Parameter.Value)"
+gdb_config="$(aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/GDB_JAVA_OPTS" --with-decryption | jq -r .Parameter.Value)"
 
-echo "\$GDB_JAVA_OPTS $GDB_CONFIG" >> /etc/environment.d/gdb_environments
+echo "\$GDB_JAVA_OPTS $gdb_config" >> /etc/graphdb/graphdb.env
 
 cat << EOF >> /etc/graphdb/graphdb.properties
 graphdb.auth.token.secret=$graphdb_cluster_token
