@@ -144,13 +144,13 @@ aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${na
 
 graphdb_cluster_token="$(aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/cluster_token" --with-decryption | jq -r .Parameter.Value)"
 
-aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/graphdb_config" --with-decryption | jq -r .Parameter.Value | \
+aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/graphdb_properties" --with-decryption | jq -r .Parameter.Value | \
   base64 -d > /etc/graphdb/graphdb.properties
 
 
-gdb_config="$(aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/GDB_JAVA_OPTS" --with-decryption | jq -r .Parameter.Value)"
+gdb_config="$(aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/gdb_java_opts" --with-decryption | jq -r .Parameter.Value)"
 
-echo "\$GDB_JAVA_OPTS $gdb_config" >> /etc/graphdb/graphdb.env
+echo " \$GDB_JAVA_OPTS  $gdb_config " >> /etc/graphdb/graphdb.env
 
 cat << EOF >> /etc/graphdb/graphdb.properties
 graphdb.auth.token.secret=$graphdb_cluster_token
@@ -249,6 +249,6 @@ amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/etc/graphdb/cloud
 
 # the proxy service is set up in the AMI but not enabled there, so we enable and start it
 systemctl daemon-reload
-systemctl start graphdb
+systemctl start graphdb.service
 systemctl enable graphdb-cluster-proxy.service
 systemctl start graphdb-cluster-proxy.service
