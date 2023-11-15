@@ -31,7 +31,7 @@ resource "aws_ssm_parameter" "graphdb_properties" {
   name        = "/${var.resource_name_prefix}/graphdb/graphdb_properties"
   description = "Contents of graphdb.properties file."
   type        = "SecureString"
-  value       = filebase64(var.graphdb_config)
+  value       = filebase64(var.graphdb_properties)
 }
 
 resource "aws_ssm_parameter" "gdb_java_opts" {
