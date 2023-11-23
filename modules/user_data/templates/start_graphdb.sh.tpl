@@ -41,13 +41,13 @@ resource_name_prefix="${resource_name_prefix}"
 GRAPHDB_CONNECTOR_PORT=""
 
 # Search for an available EBS volume to attach to the instance. If no volume is found - create new one, attach, format and mount the volume.
-source /opt/helpers-scripts/ebs_volume.sh
+source /opt/helper-scripts/ebs_volume.sh
 
 # Register the instance in Route 53, using the volume id for the sub-domain
-source /opt/helpers-scripts/register_route53.sh
+source /opt/helper-scripts/register_route53.sh
 
 # Configure the GraphDB backup cron job
-source /opt/helpers-scripts/create_backup.sh
+source /opt/helper-scripts/create_backup.sh
 
 # Configure GraphDB
 
