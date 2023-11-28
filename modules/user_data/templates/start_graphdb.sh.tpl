@@ -41,14 +41,16 @@ resource_name_prefix="${resource_name_prefix}"
 GRAPHDB_CONNECTOR_PORT=""
 
 # Search for an available EBS volume to attach to the instance. If no volume is found - create new one, attach, format and mount the volume.
-source /opt/helper-scripts/ebs_volume.sh
+#source /opt/helper-scripts/ebs_volume.sh
+./ebs_volume --name ${name} --ebs_volume_type ${ebs_volume_type} --ebs_volume_throughput ${ebs_volume_throughput} --ebs_kms_key_arn ${ebs_kms_key_arn} --ebs_volume_size ${ebs_volume_size} --ebs_volume_iops ${ebs_volume_iops} --device_name ${device_name}
 
 # Register the instance in Route 53, using the volume id for the sub-domain
-source /opt/helper-scripts/register_route53.sh
+#source /opt/helper-scripts/register_route53.sh
+./opt/helper-scripts/register_route53.sh --name ${name} --zone_dns_name ${zone_dns_name} --zone_id ${zone_id} 
 
 # Configure the GraphDB backup cron job
-source /opt/helper-scripts/create_backup.sh
-
+#source /opt/helper-scripts/create_backup.sh
+./opt/helper-scripts/create_backup.sh --region ${region} --name ${name} --backup_bucket_name ${backup_bucket_name} --backup_retention_count ${backup_retention_count} --backup_schedule ${backup_schedule}
 # Configure GraphDB
 
 aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/license" --with-decryption | \
