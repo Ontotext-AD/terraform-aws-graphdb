@@ -42,7 +42,7 @@ GRAPHDB_CONNECTOR_PORT=""
 
 # Search for an available EBS volume to attach to the instance. If no volume is found - create new one, attach, format and mount the volume.
 #source /opt/helper-scripts/ebs_volume.sh
-./ebs_volume --name ${name} --ebs_volume_type ${ebs_volume_type} --ebs_volume_throughput ${ebs_volume_throughput} --ebs_kms_key_arn ${ebs_kms_key_arn} --ebs_volume_size ${ebs_volume_size} --ebs_volume_iops ${ebs_volume_iops} --device_name ${device_name}
+./opt/helper-scripts/ebs_volume.sh --name ${nam e} --ebs_volume_type ${ebs_volume_type} --ebs_volume_throughput ${ebs_volume_throughput} --ebs_kms_key_arn ${ebs_kms_key_arn} --ebs_volume_size ${ebs_volume_size} --ebs_volume_iops ${ebs_volume_iops} --device_name ${device_name}
 
 # Register the instance in Route 53, using the volume id for the sub-domain
 #source /opt/helper-scripts/register_route53.sh
