@@ -14,7 +14,6 @@ imds_token=$( curl -Ss -H "X-aws-ec2-metadata-token-ttl-seconds: 300" -XPUT 169.
 local_ipv4=$( curl -Ss -H "X-aws-ec2-metadata-token: $imds_token" 169.254.169.254/latest/meta-data/local-ipv4 )
 instance_id=$( curl -Ss -H "X-aws-ec2-metadata-token: $imds_token" 169.254.169.254/latest/meta-data/instance-id )
 availability_zone=$( curl -Ss -H "X-aws-ec2-metadata-token: $imds_token" 169.254.169.254/latest/meta-data/placement/availability-zone )
-volume_id=""
 
 # Defining variables by interpolating Terraform variables
 
@@ -41,13 +40,28 @@ resource_name_prefix="${resource_name_prefix}"
 GRAPHDB_CONNECTOR_PORT=""
 
 # Search for an available EBS volume to attach to the instance. If no volume is found - create new one, attach, format and mount the volume.
-./opt/helper-scripts/ebs_volume.sh --name ${name} --ebs_volume_type ${ebs_volume_type} --ebs_volume_throughput ${ebs_volume_throughput} --ebs_kms_key_arn ${ebs_kms_key_arn} --ebs_volume_size ${ebs_volume_size} --ebs_volume_iops ${ebs_volume_iops} --device_name ${device_name}
+./opt/helper-scripts/ebs_volume.sh \
+ --name ${name} \
+ --ebs_volume_type ${ebs_volume_type} \
+ --ebs_volume_throughput ${ebs_volume_throughput} \
+ --ebs_kms_key_arn ${ebs_kms_key_arn} \
+ --ebs_volume_size ${ebs_volume_size} \
+ --ebs_volume_iops ${ebs_volume_iops} \
+  --device_name ${device_name}
 
 # Register the instance in Route 53, using the volume id for the sub-domain. Capturing the node_dns variable to be used in the rest of the script.
-node_dns=$(./opt/helper-scripts/register_route53.sh --name ${name} --zone_dns_name ${zone_dns_name} --zone_id ${zone_id})
+node_dns=$(./opt/helper-scripts/register_route53.sh \
+ --name ${name} \
+ --zone_dns_name ${zone_dns_name} \
+ --zone_id ${zone_id})
 
 # Configure the GraphDB backup cron job
-./opt/helper-scripts/create_backup.sh --region ${region} --name ${name} --backup_bucket_name ${backup_bucket_name} --backup_retention_count ${backup_retention_count} --backup_schedule ${backup_schedule}
+./opt/helper-scripts/create_backup.sh \
+ --region ${region} \
+ --name ${name} \
+ --backup_bucket_name ${backup_bucket_name} \
+ --backup_retention_count ${backup_retention_count} \
+ --backup_schedule ${backup_schedule}
 
 # Configure GraphDB
 aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/license" --with-decryption | \
