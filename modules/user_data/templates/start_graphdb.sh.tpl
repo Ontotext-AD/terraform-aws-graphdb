@@ -61,7 +61,7 @@ node_dns=$(./opt/helper-scripts/register_route53.sh \
  --name ${name} \
  --backup_bucket_name ${backup_bucket_name} \
  --backup_retention_count ${backup_retention_count} \
- --backup_schedule ${backup_schedule}
+ --backup_schedule "${backup_schedule}"
 
 # Configure GraphDB
 aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/license" --with-decryption | \
