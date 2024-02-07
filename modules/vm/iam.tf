@@ -22,7 +22,8 @@ data "aws_iam_policy_document" "instance_volume" {
     actions = [
       "ec2:CreateVolume",
       "ec2:AttachVolume",
-      "ec2:DescribeVolumes"
+      "ec2:DescribeVolumes",
+      "ec2:DescribeInstances"
     ]
 
     resources = ["*"]

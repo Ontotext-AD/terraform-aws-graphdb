@@ -244,3 +244,70 @@ systemctl daemon-reload
 systemctl start graphdb
 systemctl enable graphdb-cluster-proxy.service
 systemctl start graphdb-cluster-proxy.service
+
+# Setup GraphDB Cluster
+RETRY_DELAY=1
+MAX_RETRIES=10
+
+# Checks if GraphDB is started, we assume it is when the infrastructure endpoint is reached
+check_gdb() {
+  if [ -z "$1" ]; then
+    echo "Error: IP address or hostname is not provided."
+    return 1
+  fi
+
+  local gdb_address="$1:7200/rest/monitor/infrastructure"
+  if curl -s --head -u "admin:\${GRAPHDB_ADMIN_PASSWORD}" --fail "\${gdb_address}" >/dev/null; then
+    echo "Success, GraphDB node \${gdb_address} is available"
+    return 0
+  else
+    echo "GraphDB node \${gdb_address} is not available yet"
+    return 1
+  fi
+}
+
+VPC_ID=$(aws ec2 describe-instances --instance-id \$instance_id --query 'Reservations[0].Instances[0].VpcId' --output text)
+DNS_JSON=$(aws ec2 describe-instances --filters "Name=vpc-id,Values=\$VPC_ID" --query 'Reservations[*].Instances[*].[PrivateDnsName]')
+ALL_DNS_RECORDS=($(echo "\$DNS_JSON" | jq -r '.[][][]'))
+ALL_DNS_RECORDS_COUNT="\${#ALL_DNS_RECORDS[@]}"
+
+# Waits for 3 DNS records to be available
+wait_dns_records() {
+  if [ "\${ALL_DNS_RECORDS_COUNT}" -ne 3 ]; then
+    sleep 5
+    wait_dns_records
+  else
+    echo "Private DNS zone record count is \${ALL_DNS_RECORDS_COUNT}"
+  fi
+}
+
+wait_dns_records
+
+# Check all instances are running
+for record in "${ALL_DNS_RECORDS[@]}"; do
+  echo "Pinging $record"
+  # Removes the '.' at the end of the DNS address
+  if [ -n "$record" ]; then
+    while ! check_gdb "$record"; do
+      echo "Waiting for GDB $record to start"
+      sleep "$RETRY_DELAY"
+    done
+  else
+    echo "Error: address is empty."
+  fi
+done
+
+echo "All GDB instances are available. Creating the cluster."
+
+INSTANCE_IDS_JSON=$(aws ec2 describe-instances --filters "Name=vpc-id,Values=$VPC_ID" --query 'Reservations[*].Instances[*].[InstanceId]')
+INSTANCE_IDS=($(echo "$INSTANCE_IDS_JSON" | jq -r '.[][][]' | sort))
+echo $INSTANCE_IDS
+LOWEST_INSTANCE_ID=${INSTANCE_IDS[0]}
+MIDDLE_INSTANCE_ID=${INSTANCE_IDS[1]}
+HIGHEST_INSTANCE_ID=${INSTANCE_IDS[2]}
+
+echo $LOWEST_INSTANCE_ID
+echo $MIDDLE_INSTANCE_ID
+echo $HIGHEST_INSTANCE_ID
+
+echo "Volumes: ${volume_id[@]}"
