@@ -7,6 +7,54 @@ until ping -c 1 google.com &> /dev/null; do
   sleep 5
 done
 
+# Check if AWS CLI is already installed
+
+if ! command -v aws &> /dev/null
+then
+    echo "AWS CLI not installed. Installing..."
+
+    # Update package list
+    sudo apt-get update
+
+    # Install unzip if not already installed
+    sudo apt-get install unzip -y
+
+    # Determine the architecture
+    ARCHITECTURE=$(uname -m)
+    case $ARCHITECTURE in
+        x86_64)
+            AWS_CLI_PACKAGE_URL="https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip"
+            ;;
+        aarch64)
+            AWS_CLI_PACKAGE_URL="https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip"
+            ;;
+        *)
+            echo "Unsupported architecture: $ARCHITECTURE"
+            exit 1
+            ;;
+    esac
+
+    
+    # Download the installation script based on architecture
+    sudo curl "$AWS_CLI_PACKAGE_URL" -o "awscliv2.zip"
+    
+    # Unzip the installer
+    sudo unzip awscliv2.zip
+    
+    # Run the install program
+    sudo ./aws/install
+    
+    # Clean up downloaded files
+    sudo rm -f awscliv2.zip
+    sudo rm -rf aws
+
+    echo "AWS CLI v2 installed successfully"
+else
+    echo "AWS CLI is already installed"
+fi
+
+
+
 systemctl stop graphdb
 
 # Set common variables used throughout the script.
