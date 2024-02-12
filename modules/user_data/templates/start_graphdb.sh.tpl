@@ -14,6 +14,8 @@ sudo apt-get update
 
 # Install jq if not already installed
 sudo apt-get install jq -y
+# Install nvme if not already installed
+sudo apt-get install -y nvme-cli
 
 
 # Check if AWS CLI is already installed
@@ -157,23 +159,26 @@ if ! mount | grep -q "$graphdb_device"; then
 
   # Create the mount point if it doesn't exist
   if [ ! -d "$disk_mount_point" ]; then
-    mkdir -p "$disk_mount_point"
+    sudo mkdir -p "$disk_mount_point"
   fi
 
   # Add an entry to the fstab file to automatically mount the disk
-  if ! grep -q "$graphdb_device" /etc/fstab; then
-    echo "$graphdb_device $disk_mount_point ext4 defaults 0 2" >> /etc/fstab
+  if ! sudo grep -q "$graphdb_device" /etc/fstab; then
+    echo "$graphdb_device $disk_mount_point ext4 defaults 0 2" | sudo tee -a /etc/fstab > /dev/null
   fi
 
   # Mount the disk
-  mount "$disk_mount_point"
+  sudo mount "$disk_mount_point"
   echo "The disk at $graphdb_device is now mounted at $disk_mount_point."
 else
   echo "The disk at $graphdb_device is already mounted."
 fi
 
 # Ensure data folders exist
-mkdir -p $disk_mount_point/node $disk_mount_point/cluster-proxy
+sudo mkdir -p $disk_mount_point/node $disk_mount_point/cluster-proxy
+
+sudo groupadd graphdb
+sudo useradd -r -g graphdb graphdb
 
 # this is needed because after the disc attachment folder owner is reverted
 chown -R graphdb:graphdb $disk_mount_point
@@ -187,44 +192,45 @@ aws --cli-connect-timeout 300 route53 change-resource-record-sets \
   --hosted-zone-id "${zone_id}" \
   --change-batch '{"Changes": [{"Action": "UPSERT","ResourceRecordSet": {"Name": "'"$node_dns"'","Type": "A","TTL": 60,"ResourceRecords": [{"Value": "'"$local_ipv4"'"}]}}]}'
 
-hostnamectl set-hostname "$node_dns"
+sudo hostnamectl set-hostname "$node_dns"
 
 # Configure GraphDB
-
+sudo mkdir -p /etc/graphdb/
+sudo mkdir -p /etc/graphdb-cluster-proxy/
 aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/license" --with-decryption | \
   jq -r .Parameter.Value | \
   base64 -d > /etc/graphdb/graphdb.license
 
 graphdb_cluster_token="$(aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/cluster_token" --with-decryption | jq -r .Parameter.Value)"
 
-cat << EOF > /etc/graphdb/graphdb.properties
+sudo bash -c 'cat << EOF > /etc/graphdb/graphdb.properties
 graphdb.auth.token.secret=$graphdb_cluster_token
 graphdb.connector.port=7201
 graphdb.external-url=http://$${node_dns}:7201/
 graphdb.rpc.address=$${node_dns}:7301
-EOF
+EOF'
 
 load_balancer_dns=$(aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/lb_dns_name" | jq -r .Parameter.Value)
 
-cat << EOF > /etc/graphdb-cluster-proxy/graphdb.properties
+sudo bash -c 'cat << EOF > /etc/graphdb-cluster-proxy/graphdb.properties
 graphdb.auth.token.secret=$graphdb_cluster_token
 graphdb.connector.port=7200
 graphdb.external-url=http://$${load_balancer_dns}
 graphdb.vhosts=http://$${load_balancer_dns},http://$${node_dns}:7200
 graphdb.rpc.address=$${node_dns}:7300
 graphdb.proxy.hosts=$${node_dns}:7301
-EOF
+EOF'
 
-mkdir -p /etc/systemd/system/graphdb.service.d/
+sudo mkdir -p /etc/systemd/system/graphdb.service.d/
 
-cat << EOF > /etc/systemd/system/graphdb.service.d/overrides.conf
+sudo bash -c 'cat << EOF > /etc/systemd/system/graphdb.service.d/overrides.conf
 [Service]
 Environment="GDB_HEAP_SIZE=${jvm_max_memory}g"
-EOF
+EOF'
 
 # Configure the GraphDB backup cron job
 
-cat <<-EOF > /usr/bin/graphdb_backup
+sudo bash -c 'cat <<-EOF > /usr/bin/graphdb_backup
 #!/bin/bash
 
 set -euxo pipefail
@@ -244,8 +250,8 @@ function trigger_backup {
     -vvv --fail \
     --user "admin:\$GRAPHDB_ADMIN_PASSWORD" \
     --url localhost:7201/rest/recovery/cloud-backup \
-    --header 'Content-Type: application/json' \
-    --header 'Accept: application/json' \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json" \
     --data-binary @- <<-DATA
     {
       "backupOptions": { "backupSystemData": true },
@@ -273,27 +279,67 @@ fi
 
 rotate_backups
 
-EOF
+EOF'
 
-chmod +x /usr/bin/graphdb_backup
+sudo chmod +x /usr/bin/graphdb_backup
 echo "${backup_schedule} graphdb /usr/bin/graphdb_backup" > /etc/cron.d/graphdb_backup
 
 # https://docs.aws.amazon.com/elasticloadbalancing/latest/network/network-load-balancers.html#connection-idle-timeout
-echo 'net.ipv4.tcp_keepalive_time = 120' | tee -a /etc/sysctl.conf
-echo 'fs.file-max = 262144' | tee -a /etc/sysctl.conf
+echo 'net.ipv4.tcp_keepalive_time = 120' | sudo tee -a /etc/sysctl.conf
+echo 'fs.file-max = 262144' | sudo tee -a /etc/sysctl.conf
 
-sysctl -p
+sudo sysctl -p
 
 tmp=$(mktemp)
+
+
+if [ ! -f /etc/graphdb/cloudwatch-agent-config.json ]; then
+  sudo touch /etc/graphdb/cloudwatch-agent-config.json
+fi
+
 jq '.logs.metrics_collected.prometheus.log_group_name = "${resource_name_prefix}-graphdb"' /etc/graphdb/cloudwatch-agent-config.json > "$tmp" && mv "$tmp" /etc/graphdb/cloudwatch-agent-config.json
 jq '.logs.metrics_collected.prometheus.emf_processor.metric_namespace = "${resource_name_prefix}-graphdb"' /etc/graphdb/cloudwatch-agent-config.json > "$tmp" && mv "$tmp" /etc/graphdb/cloudwatch-agent-config.json
 cat /etc/prometheus/prometheus.yaml | yq '.scrape_configs[].static_configs[].targets = ["localhost:7201"]' > "$tmp" && mv "$tmp" /etc/prometheus/prometheus.yaml
 
-amazon-cloudwatch-agent-ctl -a start
-amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/etc/graphdb/cloudwatch-agent-config.json
+
+# Check if Amazon CloudWatch Agent is installed
+if ! command -v amazon-cloudwatch-agent-ctl &> /dev/null; then
+    echo "Amazon CloudWatch Agent is not installed. Installing now..."
+
+    # Specify the CloudWatch Agent download link
+    CLOUDWATCH_AGENT_DEB_URL="https://amazoncloudwatch-agent.s3.amazonaws.com/ubuntu/arm64/latest/amazon-cloudwatch-agent.deb"
+
+    # Download the CloudWatch Agent Debian package
+    echo "Downloading the CloudWatch Agent package..."
+    wget "${CLOUDWATCH_AGENT_DEB_URL}" -O amazon-cloudwatch-agent.deb
+
+    if [ $? -ne 0 ]; then
+        echo "Failed to download the CloudWatch Agent package. Please check the URL and try again."
+        exit 1
+    fi
+
+    # Install the CloudWatch Agent
+    echo "Installing the CloudWatch Agent package..."
+    sudo dpkg -i amazon-cloudwatch-agent.deb
+
+    if [ $? -eq 0 ]; then
+        echo "Installation complete."
+    else
+        echo "Installation failed. Please check for any errors and try again."
+    fi
+
+    # Cleanup
+    sudo rm amazon-cloudwatch-agent.deb
+else
+    echo "Amazon CloudWatch Agent is already installed."
+fi
+
+
+sudo amazon-cloudwatch-agent-ctl -a start
+sudo amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/etc/graphdb/cloudwatch-agent-config.json
 
 # the proxy service is set up in the AMI but not enabled there, so we enable and start it
-systemctl daemon-reload
-systemctl start graphdb
-systemctl enable graphdb-cluster-proxy.service
-systemctl start graphdb-cluster-proxy.service
+sudo systemctl daemon-reload
+sudo systemctl start graphdb
+sudo systemctl enable graphdb-cluster-proxy.service
+sudo systemctl start graphdb-cluster-proxy.service
