@@ -130,10 +130,10 @@ graphdb_device=""
 
 # the device might not be available immediately, wait a while
 for i in $(seq 1 12); do
-  for volume in $(find /dev | grep -i 'nvme[0-21]n1$'); do
+  for volume in $(sudo find /dev | grep -i 'nvme[0-21]n1$'); do
     # extract the specified device from the vendor-specific data
     # read https://github.com/oogali/ebs-automatic-nvme-mapping/blob/master/README.md, for more information
-    real_device=$(nvme id-ctrl --raw-binary $volume | cut -c3073-3104 | tr -s ' ' | sed 's/ $//g')
+    real_device=$(sudo nvme id-ctrl --raw-binary $volume | cut -c3073-3104 | tr -s ' ' | sed 's/ $//g')
     if [ "$device_mapping_full" = "$real_device" ] || [ "$device_mapping_short" = "$real_device" ]; then
       graphdb_device="$volume"
       break
@@ -311,7 +311,7 @@ if ! command -v amazon-cloudwatch-agent-ctl &> /dev/null; then
 
     # Download the CloudWatch Agent Debian package
     echo "Downloading the CloudWatch Agent package..."
-    wget $CLOUDWATCH_AGENT_DEB_URL -O amazon-cloudwatch-agent.deb
+    sudo wget $CLOUDWATCH_AGENT_DEB_URL -O amazon-cloudwatch-agent.deb
 
     if [ $? -ne 0 ]; then
         echo "Failed to download the CloudWatch Agent package. Please check the URL and try again."
