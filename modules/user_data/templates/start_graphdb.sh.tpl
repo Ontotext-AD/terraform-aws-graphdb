@@ -7,14 +7,19 @@ until ping -c 1 google.com &> /dev/null; do
   sleep 5
 done
 
-# Check if AWS CLI is already installed
 
+# Update package list
+sudo apt-get update
+
+
+# Install jq if not already installed
+sudo apt-get install jq -y
+
+
+# Check if AWS CLI is already installed
 if ! command -v aws &> /dev/null
 then
     echo "AWS CLI not installed. Installing..."
-
-    # Update package list
-    sudo apt-get update
 
     # Install unzip if not already installed
     sudo apt-get install unzip -y
