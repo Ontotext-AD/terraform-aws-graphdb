@@ -311,7 +311,7 @@ if ! command -v amazon-cloudwatch-agent-ctl &> /dev/null; then
 
     # Download the CloudWatch Agent Debian package
     echo "Downloading the CloudWatch Agent package..."
-    wget "${CLOUDWATCH_AGENT_DEB_URL}" -O amazon-cloudwatch-agent.deb
+    wget $CLOUDWATCH_AGENT_DEB_URL -O amazon-cloudwatch-agent.deb
 
     if [ $? -ne 0 ]; then
         echo "Failed to download the CloudWatch Agent package. Please check the URL and try again."
