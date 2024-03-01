@@ -1,7 +1,5 @@
 output "graphdb_userdata_base64_encoded" {
-  value = base64encode(local.graphdb_user_data)
+  description = "User data script for GraphDB VM scale set."
+  value       = data.cloudinit_config.graphdb_user_data.rendered
 }
 
-output "graphdb_max_memory" {
-  value = local.jvm_max_memory
-}

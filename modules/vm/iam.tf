@@ -23,7 +23,8 @@ data "aws_iam_policy_document" "instance_volume" {
       "ec2:CreateVolume",
       "ec2:AttachVolume",
       "ec2:DescribeVolumes",
-      "ec2:DescribeInstances"
+      "ec2:DescribeInstances",
+      "route53:ListResourceRecordSets"
     ]
 
     resources = ["*"]
