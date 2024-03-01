@@ -21,7 +21,7 @@ data "cloudinit_config" "graphdb_user_data" {
 
   part {
     content_type = "text/x-shellscript"
-    content      = templatefile("${path.module}/templates/01_disk_management.sh.tpl", {
+    content = templatefile("${path.module}/templates/01_disk_management.sh.tpl", {
       name : var.resource_name_prefix
       ebs_volume_type : var.ebs_volume_type
       ebs_volume_size : var.ebs_volume_size
@@ -34,7 +34,7 @@ data "cloudinit_config" "graphdb_user_data" {
 
   part {
     content_type = "text/x-shellscript"
-    content      = templatefile("${path.module}/templates/02_dns_provisioning.sh.tpl", {
+    content = templatefile("${path.module}/templates/02_dns_provisioning.sh.tpl", {
       zone_id : var.zone_id
       zone_dns_name : var.zone_dns_name
     })
@@ -42,7 +42,7 @@ data "cloudinit_config" "graphdb_user_data" {
 
   part {
     content_type = "text/x-shellscript"
-    content      = templatefile("${path.module}/templates/03_gdb_conf_overrides.sh.tpl", {
+    content = templatefile("${path.module}/templates/03_gdb_conf_overrides.sh.tpl", {
       name : var.resource_name_prefix
       region : var.aws_region
     })
@@ -50,7 +50,7 @@ data "cloudinit_config" "graphdb_user_data" {
 
   part {
     content_type = "text/x-shellscript"
-    content      = templatefile("${path.module}/templates/04_gdb_backup_conf.sh.tpl", {
+    content = templatefile("${path.module}/templates/04_gdb_backup_conf.sh.tpl", {
       name : var.resource_name_prefix
       region : var.aws_region
       backup_schedule : var.backup_schedule
@@ -66,7 +66,7 @@ data "cloudinit_config" "graphdb_user_data" {
 
   part {
     content_type = "text/x-shellscript"
-    content      = templatefile("${path.module}/templates/06_cloudwatch_setup.sh.tpl", {
+    content = templatefile("${path.module}/templates/06_cloudwatch_setup.sh.tpl", {
       name : var.resource_name_prefix
       region : var.aws_region
     })
@@ -74,10 +74,10 @@ data "cloudinit_config" "graphdb_user_data" {
 
   part {
     content_type = "text/x-shellscript"
-    content      = templatefile("${path.module}/templates/07_cluster_setup.sh.tpl", {
+    content = templatefile("${path.module}/templates/07_cluster_setup.sh.tpl", {
       name : var.resource_name_prefix
       region : var.aws_region
-      zone_id       : var.zone_id
+      zone_id : var.zone_id
     })
   }
 }
