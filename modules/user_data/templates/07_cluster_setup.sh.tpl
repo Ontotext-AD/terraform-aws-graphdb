@@ -115,7 +115,7 @@ if [ $NODE_DNS == $NODE1 ]; then
       echo "Cluster exists"
       break
     else
-      echo "Something went wrong! Check the logs."
+      echo "Something went wrong! Check the log files."
     fi
   done
 

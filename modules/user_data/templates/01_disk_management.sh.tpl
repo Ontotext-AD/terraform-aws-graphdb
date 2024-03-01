@@ -79,6 +79,7 @@ for i in $(seq 1 12); do
     real_device=$(nvme id-ctrl --raw-binary $volume | cut -c3073-3104 | tr -s ' ' | sed 's/ $//g')
     if [ "$device_mapping_full" = "$real_device" ] || [ "$device_mapping_short" = "$real_device" ]; then
       graphdb_device="$volume"
+      echo "Device found: $graphdb_device"
       break
     fi
   done
@@ -86,11 +87,13 @@ for i in $(seq 1 12); do
   if [ -n "$graphdb_device" ]; then
     break
   fi
+  echo "Device not available, retrying ..."
   sleep 5
 done
 
 # create a file system if there isn't any
 if [ "$graphdb_device: data" = "$(file -s $graphdb_device)" ]; then
+  echo "Creating file system for $graphdb_device"
   mkfs -t ext4 $graphdb_device
 fi
 
@@ -117,6 +120,7 @@ else
   echo "The disk at $graphdb_device is already mounted."
 fi
 
+echo "Creating data folders"
 # Ensure data folders exist
 mkdir -p $disk_mount_point/node $disk_mount_point/cluster-proxy
 
