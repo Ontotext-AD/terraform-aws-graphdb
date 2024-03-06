@@ -40,7 +40,7 @@ The following are the important variables you should configure when using this m
 
 - `instance_type`: The instance type for the GDB cluster nodes. This should match your performance and cost requirements.
 
-- `node_count`: The number of instances in the cluster. Recommended is 3, 5 or 7 in order to have consensus according to the [Raft algorithm](https://raft.github.io/). 
+- `node_count`: The number of instances in the cluster. Recommended is 3, 5 or 7 in order to have consensus according to the [Raft algorithm](https://raft.github.io/).
 
 
 
@@ -87,7 +87,7 @@ This Terraform module creates AWS Systems Manager (SSM) parameters for managing 
 This Terraform module creates a private hosted zone in Amazon Route 53 for DNS resolution in your Virtual Private Cloud (VPC).
 
 #### [IAM](modules/iam/README.md)
-This Terraform module creates an AWS Identity and Access Management (IAM) role and an instance profile that can be used for EC2 instances. It also supports the option to set a permissions boundary on the IAM role. 
+This Terraform module creates an AWS Identity and Access Management (IAM) role and an instance profile that can be used for EC2 instances. It also supports the option to set a permissions boundary on the IAM role.
 
 #### [Load Balancer](modules/load_balancer/README.md)
 This Terraform module sets up an AWS Elastic Load Balancer (Network Load Balancer) with optional TLS listeners. The module is designed to be flexible and customizable by accepting various input variables to tailor the NLB configuration to your specific requirements.

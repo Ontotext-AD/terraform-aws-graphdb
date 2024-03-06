@@ -35,7 +35,3 @@ output "graphdb_sg_id" {
   description = "Security group ID of GraphDB cluster"
   value       = module.vm.graphdb_sg_id
 }
-
-output "graphdb_max_memory" {
-  value = module.user_data.graphdb_max_memory
-}

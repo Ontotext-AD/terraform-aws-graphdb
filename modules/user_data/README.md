@@ -7,7 +7,7 @@ This Terraform module configures an AWS EC2 instance for running GraphDB with va
 To use this module, include it in your Terraform configuration and provide the required and optional variables:
 ```hcl
 module "graphdb_instance" {
-  source = "path/to/module" 
+  source = "path/to/module"
 
   # Provide required and optional variables
   var.aws_region             = "us-east-1"
@@ -15,10 +15,10 @@ module "graphdb_instance" {
   var.device_name            = "/dev/sdh"
   var.backup_schedule        = "0 0 * * *"
   var.backup_bucket_name     = "my-backup-bucket"
-  var.ebs_volume_type        = "gp2"
+  var.ebs_volume_type        = "gp3"
   var.ebs_volume_size        = 100
-  var.ebs_volume_throughput  = 100
-  var.ebs_volume_iops        = 100
+  var.ebs_volume_throughput  = 150
+  var.ebs_volume_iops        = 3000
   var.ebs_kms_key_arn        = "arn:aws:kms:us-east-1:123456789012:key/abcd1234"
   var.zone_dns_name          = "myprivatedns.local"
   var.zone_id                = "Z1234567890"
@@ -82,7 +82,6 @@ The module combines these components and settings to create a fully configured A
 
 The module provides two output values for reference in your Terraform configuration:
 `graphdb_userdata_base64_encoded` (string): Base64-encoded user data for the GraphDB instance.
-`graphdb_max_memory` (number): Maximum memory for the JVM in GiB, computed based on the EC2 instance type and adjusted for GraphDB's memory requirements.
 
 ## Example
 
@@ -97,10 +96,10 @@ module "graphdb_instance" {
   var.device_name            = "/dev/sdh"
   var.backup_schedule        = "0 0 * * *"
   var.backup_bucket_name     = "my-backup-bucket"
-  var.ebs_volume_type        = "gp2"
+  var.ebs_volume_type        = "gp3"
   var.ebs_volume_size        = 100
-  var.ebs_volume_throughput  = 100
-  var.ebs_volume_iops        = 100
+  var.ebs_volume_throughput  = 150
+  var.ebs_volume_iops        = 3000
   var.ebs_kms_key_arn        = "arn:aws:kms:us-east-1:123456789012:key/abcd1234"
   var.zone_dns_name          = "myprivatedns.local"
   var.zone_id                = "Z1234567890"
