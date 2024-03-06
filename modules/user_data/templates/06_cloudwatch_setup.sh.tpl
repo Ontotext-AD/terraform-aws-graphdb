@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 
-set -euo pipefail
+# This script performs the following actions:
+# * Set CloudWatch configurations: Retrieves GraphDB admin password from AWS SSM and updates CloudWatch and Prometheus configurations.
+# * Start CloudWatch agent: Initiates the CloudWatch agent, fetches configurations, and starts the agent.
+
+set -o errexit
+set -o nounset
+set -o pipefail
 
 echo "#################################"
 echo "#    Cloudwatch Provisioning    #"

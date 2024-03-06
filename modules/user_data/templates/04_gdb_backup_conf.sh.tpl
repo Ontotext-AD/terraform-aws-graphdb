@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 
-set -euo pipefail
+# This script performs the following actions:
+# * Create a GraphDB backup script at /usr/bin/graphdb_backup.
+# * Make the backup script executable.
+# * Configure a cron job for GraphDB backup with the specified schedule.
+
+set -o errexit
+set -o nounset
+set -o pipefail
 
 echo "#################################################"
 echo "#    Configuring the GraphDB backup cron job    #"

@@ -1,16 +1,30 @@
 #!/usr/bin/env bash
 
-set -euo pipefail
+# This script performs the following actions:
+# * Retrieve GraphDB configuration parameters from AWS Systems Manager (SSM).
+# * Decode and save the GraphDB license file.
+# * Set GraphDB cluster token, node DNS, and other properties in the GraphDB configuration file.
+# * Get the load balancer (LB) DNS name from AWS Systems Manager.
+# * Configure the GraphDB Cluster Proxy properties with LB DNS and node DNS.
+# * Create systemd service overrides for GraphDB, setting JVM max memory to 85% of the total memory.
+# * Save the calculated JVM max memory to systemd service overrides.
+
+set -o errexit
+set -o nounset
+set -o pipefail
 
 echo "#######################################"
 echo "#   GraphDB configuration overrides   #"
 echo "#######################################"
 
+# Get and store the GraphDB license
 aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/license" --with-decryption | \
   jq -r .Parameter.Value | \
   base64 -d > /etc/graphdb/graphdb.license
 
+# Get the cluster token
 GRAPHDB_CLUSTER_TOKEN="$(aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/cluster_token" --with-decryption | jq -r .Parameter.Value)"
+# Get the NODE_DNS value from the previous script
 NODE_DNS=$(cat /tmp/node_dns)
 
 cat << EOF > /etc/graphdb/graphdb.properties

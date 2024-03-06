@@ -1,6 +1,16 @@
 #!/usr/bin/env bash
 
-set -euo pipefail
+# This script performs the following actions:
+# * Set common variables: Retrieves IMDS token, instance ID, and availability zone.
+# * Search for available EBS volume: Iterates up to 6 times to find or create an EBS volume tagged for GraphDB.
+# * Attach EBS volume to instance: Connects the volume to the EC2 instance using a specified device name.
+# * Store volume ID: Saves the volume ID for use in another script.
+# * Handle EBS volume for GraphDB data directory: Manages device mapping complexities and creates a file system if needed.
+# * Mount and configure file system: Ensures the file system is mounted, configures automatic mounting, and sets proper ownership.
+
+set -o errexit
+set -o nounset
+set -o pipefail
 
 echo "###########################################"
 echo "#    Creating/Attaching managed disks     #"
@@ -25,7 +35,7 @@ for i in $(seq 1 6); do
   )
 
   if [ -z "$${VOLUME_ID:-}" ]; then
-    echo 'ebs volume not yet available'
+    echo 'EBS volume not yet available'
     sleep 10
   else
     break
@@ -58,24 +68,24 @@ aws --cli-connect-timeout 300 ec2 attach-volume \
 # Storing it to be used in another script
 echo $VOLUME_ID > /tmp/volume_id
 
-# Handle the EBS volume used for the GraphDB data directory
+# Handle the EBS volume used for the GraphDB data directory.
 # beware, here be dragons...
 # read these articles:
 # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/device_naming.html
 # https://github.com/oogali/ebs-automatic-nvme-mapping/blob/master/README.md
 
-# this variable comes from terraform, and it's what we specified in the launch template as the device mapping for the ebs
-# because this might be attached under a different name, we'll need to search for it
+# this variable comes from terraform, and it's what we specified in the launch template as the device mapping for the ebs.
+# because this might be attached under a different name, we'll need to search for it.
 device_mapping_full="${device_name}"
 device_mapping_short="$(echo $device_mapping_full | cut -d'/' -f3)"
 
 graphdb_device=""
 
-# the device might not be available immediately, wait a while
+# The device might not be available immediately, wait a while
 for i in $(seq 1 12); do
   for volume in $(find /dev | grep -i 'nvme[0-21]n1$'); do
-    # extract the specified device from the vendor-specific data
-    # read https://github.com/oogali/ebs-automatic-nvme-mapping/blob/master/README.md, for more information
+    # Extract the specified device from the vendor-specific data.
+    # Read https://github.com/oogali/ebs-automatic-nvme-mapping/blob/master/README.md, for more information.
     real_device=$(nvme id-ctrl --raw-binary $volume | cut -c3073-3104 | tr -s ' ' | sed 's/ $//g')
     if [ "$device_mapping_full" = "$real_device" ] || [ "$device_mapping_short" = "$real_device" ]; then
       graphdb_device="$volume"
@@ -91,7 +101,7 @@ for i in $(seq 1 12); do
   sleep 5
 done
 
-# create a file system if there isn't any
+# Create a file system if there isn't any.
 if [ "$graphdb_device: data" = "$(file -s $graphdb_device)" ]; then
   echo "Creating file system for $graphdb_device"
   mkfs -t ext4 $graphdb_device
@@ -99,21 +109,21 @@ fi
 
 disk_mount_point="/var/opt/graphdb"
 
-# Check if the disk is already mounted
+# Check if the disk is already mounted.
 if ! mount | grep -q "$graphdb_device"; then
   echo "The disk at $graphdb_device is not mounted."
 
-  # Create the mount point if it doesn't exist
+  # Create the mount point if it doesn't exist.
   if [ ! -d "$disk_mount_point" ]; then
     mkdir -p "$disk_mount_point"
   fi
 
-  # Add an entry to the fstab file to automatically mount the disk
+  # Add an entry to the fstab file to automatically mount the disk.
   if ! grep -q "$graphdb_device" /etc/fstab; then
     echo "$graphdb_device $disk_mount_point ext4 defaults 0 2" >> /etc/fstab
   fi
 
-  # Mount the disk
+  # Mount the disk.
   mount "$disk_mount_point"
   echo "The disk at $graphdb_device is now mounted at $disk_mount_point."
 else
@@ -121,8 +131,8 @@ else
 fi
 
 echo "Creating data folders"
-# Ensure data folders exist
+# Ensure data folders exist.
 mkdir -p $disk_mount_point/node $disk_mount_point/cluster-proxy
 
-# this is needed because after the disc attachment folder owner is reverted
+# This is required due to ownership being reverted after the disc attachment.
 chown -R graphdb:graphdb $disk_mount_point

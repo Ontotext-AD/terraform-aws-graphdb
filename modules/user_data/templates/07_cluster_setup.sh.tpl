@@ -1,6 +1,15 @@
 #!/usr/bin/env bash
 
-set -euo pipefail
+# This script performs the following actions:
+# * Retrieve necessary information from AWS and set variables.
+# * Start and enable GraphDB and GraphDB cluster proxy services.
+# * Check GraphDB availability for all instances and wait for DNS records.
+# * Attempt to create a GraphDB cluster.
+# * Change the admin user password and enable security if the node is the leader.
+
+set -o errexit
+set -o nounset
+set -o pipefail
 
 NODE_DNS=$(cat /tmp/node_dns)
 IMDS_TOKEN=$(curl -Ss -H "X-aws-ec2-metadata-token-ttl-seconds: 6000" -XPUT 169.254.169.254/latest/api/token)
@@ -73,20 +82,24 @@ done
 
 echo "All GDB instances are available."
 
-# Determine instance order
+# Determine the order of GraphDB instances in the cluster by querying Route 53 DNS records.
+# This is done because we don't want the 3 nodes to attempt to create the same cluster.
 EXISTING_RECORDS=($(aws route53 list-resource-record-sets --hosted-zone-id "${zone_id}" --query "ResourceRecordSets[?contains(Name, '.graphdb.cluster') == \`true\`].Name" --output text | sort -n))
+# Extract individual DNS names for the GraphDB cluster nodes.
 NODE1="$${EXISTING_RECORDS[0]%?}"
 NODE2="$${EXISTING_RECORDS[1]%?}"
 NODE3="$${EXISTING_RECORDS[2]%?}"
 
-# We need only once instance to attempt cluster creation.
+# Check if the current GraphDB node is the first one in the cluster (lowest instance).
 if [ $NODE_DNS == $NODE1 ]; then
 
   echo "##################################"
   echo "#    Beginning cluster setup     #"
   echo "##################################"
 
+ # Attempt to create a GraphDB cluster by configuring cluster nodes.
   for ((i = 1; i <= $MAX_RETRIES; i++)); do
+    # /rest/monitor/cluster will return 200 only if a cluster exists, 503 if no cluster is set up.
     IS_CLUSTER=$(
       curl -s -o /dev/null \
         -u "admin:$${GRAPHDB_ADMIN_PASSWORD}" \
@@ -94,11 +107,12 @@ if [ $NODE_DNS == $NODE1 ]; then
         http://localhost:7201/rest/monitor/cluster
     )
 
-    # 000 = no HTTP code was received
+     # Check if GraphDB is part of a cluster; 000 indicates no HTTP code was received.
     if [[ "$IS_CLUSTER" == 000 ]]; then
       echo "Retrying ($i/$MAX_RETRIES) after $RETRY_DELAY seconds..."
       sleep $RETRY_DELAY
     elif [ "$IS_CLUSTER" == 503 ]; then
+      # Create the GraphDB cluster configuration if it does not exist.
       CLUSTER_CREATE=$(
         curl -X POST -s http://localhost:7201/rest/cluster/config \
           -o "/dev/null" \
@@ -124,15 +138,14 @@ if [ $NODE_DNS == $NODE1 ]; then
   echo "###########################################################"
 
   LEADER_NODE=""
-  # Before enabling security a Leader must be elected
-  # Iterates all nodes and looks for a Leader
+  # Before enabling security a Leader must be elected. Iterates all nodes and looks for a node with status Leader.
   while [ -z "$LEADER_NODE" ]; do
     NODES=($NODE1 $NODE2 $NODE3)
     for node in "$${NODES[@]}"; do
       endpoint="http://$node:7201/rest/cluster/group/status"
       echo "Checking leader status for $node"
 
-      # Gets the address of the node if nodeState is LEADER, grpc port is returned therefor we replace port 7300 to 7200
+      # Gets the address of the node if nodeState is LEADER.
       LEADER_ADDRESS=$(curl -s "$endpoint" -u "admin:$${GRAPHDB_ADMIN_PASSWORD}" | jq -r '.[] | select(.nodeState == "LEADER") | .address')
       if [ -n "$${LEADER_ADDRESS}" ]; then
         LEADER_NODE=$LEADER_ADDRESS
