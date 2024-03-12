@@ -41,3 +41,13 @@ variable "graphdb_version" {
   type        = string
   default     = null
 }
+
+variable "sns_topic_endpoint" {
+  description = "Define an SNS endpoint which will be receiving the alerts via email"
+  type = string
+}
+
+variable "log_group_retention_in_days" {
+  description = "Log group retention in days"
+  type = number
+}

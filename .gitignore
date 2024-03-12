@@ -39,3 +39,4 @@ terraform.rc
 
 # Examples
 examples/**/*.lock.hcl
+.DS_Store

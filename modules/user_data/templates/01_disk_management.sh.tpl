@@ -35,7 +35,7 @@ for i in $(seq 1 6); do
   )
 
   if [ -z "$${VOLUME_ID:-}" ]; then
-    echo 'EBS volume not yet available'
+    echo 'ebs volume not yet available'
     sleep 10
   else
     break
