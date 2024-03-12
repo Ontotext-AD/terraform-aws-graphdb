@@ -8,8 +8,8 @@ variable "common_tags" {
 
 variable "aws_region" {
   description = "Define the AWS region in which you want your cluster to be deployed"
-  type = string
-  default = ""
+  type        = string
+  default     = ""
 }
 
 # Backup configurations
@@ -209,39 +209,39 @@ variable "zone_dns_name" {
 
 variable "azs" {
   description = "value"
-  type = list(string)
+  type        = list(string)
 }
 
 variable "measure_latency" {
   description = "Enable or disable route53 function to measure latency"
-  type = bool
-  default = true
+  type        = bool
+  default     = true
 }
 
 variable "actions_enabled" {
   description = "Enable or disable actions on alarms"
-  type = bool
-  default = true
+  type        = bool
+  default     = true
 }
 
 variable "sns_topic_endpoint" {
   description = "Define an SNS endpoint which will be receiving the alerts via email"
-  type = string
+  type        = string
 }
 
 variable "sns_protocol" {
   description = "Define an SNS protocol that you will use to receive alers. Possible options are: Email, Email-JSON, HTTP, HTTPS."
-  type = string
-  default = "email"
+  type        = string
+  default     = "email"
 }
 
 variable "endpoint_auto_confirms" {
   description = "Enable or disable endpoint auto confirm subscription to the sns topic"
-  type = bool
-  default = false
+  type        = bool
+  default     = false
 }
 
 variable "log_group_retention_in_days" {
   description = "Log group retention in days"
-  type = number
+  type        = number
 }

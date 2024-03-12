@@ -5,35 +5,35 @@ variable "resource_name_prefix" {
 
 variable "aws_region" {
   description = "Define the region in which the monitoring will be deployed"
-  type = string
+  type        = string
 }
 
-variable "web_availability_regions"{
+variable "web_availability_regions" {
   description = "Define regions from which you want to test"
-  type = list(string)
-  default = ["us-east-1", "us-west-1", "ap-southeast-1", "eu-west-1", "sa-east-1"]
+  type        = list(string)
+  default     = ["us-east-1", "us-west-1", "ap-southeast-1", "eu-west-1", "sa-east-1"]
 }
 
-variable "web_test_availability_request_url"{
+variable "web_test_availability_request_url" {
   description = "Define the request url which the health check will monitor"
-  type = string
+  type        = string
 }
 
 variable "actions_enabled" {
   description = "Enable or disable actions on alarms"
-  type = bool
+  type        = bool
 }
 
 variable "web_test_availability_path" {
-  description = ""
-  type = string
-  default = "/rest/cluster/node/status"
+  description = "Path for the web test to be used"
+  type        = string
+  default     = "/rest/cluster/node/status"
 }
 
 variable "web_test_availability_content_match" {
-  description = ""
-  type = string
-  default = "\"nodeState\":\"LEADER\""
+  description = "HTTP Content match for web test availability"
+  type        = string
+  default     = "\"nodeState\":\"LEADER\""
 }
 
 variable "web_test_frequency" {
@@ -50,34 +50,34 @@ variable "web_test_timeout" {
 
 variable "evaluation_periods" {
   description = "The number of the most recent periods, or data points, to evaluate when determining alarm state."
-  type = number
-  default = 1
+  type        = number
+  default     = 1
 }
 
 variable "periods" {
   description = "The length of time to use to evaluate the metric or expression to create each individual data point for an alarm. It is expressed in seconds."
-  type = number
-  default = 60
+  type        = number
+  default     = 60
 }
 
 variable "measure_latency" {
   description = "Enable or disable latency measure feature for Route 53 Health Check."
-  type = bool
+  type        = bool
 }
 
 variable "sns_topic_endpoint" {
   description = "Define an SNS endpoint which will be receiving the alerts via email"
-  type = string
+  type        = string
 }
 
 variable "sns_protocol" {
   description = "Define an SNS protocol that you will use to receive alerts. Possible options are: Email, Email-JSON, HTTP, HTTPS."
-  type = string
+  type        = string
 }
 
 variable "endpoint_auto_confirms" {
   description = "Enable or disable endpoint auto confirm subscription to the sns topic"
-  type = bool
+  type        = bool
 }
 
 variable "log_group_retention_in_days" {

@@ -44,10 +44,10 @@ variable "graphdb_version" {
 
 variable "sns_topic_endpoint" {
   description = "Define an SNS endpoint which will be receiving the alerts via email"
-  type = string
+  type        = string
 }
 
 variable "log_group_retention_in_days" {
   description = "Log group retention in days"
-  type = number
+  type        = number
 }

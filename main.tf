@@ -116,14 +116,14 @@ module "vm" {
 module "monitoring" {
   source = "./modules/monitoring"
 
-  resource_name_prefix = var.resource_name_prefix
-  actions_enabled = var.actions_enabled
-  sns_topic_endpoint = var.sns_topic_endpoint
-  endpoint_auto_confirms = var.endpoint_auto_confirms
-  sns_protocol = var.sns_protocol
+  resource_name_prefix        = var.resource_name_prefix
+  actions_enabled             = var.actions_enabled
+  sns_topic_endpoint          = var.sns_topic_endpoint
+  endpoint_auto_confirms      = var.endpoint_auto_confirms
+  sns_protocol                = var.sns_protocol
   log_group_retention_in_days = var.log_group_retention_in_days
 
-  aws_region = var.aws_region
+  aws_region                        = var.aws_region
   web_test_availability_request_url = module.load_balancer.lb_dns_name
-  measure_latency = var.measure_latency
+  measure_latency                   = var.measure_latency
 }
