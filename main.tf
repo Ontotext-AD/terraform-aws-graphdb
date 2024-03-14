@@ -114,8 +114,8 @@ module "vm" {
 }
 
 module "monitoring" {
-  source = "./modules/monitoring"
-  aws_region = var.monitoring_aws_region
+  source                            = "./modules/monitoring"
+  aws_region                        = var.monitoring_aws_region
   resource_name_prefix              = var.resource_name_prefix
   actions_enabled                   = var.monitoring_actions_enabled
   sns_topic_endpoint                = var.monitoring_sns_topic_endpoint
