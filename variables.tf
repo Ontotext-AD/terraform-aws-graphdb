@@ -242,4 +242,19 @@ variable "monitoring_aws_region" {
   type        = string
 }
 
+variable "aws_region" {
+  description = "AWS region to deploy resources into"
+  type        = string
+}
+
+variable "azs" {
+  description = "Availability zones to use in AWS region"
+  type        = list(string)
+}
+
+variable "tags" {
+  description = "Common tags for all resources"
+  type        = map(string)
+  default     = {}
+}
 

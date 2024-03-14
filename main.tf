@@ -1,15 +1,10 @@
 data "aws_region" "current" {}
 
-provider "aws" {
-  default_tags {
-    tags = merge(
-      {
-        Release_Name = var.resource_name_prefix
-        Name         = "${var.resource_name_prefix}-graphdb"
-      },
-      var.common_tags
-    )
-  }
+module "vpc" {
+  source = "./modules/aws-vpc"
+
+  azs                  = var.azs
+  resource_name_prefix = var.resource_name_prefix
 }
 
 module "iam" {
@@ -23,7 +18,7 @@ module "iam" {
 module "dns" {
   source = "./modules/dns"
 
-  vpc_id               = var.vpc_id
+  vpc_id               = module.vpc.vpc_id
   resource_name_prefix = var.resource_name_prefix
   zone_dns_name        = var.zone_dns_name
   iam_role_id          = module.iam.iam_role_id
@@ -47,9 +42,9 @@ module "config" {
 module "load_balancer" {
   source = "./modules/load_balancer"
 
-  vpc_id                        = var.vpc_id
+  vpc_id                        = module.vpc.vpc_id
   resource_name_prefix          = var.resource_name_prefix
-  lb_subnets                    = var.lb_internal ? var.private_subnet_ids : var.public_subnet_ids
+  lb_subnets                    = var.lb_internal ? module.vpc.private_subnet_ids : module.vpc.public_subnet_ids
   lb_internal                   = var.lb_internal
   lb_deregistration_delay       = var.lb_deregistration_delay
   lb_health_check_path          = var.lb_health_check_path
@@ -102,15 +97,15 @@ module "vm" {
   iam_role_id               = module.iam.iam_role_id
   instance_type             = var.instance_type
   key_name                  = var.key_name
-  lb_subnets                = var.lb_internal ? var.private_subnet_ids : var.public_subnet_ids
+  lb_subnets                = var.lb_internal ? module.vpc.private_subnet_ids : module.vpc.public_subnet_ids
   node_count                = var.node_count
   resource_name_prefix      = var.resource_name_prefix
   userdata_script           = module.user_data.graphdb_userdata_base64_encoded
   ami_id                    = var.ami_id
   graphdb_version           = var.graphdb_version
-  graphdb_subnets           = var.private_subnet_ids
+  graphdb_subnets           = module.vpc.private_subnet_ids
   graphdb_target_group_arns = local.graphdb_target_group_arns
-  vpc_id                    = var.vpc_id
+  vpc_id                    = module.vpc.vpc_id
 }
 
 module "monitoring" {
