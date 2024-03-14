@@ -13,11 +13,10 @@ module "graphdb" {
   source = "../../"
 
   resource_name_prefix = var.resource_name_prefix
-  azs                  = var.azs
-  aws_region           = var.aws_region
 
-  log_group_retention_in_days = var.log_group_retention_in_days
-  sns_topic_endpoint          = var.sns_topic_endpoint
+  monitoring_aws_region                  = var.monitoring_aws_region
+  monitoring_log_group_retention_in_days = var.monitoring_log_group_retention_in_days
+  monitoring_sns_topic_endpoint          = var.monitoring_sns_topic_endpoint
 
   vpc_id             = module.vpc.vpc_id
   private_subnet_ids = module.vpc.private_subnet_ids

@@ -6,12 +6,6 @@ variable "common_tags" {
   default     = {}
 }
 
-variable "aws_region" {
-  description = "Define the AWS region in which you want your cluster to be deployed"
-  type        = string
-  default     = ""
-}
-
 # Backup configurations
 
 variable "backup_schedule" {
@@ -207,41 +201,45 @@ variable "zone_dns_name" {
   }
 }
 
-variable "azs" {
-  description = "value"
-  type        = list(string)
-}
+# Monitoring
 
-variable "measure_latency" {
+variable "monitoring_route53_measure_latency" {
   description = "Enable or disable route53 function to measure latency"
   type        = bool
   default     = true
 }
 
-variable "actions_enabled" {
+variable "monitoring_actions_enabled" {
   description = "Enable or disable actions on alarms"
   type        = bool
   default     = true
 }
 
-variable "sns_topic_endpoint" {
+variable "monitoring_sns_topic_endpoint" {
   description = "Define an SNS endpoint which will be receiving the alerts via email"
   type        = string
 }
 
-variable "sns_protocol" {
+variable "monitoring_sns_protocol" {
   description = "Define an SNS protocol that you will use to receive alers. Possible options are: Email, Email-JSON, HTTP, HTTPS."
   type        = string
   default     = "email"
 }
 
-variable "endpoint_auto_confirms" {
+variable "monitoring_endpoint_auto_confirms" {
   description = "Enable or disable endpoint auto confirm subscription to the sns topic"
   type        = bool
   default     = false
 }
 
-variable "log_group_retention_in_days" {
+variable "monitoring_log_group_retention_in_days" {
   description = "Log group retention in days"
   type        = number
 }
+
+variable "monitoring_aws_region" {
+  description = "Define the region in which you want the monitoring to be deployed. It is used to define where the Route53 Availability Check will be deployed, since if it is not specified it will deploy the check in us-east-1 and if you deploy in different region it will not find the dimensions."
+  type        = string
+}
+
+

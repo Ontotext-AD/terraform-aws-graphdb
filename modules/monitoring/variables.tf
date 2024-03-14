@@ -39,13 +39,13 @@ variable "web_test_availability_content_match" {
 variable "web_test_frequency" {
   description = "Interval in seconds between tests. Valid options are 5-30. Default is 30."
   type        = number
-  default     = 10
+  default     = 30
 }
 
 variable "web_test_timeout" {
   description = "Seconds until this WebTest will timeout and fail. Valid options are 5-10, Default is 10."
   type        = number
-  default     = 1
+  default     = 10
 }
 
 variable "evaluation_periods" {
@@ -54,7 +54,7 @@ variable "evaluation_periods" {
   default     = 1
 }
 
-variable "periods" {
+variable "period" {
   description = "The length of time to use to evaluate the metric or expression to create each individual data point for an alarm. It is expressed in seconds."
   type        = number
   default     = 60
@@ -90,3 +90,28 @@ variable "al_low_memory_warning_threshold" {
   type        = number
   default     = 90
 }
+
+variable "web_test_port" {
+  description = "Which HTTP port to use for the web availability tests"
+  type        = number
+  default     = 80
+}
+
+variable "route53_http_string_type" {
+  description = "HTTP string type: Valid values are HTTP, HTTPS, HTTP_STR_MATCH, HTTPS_STR_MATCH, TCP, CALCULATED, CLOUDWATCH_METRIC and RECOVERY_CONTROL"
+  type        = string
+  default     = "HTTP_STR_MATCH"
+}
+
+variable "parameter_store_ssm_parameter_tier" {
+  description = "Define parameter store tier for the cloudwatch agent. Possible values are: Standard, Advanced. Default is Advanced, because of the size of the config."
+  type        = string
+  default     = "Advanced"
+}
+
+variable "parameter_store_ssm_parameter_type" {
+  description = "Define parameter store ssm parameter type for the cloudwatch agent config"
+  type        = string
+  default     = "String"
+}
+

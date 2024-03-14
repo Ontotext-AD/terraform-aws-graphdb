@@ -12,7 +12,7 @@ echo "#################################"
 echo "#    Cloudwatch Provisioning    #"
 echo "#################################"
 
-# Parse the CW Agent Config ffrom SSM store and put it in file
+# Parse the CW Agent Config from SSM Parameter store and put it in file
 CWAGENT_CONFIG=$(aws ssm get-parameter --name "/CWAgent/Config" --query "Parameter.Value" --output text)
 echo "$CWAGENT_CONFIG" > /etc/graphdb/cloudwatch-agent-config.json
 
