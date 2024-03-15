@@ -2,14 +2,14 @@ resource "aws_ssm_parameter" "graphdb_admin_password" {
   name        = "/${var.resource_name_prefix}/graphdb/admin_password"
   description = "Password for the 'admin' user in GraphDB."
   type        = "SecureString"
-  value       = var.graphdb_admin_password
+  value       = base64encode(local.graphdb_admin_password)
 }
 
 resource "aws_ssm_parameter" "graphdb_cluster_token" {
   name        = "/${var.resource_name_prefix}/graphdb/cluster_token"
   description = "Cluster token used for authenticating the communication between the nodes."
   type        = "SecureString"
-  value       = var.graphdb_cluster_token
+  value       = base64encode(local.graphdb_cluster_token)
 }
 
 resource "aws_ssm_parameter" "graphdb_license" {
