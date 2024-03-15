@@ -67,26 +67,6 @@ resource "aws_cloudwatch_metric_alarm" "low_disk_space_alarm" {
   depends_on = [aws_cloudwatch_log_metric_filter.graphdb_low_disk_space_metric_filter]
 }
 
-# Availability Alert
-
-resource "aws_cloudwatch_metric_alarm" "graphdb_availability_alert" {
-  alarm_name          = "al-${var.resource_name_prefix}-availability"
-  alarm_description   = "Alarm will trigger if availability goes beneath 100"
-  comparison_operator = "LessThanThreshold"
-  evaluation_periods  = var.evaluation_periods
-  metric_name         = "HealthCheckPercentageHealthy"
-  namespace           = "AWS/Route53"
-  period              = var.period
-  statistic           = "Average"
-  threshold           = "100"
-  actions_enabled     = var.actions_enabled
-  alarm_actions       = [aws_sns_topic.graphdb_sns_topic.arn]
-
-  dimensions = {
-    HealthCheckId = aws_route53_health_check.graphdb_availability_check.id
-  }
-}
-
 # TODO: Currently this alarm won't work because it relies on the instance IDs which need to be parsed dynamically. The workarounds are remote state, or restructruting the current modules in order to parse the EC2 InstanceIDs from the VM module.
 
 resource "aws_cloudwatch_metric_alarm" "graphdb_memory_utilization" {

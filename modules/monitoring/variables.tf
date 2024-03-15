@@ -115,3 +115,8 @@ variable "parameter_store_ssm_parameter_type" {
   default     = "String"
 }
 
+variable "route53_availability_check_region" {
+  description = "Define route53 health check region"
+  type        = string
+  default     = "us-east-1"
+}

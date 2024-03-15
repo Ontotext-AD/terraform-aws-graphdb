@@ -8,11 +8,11 @@
           "type": "metric",
           "properties": {
               "metrics": [
-                  [ "AWS/Route53", "HealthCheckPercentageHealthy", "HealthCheckId", "${health_check_id}", { "id": "m1", "region": "${aws_region}" } ]
+                  [ "AWS/Route53", "HealthCheckPercentageHealthy", "HealthCheckId", "${health_check_id}", { "id": "m1", "region": "${route53_availability_check_region}" } ]
               ],
               "period": 300,
               "stat": "Average",
-              "region": "${aws_region}",
+              "region": "${route53_availability_check_region}",
               "title": "Availability Tests",
               "yAxis": {
                   "left": {
