@@ -72,3 +72,7 @@ module "monitoring" {
 ## What the Module Creates
 
 This Terraform module creates an AWS Cloudwatch Dasbhoard, Log Group and alarms for CPU, Memory Utilization, GraphDB Nodes Disconnected, Availability Check and 2 alarms based on log messages:
+
+## Good to know
+
+If you choose to deploy in region different than us-east-1 you should know that the route53 health check will be created in us-east-1 since Route53 is a global service, not a regional service. Because of that Route53 publishes metrics only in us-east-1. Since alarms are not cross-regional, the alarm will be created in us-east-1 as well. You can read more [here[(https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Cross-Account-Cross-Region.html)].

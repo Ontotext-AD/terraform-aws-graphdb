@@ -23,9 +23,10 @@ resource "aws_ssm_parameter" "graphdb_cloudwatch_agent_config" {
 resource "aws_cloudwatch_dashboard" "graphdb_dashboard" {
   dashboard_name = "${var.resource_name_prefix}-graphdb"
   dashboard_body = templatefile("${path.module}/graphdb_dashboard.json", {
-    health_check_id      = aws_route53_health_check.graphdb_availability_check.id
-    resource_name_prefix = var.resource_name_prefix
-    aws_region           = var.aws_region
+    health_check_id                   = aws_route53_health_check.graphdb_availability_check.id
+    resource_name_prefix              = var.resource_name_prefix
+    aws_region                        = var.aws_region
+    route53_availability_check_region = var.route53_availability_check_region
   })
 }
 
