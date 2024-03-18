@@ -110,7 +110,6 @@ resource "aws_cloudwatch_metric_alarm" "graphdb_cpu_utilization" {
   }
 }
 
-
 # Alarm for nodes disconnected
 resource "aws_cloudwatch_metric_alarm" "graphdb_nodes_disconnected" {
   alarm_name          = "al-${var.resource_name_prefix}-nodes-disconnected"
