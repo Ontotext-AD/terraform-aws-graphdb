@@ -8,6 +8,16 @@ resource "aws_iam_role_policy_attachment" "cloudwatch-agent-policy" {
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
 }
 
+resource "aws_iam_role_policy_attachment" "cloudwatch-admin-policy" {
+  role       = aws_iam_role.graphdb[0].id
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentAdminPolicy"
+}
+
+resource "aws_iam_role_policy_attachment" "cloudwatch-access-policy" {
+  role       = aws_iam_role.graphdb[0].id
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchFullAccessV2"
+}
+
 resource "aws_iam_role" "graphdb" {
   count                = var.user_supplied_iam_role_name != null ? 0 : 1
   name_prefix          = "${var.resource_name_prefix}-graphdb-"

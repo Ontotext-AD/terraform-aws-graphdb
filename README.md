@@ -98,12 +98,12 @@ This Terraform module configures an AWS EC2 instance for running GraphDB with va
 #### [VM](modules/vm/README.md)
 This Terraform module configures IAM roles, EC2 instances, and associated security groups for running GraphDB with optional parameters and customization.
 
+#### [MONITORING](modules/monitoring/README.md)
+This Terraform module configures Cloudwatch Dashboard, Cloudwatch Alarms, Metric filters and log group.
 
 ## Contributing
 Check out the contributors guide [CONTRIBUTING.md](CONTRIBUTING.md).
 
-
 ## License
 
 This code is released under the Apache 2.0 License. See [LICENSE](LICENSE) for more details.
-

@@ -14,6 +14,10 @@ module "graphdb" {
 
   resource_name_prefix = var.resource_name_prefix
 
+  monitoring_aws_region                  = var.monitoring_aws_region
+  monitoring_log_group_retention_in_days = var.monitoring_log_group_retention_in_days
+  monitoring_sns_topic_endpoint          = var.monitoring_sns_topic_endpoint
+
   vpc_id             = module.vpc.vpc_id
   private_subnet_ids = module.vpc.private_subnet_ids
   public_subnet_ids  = module.vpc.public_subnet_ids
@@ -27,11 +31,4 @@ module "graphdb" {
   instance_type   = var.instance_type
   ami_id          = var.ami_id
   graphdb_version = var.graphdb_version
-}
-
-module "monitoring" {
-  source = "./monitoring"
-
-  aws_region           = var.aws_region
-  resource_name_prefix = var.resource_name_prefix
 }

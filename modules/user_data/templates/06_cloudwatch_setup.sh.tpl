@@ -11,6 +11,11 @@ set -o pipefail
 echo "#################################"
 echo "#    Cloudwatch Provisioning    #"
 echo "#################################"
+
+# Parse the CW Agent Config from SSM Parameter store and put it in file
+CWAGENT_CONFIG=$(aws ssm get-parameter --name "/CWAgent/Config" --query "Parameter.Value" --output text)
+echo "$CWAGENT_CONFIG" > /etc/graphdb/cloudwatch-agent-config.json
+
 GRAPHDB_ADMIN_PASSWORD=$(aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/admin_password" --with-decryption --query "Parameter.Value" --output text)
 
 tmp=$(mktemp)
