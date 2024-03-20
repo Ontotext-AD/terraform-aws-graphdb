@@ -1,3 +1,4 @@
+# TODO move to config.tf after module restructuring
 resource "aws_ssm_parameter" "graphdb_admin_password" {
   name        = "/${var.resource_name_prefix}/graphdb/admin_password"
   description = "Password for the 'admin' user in GraphDB."

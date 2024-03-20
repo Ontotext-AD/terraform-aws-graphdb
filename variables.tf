@@ -245,6 +245,20 @@ variable "graphdb_license_path" {
   default     = null
 }
 
+variable "graphdb_admin_password" {
+  description = "Password for the 'admin' user in GraphDB."
+  type        = string
+  sensitive   = true
+  default     = null
+}
+
+variable "graphdb_cluster_token" {
+  description = "Cluster token used for authenticating the communication between the nodes."
+  type        = string
+  sensitive   = true
+  default     = null
+}
+
 variable "zone_dns_name" {
   description = "DNS name for the private hosted zone in Route 53"
   type        = string

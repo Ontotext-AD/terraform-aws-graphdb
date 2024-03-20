@@ -43,9 +43,11 @@ module "backup" {
 module "config" {
   source = "./modules/config"
 
-  resource_name_prefix = var.resource_name_prefix
-  graphdb_license_path = var.graphdb_license_path
-  graphdb_lb_dns_name  = module.load_balancer.lb_dns_name
+  resource_name_prefix   = var.resource_name_prefix
+  graphdb_license_path   = var.graphdb_license_path
+  graphdb_lb_dns_name    = module.load_balancer.lb_dns_name
+  graphdb_admin_password = var.graphdb_admin_password
+  graphdb_cluster_token  = var.graphdb_cluster_token
 }
 
 module "load_balancer" {

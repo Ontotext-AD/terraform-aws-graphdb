@@ -1,6 +1,7 @@
 resource "random_password" "graphdb_admin_password" {
-  count  = var.graphdb_admin_password != null ? 0 : 1
-  length = 8
+  count   = var.graphdb_admin_password != null ? 0 : 1
+  length  = 8
+  special = true
 }
 
 resource "random_password" "graphdb_cluster_token" {
