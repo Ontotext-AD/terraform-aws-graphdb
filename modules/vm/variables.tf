@@ -60,6 +60,16 @@ variable "instance_type" {
   type        = string
 }
 
+variable "aws_region" {
+  description = "AWS region where GraphDB is being deployed"
+  type        = string
+}
+
+variable "aws_subscription_id" {
+  description = "AWS subscription ID of the account GraphDB is being deployed in"
+  type        = string
+}
+
 # OPTIONAL parameters
 
 variable "ami_id" {

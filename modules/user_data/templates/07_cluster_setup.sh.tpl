@@ -97,7 +97,8 @@ if [ $NODE_DNS == $NODE1 ]; then
   echo "#    Beginning cluster setup     #"
   echo "##################################"
 
- # Attempt to create a GraphDB cluster by configuring cluster nodes.
+  echo "Attempting to create a GraphDB cluster by configuring cluster nodes."
+  # Will retry several times in case 000 is returned as a HTTP response code
   for ((i = 1; i <= $MAX_RETRIES; i++)); do
     # /rest/monitor/cluster will return 200 only if a cluster exists, 503 if no cluster is set up.
     IS_CLUSTER=$(
@@ -107,7 +108,7 @@ if [ $NODE_DNS == $NODE1 ]; then
         http://localhost:7201/rest/monitor/cluster
     )
 
-     # Check if GraphDB is part of a cluster; 000 indicates no HTTP code was received.
+    # Check if GraphDB is part of a cluster; 000 indicates no HTTP code was received.
     if [[ "$IS_CLUSTER" == 000 ]]; then
       echo "Retrying ($i/$MAX_RETRIES) after $RETRY_DELAY seconds..."
       sleep $RETRY_DELAY
@@ -128,8 +129,13 @@ if [ $NODE_DNS == $NODE1 ]; then
     elif [ "$IS_CLUSTER" == 200 ]; then
       echo "Cluster exists"
       break
+    elif [ "$IS_CLUSTER" == 412 ]; then
+      echo "Cluster precondition/s are not met"
+      exit 1
     else
       echo "Something went wrong! Check the log files."
+      # Do not continue if the cluster creation fails for another reason.
+      exit 1
     fi
   done
 
@@ -137,9 +143,16 @@ if [ $NODE_DNS == $NODE1 ]; then
   echo "#    Changing admin user password and enable security     #"
   echo "###########################################################"
 
+  retry_count=0
+  max_retries=120
   LEADER_NODE=""
   # Before enabling security a Leader must be elected. Iterates all nodes and looks for a node with status Leader.
   while [ -z "$LEADER_NODE" ]; do
+    if [ "$retry_count" -ge "$max_retries" ]; then
+      echo "Max retry limit reached. Leader node not found."
+      echo "Exiting..."
+      exit 1
+    fi
     NODES=($NODE1 $NODE2 $NODE3)
     for node in "$${NODES[@]}"; do
       endpoint="http://$node:7201/rest/cluster/group/status"
@@ -158,6 +171,7 @@ if [ $NODE_DNS == $NODE1 ]; then
 
     echo "No leader found on any node. Retrying..."
     sleep 5
+    ((retry_count++))
   done
 
   IS_SECURITY_ENABLED=$(curl -s -X GET \

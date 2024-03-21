@@ -7,7 +7,7 @@ data "aws_ec2_instance_type" "graphdb" {
 data "aws_ami" "graphdb" {
   count = var.ami_id != null ? 0 : 1
 
-  owners      = ["408414015572"] # Ontotext
+  owners      = ["770034820396"] # Ontotext
   most_recent = true
 
   filter {

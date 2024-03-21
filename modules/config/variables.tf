@@ -35,14 +35,12 @@ variable "graphdb_lb_dns_name" {
   default     = ""
 }
 
-variable "graphdb_properties" {
-  description = "Path to the initial config to add for GraphDB."
+variable "graphdb_properties_path" {
+  description = "Path to a local file with with properties which will be appended to graphdb.properties"
   type        = string
-  default     = "/home/kristian/Ontotext/properties-test"
 }
 
-variable "gdb_java_opts" {
+variable "graphdb_java_options" {
   description = "Additional configurations to add to the GDB_JAVA_OPTS environment variable"
   type        = string
-  default = "test101"
 }
