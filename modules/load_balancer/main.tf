@@ -10,6 +10,7 @@ resource "aws_lb" "graphdb" {
   subnets                    = var.lb_subnets
   enable_deletion_protection = var.lb_enable_deletion_protection
   security_groups            = var.lb_security_groups
+
 }
 
 resource "aws_lb_target_group" "graphdb" {
@@ -43,7 +44,6 @@ resource "aws_lb_listener" "graphdb" {
     target_group_arn = aws_lb_target_group.graphdb.arn
   }
 }
-
 resource "aws_lb_listener" "graphdb_tls" {
   count = local.lb_tls_enabled ? 1 : 0
 

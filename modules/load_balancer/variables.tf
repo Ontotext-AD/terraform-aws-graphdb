@@ -16,7 +16,6 @@ variable "resource_name_prefix" {
     condition     = can(regex("^[a-zA-Z0-9-]+$", var.resource_name_prefix)) && !can(regex("^-", var.resource_name_prefix))
     error_message = "Resource name prefix cannot start with a hyphen and can only contain letters, numbers, and hyphens."
   }
-
 }
 
 variable "lb_subnets" {
@@ -84,4 +83,9 @@ variable "lb_tls_policy" {
   description = "TLS security policy on the listener."
   type        = string
   default     = "ELBSecurityPolicy-TLS13-1-2-2021-06"
+}
+
+variable "lb_allowed_cidrs" {
+  description = "Define the CIDRs which should access the load balancer"
+  type        = list(string)
 }

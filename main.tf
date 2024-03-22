@@ -1,10 +1,26 @@
 data "aws_region" "current" {}
 
+# Fetch availability zones for the current region
+data "aws_availability_zones" "available" {}
+
+locals {
+  azs = slice(data.aws_availability_zones.available.names, 0, 3)
+}
+
 module "vpc" {
   source = "./modules/aws-vpc"
 
-  azs                  = var.azs
-  resource_name_prefix = var.resource_name_prefix
+  create_vpc = var.create_vpc
+
+  azs                      = local.azs
+  resource_name_prefix     = var.resource_name_prefix
+  vpc_dns_hostnames        = var.vpc_dns_hostnames
+  vpc_dns_support          = var.vpc_dns_support
+  vpc_private_subnet_cidrs = var.vpc_private_subnet_cidrs
+  vpc_public_subnet_cidrs  = var.vpc_public_subnet_cidrs
+  vpc_cidr_block           = var.vpc_cidr_block
+  single_nat_gateway       = var.single_nat_gateway
+  enable_nat_gateway       = var.enable_nat_gateway
 }
 
 module "iam" {
@@ -42,7 +58,8 @@ module "config" {
 module "load_balancer" {
   source = "./modules/load_balancer"
 
-  vpc_id                        = module.vpc.vpc_id
+  vpc_id = module.vpc.vpc_id
+
   resource_name_prefix          = var.resource_name_prefix
   lb_subnets                    = var.lb_internal ? module.vpc.private_subnet_ids : module.vpc.public_subnet_ids
   lb_internal                   = var.lb_internal
@@ -52,6 +69,9 @@ module "load_balancer" {
   lb_enable_deletion_protection = var.prevent_resource_deletion
   lb_tls_certificate_arn        = var.lb_tls_certificate_arn
   lb_tls_policy                 = var.lb_tls_policy
+  lb_allowed_cidrs              = var.allowed_inbound_cidrs_lb
+
+  depends_on = [module.vpc]
 }
 
 module "user_data" {

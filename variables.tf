@@ -97,14 +97,60 @@ variable "permissions_boundary" {
   default     = null
 }
 
-variable "private_subnet_ids" {
-  type        = list(string)
-  description = "Subnet IDs to deploy GraphDB into"
+variable "vpc_dns_hostnames" {
+  description = "Enable or disable DNS hostnames support for the VPC"
+  type        = bool
+  default     = true
 }
 
-variable "public_subnet_ids" {
+variable "create_vpc" {
+  description = "Enable or disable the creation of the VPC"
+  type        = bool
+  default     = true
+}
+
+variable "vpc_private_subnet_cidrs" {
+  description = "CIDR blocks for private subnets"
   type        = list(string)
-  description = "Public subnets used if LB is public"
+  default = [
+    "10.0.0.0/19",
+    "10.0.32.0/19",
+    "10.0.64.0/19",
+  ]
+}
+
+variable "vpc_public_subnet_cidrs" {
+  description = "CIDR blocks for public subnets"
+  type        = list(string)
+  default = [
+    "10.0.128.0/20",
+    "10.0.144.0/20",
+    "10.0.160.0/20",
+  ]
+}
+
+variable "vpc_cidr_block" {
+  description = "CIDR block for VPC"
+  type        = string
+  default     = "10.0.0.0/16"
+}
+
+variable "vpc_dns_support" {
+  description = "Enable or disable the support of the DNS service"
+  type        = bool
+  default     = true
+}
+
+variable "single_nat_gateway" {
+  description = "Enable or disable the option to have single NAT Gateway."
+  type        = bool
+  default     = false
+}
+
+variable "enable_nat_gateway" {
+  description = "Enable or disable the creation of the NAT Gateway"
+  type        = bool
+  default     = true
 }
 
 variable "resource_name_prefix" {
@@ -135,11 +181,6 @@ variable "user_supplied_userdata_path" {
   type        = string
   description = "(Optional) File path to custom userdata script being supplied by the user"
   default     = null
-}
-
-variable "vpc_id" {
-  type        = string
-  description = "VPC ID where GraphDB will be deployed"
 }
 
 variable "device_name" {

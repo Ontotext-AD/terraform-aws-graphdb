@@ -1,14 +1,14 @@
 output "private_subnet_ids" {
   description = "Private subnet IDs"
-  value       = module.vpc.private_subnets
+  value       = aws_subnet.graphdb_private_subnet[*].id
 }
 
 output "public_subnet_ids" {
   description = "Public subnet IDs"
-  value       = module.vpc.public_subnets
+  value       = aws_subnet.graphdb_public_subnet[*].id
 }
 
 output "vpc_id" {
   description = "The ID of the VPC"
-  value       = module.vpc.vpc_id
+  value       = aws_vpc.graphdb_vpc[0].id
 }
