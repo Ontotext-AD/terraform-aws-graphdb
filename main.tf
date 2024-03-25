@@ -1,18 +1,11 @@
 data "aws_region" "current" {}
 
-# Fetch availability zones for the current region
-data "aws_availability_zones" "available" {}
-
-locals {
-  azs = slice(data.aws_availability_zones.available.names, 0, 3)
-}
-
 module "vpc" {
   source = "./modules/aws-vpc"
 
   create_vpc = var.create_vpc
 
-  azs                      = local.azs
+  azs                      = var.azs
   resource_name_prefix     = var.resource_name_prefix
   vpc_dns_hostnames        = var.vpc_dns_hostnames
   vpc_dns_support          = var.vpc_dns_support
@@ -69,7 +62,6 @@ module "load_balancer" {
   lb_enable_deletion_protection = var.prevent_resource_deletion
   lb_tls_certificate_arn        = var.lb_tls_certificate_arn
   lb_tls_policy                 = var.lb_tls_policy
-  lb_allowed_cidrs              = var.allowed_inbound_cidrs_lb
 
   depends_on = [module.vpc]
 }

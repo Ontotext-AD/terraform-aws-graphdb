@@ -10,7 +10,6 @@ resource "aws_lb" "graphdb" {
   subnets                    = var.lb_subnets
   enable_deletion_protection = var.lb_enable_deletion_protection
   security_groups            = var.lb_security_groups
-
 }
 
 resource "aws_lb_target_group" "graphdb" {

@@ -84,8 +84,3 @@ variable "lb_tls_policy" {
   type        = string
   default     = "ELBSecurityPolicy-TLS13-1-2-2021-06"
 }
-
-variable "lb_allowed_cidrs" {
-  description = "Define the CIDRs which should access the load balancer"
-  type        = list(string)
-}

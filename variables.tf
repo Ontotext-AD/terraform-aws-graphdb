@@ -58,8 +58,6 @@ variable "lb_tls_policy" {
   default     = "ELBSecurityPolicy-TLS13-1-2-2021-06"
 }
 
-#
-
 variable "allowed_inbound_cidrs_lb" {
   type        = list(string)
   description = "(Optional) List of CIDR blocks to permit inbound traffic from to load balancer"
