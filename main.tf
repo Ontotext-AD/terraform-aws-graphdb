@@ -1,9 +1,9 @@
 data "aws_region" "current" {}
 
 module "vpc" {
-  source = "./modules/aws-vpc"
+  source = "./modules/vpc"
 
-  create_vpc = var.create_vpc
+  count = var.create_vpc ? 1 : 0
 
   azs                      = var.azs
   resource_name_prefix     = var.resource_name_prefix
@@ -27,7 +27,7 @@ module "iam" {
 module "dns" {
   source = "./modules/dns"
 
-  vpc_id               = module.vpc.vpc_id
+  vpc_id               = module.vpc[0].vpc_id
   resource_name_prefix = var.resource_name_prefix
   zone_dns_name        = var.zone_dns_name
   iam_role_id          = module.iam.iam_role_id
@@ -51,10 +51,10 @@ module "config" {
 module "load_balancer" {
   source = "./modules/load_balancer"
 
-  vpc_id = module.vpc.vpc_id
+  vpc_id = module.vpc[0].vpc_id
 
   resource_name_prefix          = var.resource_name_prefix
-  lb_subnets                    = var.lb_internal ? module.vpc.private_subnet_ids : module.vpc.public_subnet_ids
+  lb_subnets                    = var.lb_internal ? module.vpc[0].private_subnet_ids : module.vpc[0].public_subnet_ids
   lb_internal                   = var.lb_internal
   lb_deregistration_delay       = var.lb_deregistration_delay
   lb_health_check_path          = var.lb_health_check_path
@@ -62,8 +62,6 @@ module "load_balancer" {
   lb_enable_deletion_protection = var.prevent_resource_deletion
   lb_tls_certificate_arn        = var.lb_tls_certificate_arn
   lb_tls_policy                 = var.lb_tls_policy
-
-  depends_on = [module.vpc]
 }
 
 module "user_data" {
@@ -109,15 +107,15 @@ module "vm" {
   iam_role_id               = module.iam.iam_role_id
   instance_type             = var.instance_type
   key_name                  = var.key_name
-  lb_subnets                = var.lb_internal ? module.vpc.private_subnet_ids : module.vpc.public_subnet_ids
+  lb_subnets                = var.lb_internal ? module.vpc[0].private_subnet_ids : module.vpc[0].public_subnet_ids
   node_count                = var.node_count
   resource_name_prefix      = var.resource_name_prefix
   userdata_script           = module.user_data.graphdb_userdata_base64_encoded
   ami_id                    = var.ami_id
   graphdb_version           = var.graphdb_version
-  graphdb_subnets           = module.vpc.private_subnet_ids
+  graphdb_subnets           = module.vpc[0].private_subnet_ids
   graphdb_target_group_arns = local.graphdb_target_group_arns
-  vpc_id                    = module.vpc.vpc_id
+  vpc_id                    = module.vpc[0].vpc_id
 }
 
 module "monitoring" {

@@ -1,8 +1,3 @@
-variable "create_vpc" {
-  description = "Enable or disable the creation of the VPC"
-  type        = bool
-}
-
 variable "azs" {
   description = "availability zones to use in AWS region"
   type        = list(string)

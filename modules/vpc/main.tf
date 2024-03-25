@@ -17,7 +17,6 @@ locals {
 # GraphDB VPC
 
 resource "aws_vpc" "graphdb_vpc" {
-  count = var.create_vpc ? 1 : 0
 
   cidr_block           = var.vpc_cidr_block
   enable_dns_hostnames = var.vpc_dns_hostnames
@@ -27,9 +26,7 @@ resource "aws_vpc" "graphdb_vpc" {
 # GraphDB Internet Gateway
 
 resource "aws_internet_gateway" "graphdb_internet_gateway" {
-  count = var.create_vpc ? 1 : 0
-
-  vpc_id = aws_vpc.graphdb_vpc[0].id
+  vpc_id = aws_vpc.graphdb_vpc.id
 }
 
 # GraphDB Subnets
@@ -37,9 +34,9 @@ resource "aws_internet_gateway" "graphdb_internet_gateway" {
 # GraphDB Public Subnet
 
 resource "aws_subnet" "graphdb_public_subnet" {
-  count = var.create_vpc ? length(local.azs) : 0
+  count = length(local.azs)
 
-  vpc_id            = aws_vpc.graphdb_vpc[0].id
+  vpc_id            = aws_vpc.graphdb_vpc.id
   cidr_block        = var.vpc_public_subnet_cidrs[count.index]
   availability_zone = local.azs[count.index]
 
@@ -49,9 +46,9 @@ resource "aws_subnet" "graphdb_public_subnet" {
 # GraphDB Private Subnet
 
 resource "aws_subnet" "graphdb_private_subnet" {
-  count = var.create_vpc ? length(local.azs) : 0
+  count = length(local.azs)
 
-  vpc_id            = aws_vpc.graphdb_vpc[0].id
+  vpc_id            = aws_vpc.graphdb_vpc.id
   cidr_block        = var.vpc_private_subnet_cidrs[count.index]
   availability_zone = local.azs[count.index]
 
@@ -82,13 +79,13 @@ resource "aws_nat_gateway" "graphdb_nat_gateway" {
 # GraphDB Public Route Table
 
 resource "aws_route_table" "graphdb_public_route_table" {
-  count = var.create_vpc ? length(local.azs) : 0
+  count = length(local.azs)
 
-  vpc_id = aws_vpc.graphdb_vpc[0].id
+  vpc_id = aws_vpc.graphdb_vpc.id
 
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.graphdb_internet_gateway[0].id
+    gateway_id = aws_internet_gateway.graphdb_internet_gateway.id
   }
 
   tags = {
@@ -97,7 +94,7 @@ resource "aws_route_table" "graphdb_public_route_table" {
 }
 
 resource "aws_route_table_association" "graphdb_public_route_table_association" {
-  count = var.create_vpc ? length(local.azs) : 0
+  count = length(local.azs)
 
   route_table_id = aws_route_table.graphdb_public_route_table[count.index].id
   subnet_id      = aws_subnet.graphdb_public_subnet[count.index].id
@@ -106,9 +103,9 @@ resource "aws_route_table_association" "graphdb_public_route_table_association" 
 # GraphDB Private Route Table
 
 resource "aws_route_table" "graphdb_private_route_table" {
-  count = var.create_vpc ? length(local.azs) : 0
+  count = length(local.azs)
 
-  vpc_id = aws_vpc.graphdb_vpc[0].id
+  vpc_id = aws_vpc.graphdb_vpc.id
 
   tags = {
     Name = "${local.tags.Name}-private-route-table-${count.index}"
@@ -125,7 +122,7 @@ resource "aws_route_table" "graphdb_private_route_table" {
 }
 
 resource "aws_route_table_association" "graphdb_private_route_table_association" {
-  count = var.create_vpc ? length(local.azs) : 0
+  count = length(local.azs)
 
   route_table_id = aws_route_table.graphdb_private_route_table[count.index].id
   subnet_id      = aws_subnet.graphdb_private_subnet[count.index].id

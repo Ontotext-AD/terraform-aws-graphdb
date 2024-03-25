@@ -10,5 +10,5 @@ output "public_subnet_ids" {
 
 output "vpc_id" {
   description = "The ID of the VPC"
-  value       = aws_vpc.graphdb_vpc[0].id
+  value       = aws_vpc.graphdb_vpc.id
 }
