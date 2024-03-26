@@ -16,7 +16,7 @@ echo "#################################"
 CWAGENT_CONFIG=$(aws ssm get-parameter --name "/CWAgent/Config" --query "Parameter.Value" --output text)
 echo "$CWAGENT_CONFIG" > /etc/graphdb/cloudwatch-agent-config.json
 
-GRAPHDB_ADMIN_PASSWORD=$(aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/admin_password" --with-decryption --query "Parameter.Value" --output text)
+GRAPHDB_ADMIN_PASSWORD=$(aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/admin_password" --with-decryption --query "Parameter.Value" --output text | base64 -d)
 
 tmp=$(mktemp)
 jq '.logs.metrics_collected.prometheus.log_group_name = "${name}-graphdb"' /etc/graphdb/cloudwatch-agent-config.json > "$tmp" && mv "$tmp" /etc/graphdb/cloudwatch-agent-config.json

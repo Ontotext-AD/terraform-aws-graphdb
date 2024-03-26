@@ -23,7 +23,7 @@ aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${na
   base64 -d > /etc/graphdb/graphdb.license
 
 # Get the cluster token
-GRAPHDB_CLUSTER_TOKEN="$(aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/cluster_token" --with-decryption | jq -r .Parameter.Value)"
+GRAPHDB_CLUSTER_TOKEN="$(aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/cluster_token" --with-decryption | jq -r .Parameter.Value | base64 -d)"
 # Get the NODE_DNS value from the previous script
 NODE_DNS=$(cat /tmp/node_dns)
 

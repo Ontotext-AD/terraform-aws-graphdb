@@ -15,18 +15,12 @@ variable "resource_name_prefix" {
 variable "graphdb_admin_password" {
   description = "Password for the 'admin' user in GraphDB."
   type        = string
-  default     = "s3cret"
-
-  validation {
-    condition     = length(var.graphdb_admin_password) >= 5 && can(regex("[0-9]", var.graphdb_admin_password))
-    error_message = "Password must be at least 5 characters long and contain at least one number."
-  }
+  sensitive   = true
 }
 
 variable "graphdb_cluster_token" {
   description = "Cluster token used for authenticating the communication between the nodes."
-  type        = string
-  default     = "s3cret"
+  sensitive   = true
 }
 
 variable "graphdb_license_path" {
