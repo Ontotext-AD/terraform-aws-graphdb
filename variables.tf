@@ -6,6 +6,22 @@ variable "common_tags" {
   default     = {}
 }
 
+variable "aws_region" {
+  description = "AWS region to deploy resources into"
+  type        = string
+}
+
+variable "azs" {
+  description = "Availability zones to use in AWS region"
+  type        = list(string)
+}
+
+variable "tags" {
+  description = "Common tags for all resources"
+  type        = map(string)
+  default     = {}
+}
+
 # Backup configurations
 
 variable "backup_schedule" {
@@ -279,21 +295,5 @@ variable "monitoring_log_group_retention_in_days" {
 variable "monitoring_aws_region" {
   description = "Define the region in which you want the monitoring to be deployed. It is used to define where the Route53 Availability Check will be deployed, since if it is not specified it will deploy the check in us-east-1 and if you deploy in different region it will not find the dimensions."
   type        = string
-}
-
-variable "aws_region" {
-  description = "AWS region to deploy resources into"
-  type        = string
-}
-
-variable "azs" {
-  description = "Availability zones to use in AWS region"
-  type        = list(string)
-}
-
-variable "tags" {
-  description = "Common tags for all resources"
-  type        = map(string)
-  default     = {}
 }
 
