@@ -34,3 +34,13 @@ variable "graphdb_lb_dns_name" {
   type        = string
   default     = ""
 }
+
+variable "graphdb_properties_path" {
+  description = "Path to a local file with with properties which will be appended to graphdb.properties"
+  type        = string
+}
+
+variable "graphdb_java_options" {
+  description = "Additional configurations to add to the GDB_JAVA_OPTS environment variable"
+  type        = string
+}

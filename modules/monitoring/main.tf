@@ -8,7 +8,7 @@ resource "aws_cloudwatch_log_group" "graphdb_log_group" {
 # SSM Parameter which hosts the config for the cloudwatch agent
 
 resource "aws_ssm_parameter" "graphdb_cloudwatch_agent_config" {
-  name        = "/CWAgent/Config"
+  name        = "/${var.resource_name_prefix}/graphdb/CWAgent/Config"
   description = "Cloudwatch Agent Configuration"
   type        = var.parameter_store_ssm_parameter_type
   tier        = var.parameter_store_ssm_parameter_tier

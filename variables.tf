@@ -290,7 +290,7 @@ variable "monitoring_sns_topic_endpoint" {
 }
 
 variable "monitoring_sns_protocol" {
-  description = "Define an SNS protocol that you will use to receive alers. Possible options are: Email, Email-JSON, HTTP, HTTPS."
+  description = "Define an SNS protocol that you will use to receive alerts. Possible options are: Email, Email-JSON, HTTP, HTTPS."
   type        = string
   default     = "email"
 }
@@ -311,3 +311,16 @@ variable "monitoring_aws_region" {
   type        = string
 }
 
+# GraphDB overrides
+
+variable "graphdb_properties_path" {
+  description = "Path to a local file containing GraphDB properties (graphdb.properties) that would be appended to the default in the VM."
+  type        = string
+  default     = null
+}
+
+variable "graphdb_java_options" {
+  description = "GraphDB options to pass to GraphDB with GRAPHDB_JAVA_OPTS environment variable."
+  type        = string
+  default     = null
+}

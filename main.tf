@@ -1,5 +1,7 @@
 data "aws_region" "current" {}
 
+data "aws_caller_identity" "current" {}
+
 module "vpc" {
   source = "./modules/vpc"
 
@@ -43,11 +45,13 @@ module "backup" {
 module "config" {
   source = "./modules/config"
 
-  resource_name_prefix   = var.resource_name_prefix
-  graphdb_license_path   = var.graphdb_license_path
-  graphdb_lb_dns_name    = module.load_balancer.lb_dns_name
-  graphdb_admin_password = var.graphdb_admin_password
-  graphdb_cluster_token  = var.graphdb_cluster_token
+  resource_name_prefix    = var.resource_name_prefix
+  graphdb_license_path    = var.graphdb_license_path
+  graphdb_lb_dns_name     = module.load_balancer.lb_dns_name
+  graphdb_admin_password  = var.graphdb_admin_password
+  graphdb_cluster_token   = var.graphdb_cluster_token
+  graphdb_properties_path = var.graphdb_properties_path
+  graphdb_java_options    = var.graphdb_java_options
 }
 
 module "load_balancer" {
@@ -118,10 +122,13 @@ module "vm" {
   graphdb_subnets           = module.vpc[0].private_subnet_ids
   graphdb_target_group_arns = local.graphdb_target_group_arns
   vpc_id                    = module.vpc[0].vpc_id
+  aws_region                = data.aws_region.current.name
+  aws_subscription_id       = data.aws_caller_identity.current.account_id
 }
 
 module "monitoring" {
-  source                            = "./modules/monitoring"
+  source = "./modules/monitoring"
+
   aws_region                        = var.monitoring_aws_region
   resource_name_prefix              = var.resource_name_prefix
   actions_enabled                   = var.monitoring_actions_enabled
