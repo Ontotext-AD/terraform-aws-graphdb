@@ -13,7 +13,8 @@ echo "#################################################"
 echo "#    Configuring the GraphDB backup cron job    #"
 echo "#################################################"
 
-cat <<-EOF > /usr/bin/graphdb_backup
+if [ ${deploy_backup} == "true" ]; then
+  cat <<-EOF >/usr/bin/graphdb_backup
 #!/bin/bash
 
 set -euxo pipefail
@@ -64,7 +65,10 @@ rotate_backups
 
 EOF
 
-chmod +x /usr/bin/graphdb_backup
-echo "${backup_schedule} graphdb /usr/bin/graphdb_backup" > /etc/cron.d/graphdb_backup
+  chmod +x /usr/bin/graphdb_backup
+  echo "${backup_schedule} graphdb /usr/bin/graphdb_backup" > /etc/cron.d/graphdb_backup
 
-echo "Cron job created"
+  echo "Cron job created"
+else
+  echo "Backup module is not deployed, skipping provisioning..."
+fi

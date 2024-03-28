@@ -20,6 +20,8 @@ module "vpc" {
 module "backup" {
   source = "./modules/backup"
 
+  count = var.deploy_backup ? 1 : 0
+
   resource_name_prefix = var.resource_name_prefix
   iam_role_id          = module.graphdb.iam_role_id
 }
@@ -109,9 +111,10 @@ module "graphdb" {
 
   # Backup Configuration
 
+  deploy_backup          = var.deploy_backup
   backup_schedule        = var.backup_schedule
   backup_retention_count = var.backup_retention_count
-  backup_bucket_name     = module.backup.bucket_name
+  backup_bucket_name     = var.deploy_backup == false ? "" : module.backup[0].bucket_name
 
   # VM Image
 
