@@ -7,7 +7,6 @@ module "vpc" {
 
   count = var.create_vpc ? 1 : 0
 
-  azs                      = var.azs
   resource_name_prefix     = var.resource_name_prefix
   vpc_dns_hostnames        = var.vpc_dns_hostnames
   vpc_dns_support          = var.vpc_dns_support
@@ -18,40 +17,11 @@ module "vpc" {
   enable_nat_gateway       = var.enable_nat_gateway
 }
 
-module "iam" {
-  source = "./modules/iam"
-
-  resource_name_prefix        = var.resource_name_prefix
-  permissions_boundary        = var.permissions_boundary
-  user_supplied_iam_role_name = var.user_supplied_iam_role_name
-}
-
-module "dns" {
-  source = "./modules/dns"
-
-  vpc_id               = module.vpc[0].vpc_id
-  resource_name_prefix = var.resource_name_prefix
-  zone_dns_name        = var.zone_dns_name
-  iam_role_id          = module.iam.iam_role_id
-}
-
 module "backup" {
   source = "./modules/backup"
 
   resource_name_prefix = var.resource_name_prefix
-  iam_role_id          = module.iam.iam_role_id
-}
-
-module "config" {
-  source = "./modules/config"
-
-  resource_name_prefix    = var.resource_name_prefix
-  graphdb_license_path    = var.graphdb_license_path
-  graphdb_lb_dns_name     = module.load_balancer.lb_dns_name
-  graphdb_admin_password  = var.graphdb_admin_password
-  graphdb_cluster_token   = var.graphdb_cluster_token
-  graphdb_properties_path = var.graphdb_properties_path
-  graphdb_java_options    = var.graphdb_java_options
+  iam_role_id          = module.graphdb.iam_role_id
 }
 
 module "load_balancer" {
@@ -70,66 +40,24 @@ module "load_balancer" {
   lb_tls_policy                 = var.lb_tls_policy
 }
 
-module "user_data" {
-  source = "./modules/user_data"
-
-  aws_region                  = data.aws_region.current.name
-  resource_name_prefix        = var.resource_name_prefix
-  user_supplied_userdata_path = var.user_supplied_userdata_path
-  device_name                 = var.device_name
-
-  backup_schedule        = var.backup_schedule
-  backup_retention_count = var.backup_retention_count
-  backup_bucket_name     = module.backup.bucket_name
-
-  ebs_volume_type       = var.ebs_volume_type
-  ebs_volume_size       = var.ebs_volume_size
-  ebs_volume_iops       = var.ebs_volume_iops
-  ebs_volume_throughput = var.ebs_volume_throughput
-  ebs_kms_key_arn       = var.ebs_kms_key_arn
-
-  zone_id       = module.dns.zone_id
-  zone_dns_name = var.zone_dns_name
-
-  instance_type = var.instance_type
-
-  depends_on = [
-    module.config
-  ]
-}
-
 locals {
   graphdb_target_group_arns = concat(
     [module.load_balancer.lb_target_group_arn]
   )
 }
 
-module "vm" {
-  source = "./modules/vm"
-
-  allowed_inbound_cidrs     = var.allowed_inbound_cidrs_lb
-  allowed_inbound_cidrs_ssh = var.allowed_inbound_cidrs_ssh
-  iam_instance_profile      = module.iam.iam_instance_profile
-  iam_role_id               = module.iam.iam_role_id
-  instance_type             = var.instance_type
-  key_name                  = var.key_name
-  lb_subnets                = var.lb_internal ? module.vpc[0].private_subnet_ids : module.vpc[0].public_subnet_ids
-  node_count                = var.node_count
-  resource_name_prefix      = var.resource_name_prefix
-  userdata_script           = module.user_data.graphdb_userdata_base64_encoded
-  ami_id                    = var.ami_id
-  graphdb_version           = var.graphdb_version
-  graphdb_subnets           = module.vpc[0].private_subnet_ids
-  graphdb_target_group_arns = local.graphdb_target_group_arns
-  vpc_id                    = module.vpc[0].vpc_id
-  aws_region                = data.aws_region.current.name
-  aws_subscription_id       = data.aws_caller_identity.current.account_id
-}
-
 module "monitoring" {
-  source = "./modules/monitoring"
 
-  aws_region                        = var.monitoring_aws_region
+  count = var.deploy_monitoring ? 1 : 0
+
+  providers = {
+    aws.main       = aws.main
+    aws.monitoring = aws.monitoring
+  }
+
+  source                            = "./modules/monitoring"
+  aws_region                        = var.aws_region
+  route53_availability_check_region = var.monitoring_route53_health_check_aws_region
   resource_name_prefix              = var.resource_name_prefix
   actions_enabled                   = var.monitoring_actions_enabled
   sns_topic_endpoint                = var.monitoring_sns_topic_endpoint
@@ -138,4 +66,71 @@ module "monitoring" {
   log_group_retention_in_days       = var.monitoring_log_group_retention_in_days
   web_test_availability_request_url = module.load_balancer.lb_dns_name
   measure_latency                   = var.monitoring_route53_measure_latency
+}
+
+module "graphdb" {
+  source               = "./modules/graphdb"
+  aws_region           = data.aws_region.current.name
+  resource_name_prefix = var.resource_name_prefix
+  aws_subscription_id  = data.aws_caller_identity.current.account_id
+
+  # Networking
+
+  allowed_inbound_cidrs     = var.allowed_inbound_cidrs_lb
+  allowed_inbound_cidrs_ssh = var.allowed_inbound_cidrs_ssh
+  graphdb_subnets           = module.vpc[0].private_subnet_ids
+  graphdb_target_group_arns = local.graphdb_target_group_arns
+  vpc_id                    = module.vpc[0].vpc_id
+
+  # Network Load Balancer
+
+  lb_subnets          = var.lb_internal ? module.vpc[0].private_subnet_ids : module.vpc[0].public_subnet_ids
+  graphdb_lb_dns_name = module.load_balancer.lb_dns_name
+
+
+  # Identity
+
+  iam_instance_profile = module.graphdb.iam_instance_profile
+  iam_role_id          = module.graphdb.iam_role_id
+
+  # GraphDB Configurations
+
+  graphdb_admin_password  = var.graphdb_admin_password
+  graphdb_cluster_token   = var.graphdb_cluster_token
+  graphdb_properties_path = var.graphdb_properties_path
+  graphdb_java_options    = var.graphdb_java_options
+  graphdb_license_path    = var.graphdb_license_path
+
+  # VMs
+
+  instance_type               = var.instance_type
+  node_count                  = var.node_count
+  userdata_script             = module.graphdb.graphdb_userdata_base64_encoded
+  key_name                    = var.key_name
+  user_supplied_userdata_path = var.user_supplied_userdata_path
+
+  # Backup Configuration
+
+  backup_schedule        = var.backup_schedule
+  backup_retention_count = var.backup_retention_count
+  backup_bucket_name     = module.backup.bucket_name
+
+  # VM Image
+
+  ami_id          = var.ami_id
+  graphdb_version = var.graphdb_version
+
+  # Managed Disks
+
+  device_name           = var.device_name
+  ebs_volume_type       = var.ebs_volume_type
+  ebs_volume_size       = var.ebs_volume_size
+  ebs_volume_iops       = var.ebs_volume_iops
+  ebs_volume_throughput = var.ebs_volume_throughput
+  ebs_kms_key_arn       = var.ebs_kms_key_arn
+
+  # DNS
+
+  zone_id       = module.graphdb.zone_id
+  zone_dns_name = var.zone_dns_name
 }

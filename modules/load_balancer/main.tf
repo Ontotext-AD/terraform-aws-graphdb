@@ -43,6 +43,7 @@ resource "aws_lb_listener" "graphdb" {
     target_group_arn = aws_lb_target_group.graphdb.arn
   }
 }
+
 resource "aws_lb_listener" "graphdb_tls" {
   count = local.lb_tls_enabled ? 1 : 0
 
