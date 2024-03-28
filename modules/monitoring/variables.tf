@@ -5,7 +5,6 @@ variable "resource_name_prefix" {
 
 variable "aws_region" {
   description = "Define the region in which the monitoring will be deployed"
-  type        = string
 }
 
 variable "web_availability_regions" {

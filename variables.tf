@@ -272,6 +272,12 @@ variable "zone_dns_name" {
 
 # Monitoring
 
+variable "deploy_monitoring" {
+  description = "Enable or disable toggle for monitoring"
+  type        = bool
+  default     = false
+}
+
 variable "monitoring_route53_measure_latency" {
   description = "Enable or disable route53 function to measure latency"
   type        = bool
@@ -306,7 +312,7 @@ variable "monitoring_log_group_retention_in_days" {
   type        = number
 }
 
-variable "monitoring_aws_region" {
+variable "monitoring_route53_health_check_aws_region" {
   description = "Define the region in which you want the monitoring to be deployed. It is used to define where the Route53 Availability Check will be deployed, since if it is not specified it will deploy the check in us-east-1 and if you deploy in different region it will not find the dimensions."
   type        = string
 }
