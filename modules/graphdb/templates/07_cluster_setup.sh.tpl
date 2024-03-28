@@ -11,12 +11,8 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-NODE_DNS=$(cat /tmp/node_dns)
-IMDS_TOKEN=$(curl -Ss -H "X-aws-ec2-metadata-token-ttl-seconds: 6000" -XPUT 169.254.169.254/latest/api/token)
-INSTANCE_ID=$(curl -Ss -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" 169.254.169.254/latest/meta-data/instance-id)
+NODE_DNS_RECORD=$(cat /var/opt/graphdb/node_dns)
 GRAPHDB_ADMIN_PASSWORD=$(aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/admin_password" --with-decryption --query "Parameter.Value" --output text | base64 -d)
-VPC_ID=$(aws ec2 describe-instances --instance-id "$${INSTANCE_ID}" --query 'Reservations[0].Instances[0].VpcId' --output text)
-
 RETRY_DELAY=5
 MAX_RETRIES=10
 
@@ -24,17 +20,40 @@ echo "###########################"
 echo "#    Starting GraphDB     #"
 echo "###########################"
 
-# the proxy service is set up in the AMI but not enabled, so we enable and start it
-systemctl daemon-reload
-systemctl start graphdb
-systemctl enable graphdb-cluster-proxy.service
-systemctl start graphdb-cluster-proxy.service
+# Don't attempt to form a cluster if the node count is 1
+if [ "${node_count}" == 1 ]; then
+  echo "Starting Graphdb"
+  systemctl daemon-reload
+  systemctl start graphdb
+  echo "Single node deployment, skipping cluster setup."
+  exit 0
+else
+  # The proxy service is set up in the AMI but not enabled, so we enable and start it
+  systemctl daemon-reload
+  systemctl start graphdb
+  systemctl enable graphdb-cluster-proxy.service
+  systemctl start graphdb-cluster-proxy.service
+fi
 
 #####################
 #   Cluster setup   #
 #####################
 
-# Checks if GraphDB is started, we assume it is when the infrastructure endpoint is reached
+# Function which waits for all DNS records to be created
+wait_dns_records() {
+  local all_dns_records=($(aws route53 list-resource-record-sets --hosted-zone-id "${zone_id}" --query "ResourceRecordSets[?contains(Name, '.graphdb.cluster') == \`true\`].Name" --output text))
+  local all_dns_records_count="$${#all_dns_records[@]}"
+
+  if [ "$${all_dns_records_count}" -ne ${node_count} ]; then
+    sleep 5
+    echo "Private DNS zone record count is $${all_dns_records_count}, expecting ${node_count}"
+    wait_dns_records
+  else
+    echo "Private DNS zone record count is $${all_dns_records_count}, expecting ${node_count}"
+  fi
+}
+
+# Function which checks if GraphDB is started, we assume it is when the infrastructure endpoint is reached
 check_gdb() {
   if [ -z "$1" ]; then
     echo "Error: IP address or hostname is not provided."
@@ -51,25 +70,21 @@ check_gdb() {
   fi
 }
 
-# Waits for 3 DNS records to be available
-wait_dns_records() {
-  ALL_DNS_RECORDS=($(aws ec2 describe-instances --filters "Name=vpc-id,Values=$${VPC_ID}" --query 'Reservations[*].Instances[*].[PrivateDnsName]' --output text))
-  ALL_DNS_RECORDS_COUNT="$${#ALL_DNS_RECORDS[@]}"
-
-  if [ "$${ALL_DNS_RECORDS_COUNT}" -ne 3 ]; then
-    sleep 5
-    wait_dns_records
-  else
-    echo "Private DNS zone record count is $${ALL_DNS_RECORDS_COUNT}"
-  fi
-}
-
 wait_dns_records
 
-# Check all instances are running
-for record in "$${ALL_DNS_RECORDS[@]}"; do
-  echo "Pinging $record"
+# Existing records are returned with . at the end
+EXISTING_DNS_RECORDS=$(aws route53 list-resource-record-sets --hosted-zone-id "${zone_id}" --query "ResourceRecordSets[?contains(Name, '.graphdb.cluster') == \`true\`].Name")
+# Convert the output into an array
+readarray -t EXISTING_DNS_RECORDS_ARRAY <<<$(echo "$EXISTING_DNS_RECORDS" | jq -r '.[] | rtrimstr(".")')
+# Builds grpc addresses for all nodes registered in Route53
+CLUSTER_ADDRESS_GRPC=$(echo "$EXISTING_DNS_RECORDS" | jq -r '[ .[] | rtrimstr(".") + ":7301" ]')
+# Determine with is the lowest instance ID
+SORTED_INSTANCE_IDS=($(echo "$${EXISTING_DNS_RECORDS_ARRAY[@]}" | tr ' ' '\n' | sort -n))
+LOWEST_INSTANCE_ID=$${SORTED_INSTANCE_IDS[0]}
 
+# Wait for all instances to be running
+for record in "$${EXISTING_DNS_RECORDS_ARRAY[@]}"; do
+  echo "Pinging $record"
   if [ -n "$record" ]; then
     while ! check_gdb "$record"; do
       echo "Waiting for GDB $record to start"
@@ -82,88 +97,29 @@ done
 
 echo "All GDB instances are available."
 
-# Determine the order of GraphDB instances in the cluster by querying Route 53 DNS records.
-# This is done because we don't want the 3 nodes to attempt to create the same cluster.
-EXISTING_RECORDS=($(aws route53 list-resource-record-sets --hosted-zone-id "${zone_id}" --query "ResourceRecordSets[?contains(Name, '.graphdb.cluster') == \`true\`].Name" --output text | sort -n))
-# Extract individual DNS names for the GraphDB cluster nodes.
-NODE1="$${EXISTING_RECORDS[0]%?}"
-NODE2="$${EXISTING_RECORDS[1]%?}"
-NODE3="$${EXISTING_RECORDS[2]%?}"
+# Function which finds the cluster Leader node
+find_leader_node() {
+  local retry_count=0
+  local max_retries=120
+  local leader_node=""
 
-# Check if the current GraphDB node is the first one in the cluster (lowest instance).
-if [ $NODE_DNS == $NODE1 ]; then
-
-  echo "##################################"
-  echo "#    Beginning cluster setup     #"
-  echo "##################################"
-
-  echo "Attempting to create a GraphDB cluster by configuring cluster nodes."
-  # Will retry several times in case 000 is returned as a HTTP response code
-  for ((i = 1; i <= $MAX_RETRIES; i++)); do
-    # /rest/monitor/cluster will return 200 only if a cluster exists, 503 if no cluster is set up.
-    IS_CLUSTER=$(
-      curl -s -o /dev/null \
-        -u "admin:$${GRAPHDB_ADMIN_PASSWORD}" \
-        -w "%%{http_code}" \
-        http://localhost:7201/rest/monitor/cluster
-    )
-
-    # Check if GraphDB is part of a cluster; 000 indicates no HTTP code was received.
-    if [[ "$IS_CLUSTER" == 000 ]]; then
-      echo "Retrying ($i/$MAX_RETRIES) after $RETRY_DELAY seconds..."
-      sleep $RETRY_DELAY
-    elif [ "$IS_CLUSTER" == 503 ]; then
-      # Create the GraphDB cluster configuration if it does not exist.
-      CLUSTER_CREATE=$(
-        curl -X POST -s http://localhost:7201/rest/cluster/config \
-          -o "/dev/null" \
-          -w "%%{http_code}" \
-          -H 'Content-type: application/json' \
-          -u "admin:$${GRAPHDB_ADMIN_PASSWORD}" \
-          -d "{\"nodes\": [\"$${NODE1}:7301\",\"$${NODE2}:7301\",\"$${NODE3}:7301\"]}"
-      )
-      if [[ "$CLUSTER_CREATE" == 201 ]]; then
-        echo "GraphDB cluster successfully created!"
-        break
-      fi
-    elif [ "$IS_CLUSTER" == 200 ]; then
-      echo "Cluster exists"
-      break
-    elif [ "$IS_CLUSTER" == 412 ]; then
-      echo "Cluster precondition/s are not met"
-      exit 1
-    else
-      echo "Something went wrong! Check the log files."
-      # Do not continue if the cluster creation fails for another reason.
-      exit 1
-    fi
-  done
-
-  echo "###########################################################"
-  echo "#    Changing admin user password and enable security     #"
-  echo "###########################################################"
-
-  retry_count=0
-  max_retries=120
-  LEADER_NODE=""
-  # Before enabling security a Leader must be elected. Iterates all nodes and looks for a node with status Leader.
-  while [ -z "$LEADER_NODE" ]; do
+  while [ -z "$leader_node" ]; do
     if [ "$retry_count" -ge "$max_retries" ]; then
       echo "Max retry limit reached. Leader node not found."
       echo "Exiting..."
       exit 1
     fi
-    NODES=($NODE1 $NODE2 $NODE3)
-    for node in "$${NODES[@]}"; do
-      endpoint="http://$node:7201/rest/cluster/group/status"
+
+    for node in "$${EXISTING_DNS_RECORDS_ARRAY[@]}"; do
+      local endpoint="http://$node:7201/rest/cluster/group/status"
       echo "Checking leader status for $node"
 
       # Gets the address of the node if nodeState is LEADER.
-      LEADER_ADDRESS=$(curl -s "$endpoint" -u "admin:$${GRAPHDB_ADMIN_PASSWORD}" | jq -r '.[] | select(.nodeState == "LEADER") | .address')
-      if [ -n "$${LEADER_ADDRESS}" ]; then
-        LEADER_NODE=$LEADER_ADDRESS
-        echo "Found leader address $LEADER_ADDRESS"
-        break 2 # Exit both loops
+      local leader_address=$(curl -s "$endpoint" -u "admin:$${GRAPHDB_ADMIN_PASSWORD}" | jq -r '.[] | select(.nodeState == "LEADER") | .address')
+      if [ -n "$${leader_address}" ]; then
+        leader_node=$leader_address
+        echo "Found leader address $leader_address"
+        return 0
       else
         echo "No leader found at $node"
       fi
@@ -171,47 +127,131 @@ if [ $NODE_DNS == $NODE1 ]; then
 
     echo "No leader found on any node. Retrying..."
     sleep 5
-    ((retry_count++))
+    retry_count=$((retry_count + 1))
   done
+}
 
-  IS_SECURITY_ENABLED=$(curl -s -X GET \
-    --header 'Accept: application/json' \
-    -u "admin:$${GRAPHDB_ADMIN_PASSWORD}" \
-    'http://localhost:7200/rest/security')
+# Function which setups GraphDB cluster
+create_cluster() {
+  echo "##################################"
+  echo "#    Beginning cluster setup     #"
+  echo "##################################"
 
-  # Check if GDB security is enabled
-  if [[ $IS_SECURITY_ENABLED == "true" ]]; then
-    echo "Security is enabled"
-  else
-    # Set the admin password
-    SET_PASSWORD=$(
-      curl --location -s -w "%%{http_code}" \
-        --request PATCH 'http://localhost:7200/rest/security/users/admin' \
-        --header 'Content-Type: application/json' \
-        --data "{ \"password\": \"$${GRAPHDB_ADMIN_PASSWORD}\" }"
+  for ((i = 1; i <= $MAX_RETRIES; i++)); do
+    # /rest/monitor/cluster will return 200 only if a cluster exists, 503 if no cluster is set up.
+    local is_cluster=$(
+      curl -s -o /dev/null \
+        -u "admin:$${GRAPHDB_ADMIN_PASSWORD}" \
+        -w "%%{http_code}" \
+        http://localhost:7201/rest/monitor/cluster
     )
-    if [[ "$SET_PASSWORD" == 200 ]]; then
-      echo "Set GraphDB password successfully"
-    else
-      echo "Failed setting GraphDB password. Please check the logs!"
-    fi
 
-    # Enable the security
-    ENABLED_SECURITY=$(curl -X POST -s -w "%%{http_code}" \
+    # Check if GraphDB is part of a cluster; 000 indicates no HTTP code was received.
+    if [[ "$is_cluster" == 000 ]]; then
+      echo "Retrying ($i/$MAX_RETRIES) after $RETRY_DELAY seconds..."
+      sleep $RETRY_DELAY
+    elif [ "$is_cluster" == 503 ]; then
+      # Create the GraphDB cluster configuration if it does not exist.
+      local cluster_create=$(
+        curl -X POST -s http://localhost:7201/rest/cluster/config \
+          -o "/dev/null" \
+          -w "%%{http_code}" \
+          -H 'Content-type: application/json' \
+          -u "admin:$${GRAPHDB_ADMIN_PASSWORD}" \
+          -d "{\"nodes\": $CLUSTER_ADDRESS_GRPC}"
+      )
+      if [[ "$cluster_create" == 201 ]]; then
+        echo "GraphDB cluster successfully created!"
+        break
+      fi
+    elif [ "$is_cluster" == 200 ]; then
+      echo "Cluster exists"
+      break
+    elif [ "$is_cluster" == 412 ]; then
+      echo "Cluster precondition/s are not met"
+    else
+      echo "Something went wrong! Check the log files."
+    fi
+    sleep $RETRY_DELAY
+  done
+}
+
+# Function which enables the admin password and enables the security in GraphDB
+enable_security() {
+  echo "#############################################################"
+  echo "#    Changing admin user password and enabling security     #"
+  echo "#############################################################"
+
+  # Set the admin password
+  local set_password=$(
+    curl --location -s -w "%%{http_code}" \
+      --request PATCH 'http://localhost:7200/rest/security/users/admin' \
+      --header 'Content-Type: application/json' \
+      --data "{ \"password\": \"$${GRAPHDB_ADMIN_PASSWORD}\" }"
+  )
+  if [[ "$set_password" == 200 ]]; then
+    echo "Set GraphDB password successfully"
+  else
+    echo "Failed setting GraphDB password. Please check the logs!"
+    return 1
+  fi
+
+  # Enable the security
+  local enable_security=$(
+    curl -X POST -s -w "%%{http_code}" \
       --header 'Content-Type: application/json' \
       --header 'Accept: */*' \
-      -d 'true' 'http://localhost:7200/rest/security')
+      -d 'true' 'http://localhost:7200/rest/security'
+  )
 
-    if [[ "$ENABLED_SECURITY" == 200 ]]; then
-      echo "Enabled GraphDB security successfully"
-    else
-      echo "Failed enabling GraphDB security. Please check the logs!"
-    fi
+  if [[ "$enable_security" == 200 ]]; then
+    echo "Enabled GraphDB security successfully"
+  else
+    echo "Failed enabling GraphDB security. Please check the logs!"
+    return 1
   fi
-else
-  echo "Node $NODE_DNS is not the lowest instance, skipping cluster creation."
-fi
+}
 
-echo "###########################"
-echo "#    Script completed     #"
-echo "###########################"
+# Function which checks if the GraphDB security is enabled
+check_security_status() {
+  local is_security_enabled=$(
+    curl -s -X GET \
+      --header 'Accept: application/json' \
+      -u "admin:$${GRAPHDB_ADMIN_PASSWORD}" \
+      'http://localhost:7200/rest/security'
+  )
+
+  # Check if GDB security is enabled
+  if [[ $is_security_enabled == "true" ]]; then
+    echo "Security is enabled"
+  else
+    echo "Security is not enabled"
+    enable_security
+  fi
+}
+
+# Function to check if the GraphDB license has been applied
+check_license() {
+  # Define the URL to check
+  local URL="http://localhost:7201/rest/graphdb-settings/license"
+
+  # Send an HTTP GET request and store the response in a variable
+  local response=$(curl -s "$URL")
+
+  # Check if the response contains the word "free"
+  if [[ "$response" == *"free"* ]]; then
+    echo "Free license detecting"
+    exit 1
+  fi
+}
+
+check_license
+
+#  Only the instance with the lowest ID would attempt to create the cluster
+if [ $NODE_DNS_RECORD == $LOWEST_INSTANCE_ID ]; then
+  create_cluster
+  find_leader_node
+  check_security_status
+else
+  echo "Node $NODE_DNS_RECORD is not the lowest instance, skipping cluster creation."
+fi

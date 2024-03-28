@@ -134,4 +134,7 @@ module "graphdb" {
 
   zone_id       = module.graphdb.zone_id
   zone_dns_name = var.zone_dns_name
+
+  # User data scripts
+  deploy_monitoring = var.deploy_monitoring
 }

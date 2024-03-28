@@ -15,23 +15,61 @@ echo "########################"
 echo "#   DNS Provisioning   #"
 echo "########################"
 
-IMDS_TOKEN=$( curl -Ss -H "X-aws-ec2-metadata-token-ttl-seconds: 6000" -XPUT 169.254.169.254/latest/api/token )
-LOCAL_IPv4=$( curl -Ss -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" 169.254.169.254/latest/meta-data/local-ipv4 )
-VOLUME_ID=$(cat /tmp/volume_id)
+IMDS_TOKEN=$(curl -Ss -H "X-aws-ec2-metadata-token-ttl-seconds: 6000" -XPUT 169.254.169.254/latest/api/token)
+LOCAL_IPv4=$(curl -Ss -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" 169.254.169.254/latest/meta-data/local-ipv4)
+AVAILABILITY_ZONE_ID=$(curl -Ss -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" 169.254.169.254/latest/meta-data/placement/availability-zone-id)
+NODE_DNS_PATH="/var/opt/graphdb/node_dns"
+# Extract only the numeric part from the AVAILABILITY_ZONE_ID
+AVAILABILITY_ZONE_ID_NUMBER="$${AVAILABILITY_ZONE_ID//*-az}"
+NODE_NUMBER=0
 
-# Subdomain is based on the volume name.
-SUBDOMAIN="$( echo -n "$VOLUME_ID" | sed 's/^vol-//' )"
-NODE_DNS="$SUBDOMAIN.${zone_dns_name}"
+# Handles instance reboots or recreations when the node has already been part of a cluster
+if [ -f $NODE_DNS_PATH ]; then
+  echo "Found $NODE_DNS_PATH"
+  NODE_DNS_RECORD=$(cat $NODE_DNS_PATH)
 
-# Storing it to be used in another script
-echo $NODE_DNS > /tmp/node_dns
+  # Updates the NODE_DSN record on file with the new IP.
+  echo "Updating IP address for $NODE_DNS_RECORD"
 
-# Creates the DNS record
-aws --cli-connect-timeout 300 route53 change-resource-record-sets \
-  --hosted-zone-id "${zone_id}" \
-  --change-batch '{"Changes": [{"Action": "UPSERT","ResourceRecordSet": {"Name": "'"$NODE_DNS"'","Type": "A","TTL": 60,"ResourceRecords": [{"Value": "'"$LOCAL_IPv4"'"}]}}]}'
+  aws --cli-connect-timeout 300 route53 change-resource-record-sets \
+    --hosted-zone-id "${zone_id}" \
+    --change-batch '{"Changes": [{"Action": "UPSERT","ResourceRecordSet": {"Name": "'"$NODE_DNS_RECORD"'","Type": "A","TTL": 60,"ResourceRecords": [{"Value": "'"$LOCAL_IPv4"'"}]}}]}'
 
-echo "DNS record for $NODE_DNS has been created"
+  hostnamectl set-hostname "$NODE_DNS_RECORD"
+  echo "DNS record for $NODE_DNS_RECORD has been updated"
+else
+  echo "$NODE_DNS_PATH does not exist. New DNS record will be created."
 
-hostnamectl set-hostname "$NODE_DNS"
+  while true; do
+    # Concatenate "node" with the extracted number
+    NODE_NAME="node-$NODE_NUMBER-zone-$AVAILABILITY_ZONE_ID_NUMBER"
 
+    # Check if the Route 53 record exists for the node name
+    DNS_RECORD_TAKEN=$(aws route53 list-resource-record-sets --hosted-zone-id ${zone_id} --query "ResourceRecordSets[?contains(Name, '$NODE_NAME')]" --output text)
+
+    if [ "$DNS_RECORD_TAKEN" ]; then
+      echo "Record $NODE_NAME is taken in hosted zone ${zone_id}"
+      # Increment node number for the next iteration
+      NODE_NUMBER=$((NODE_NUMBER + 1))
+    else
+      echo "Record $NODE_NAME does not exist in hosted zone ${zone_id}"
+      # Forms the full DNS address for the current node
+      NODE_DNS_RECORD="$NODE_NAME.${zone_dns_name}"
+
+      # Attempt to create the DNS record
+      if aws --cli-connect-timeout 300 route53 change-resource-record-sets \
+        --hosted-zone-id "${zone_id}" \
+        --change-batch '{"Changes": [{"Action": "CREATE","ResourceRecordSet": {"Name": "'"$NODE_DNS_RECORD"'","Type": "A","TTL": 60,"ResourceRecords": [{"Value": "'"$LOCAL_IPv4"'"}]}}]}' &>/dev/null; then
+        echo "DNS record for $NODE_DNS_RECORD has been created"
+        hostnamectl set-hostname "$NODE_DNS_RECORD"
+        echo "$NODE_DNS_RECORD" >/var/opt/graphdb/node_dns
+        break # Exit loop when non-existing node name is found
+      else
+        echo "Creating DNS record failed for $NODE_NAME, retrying with next available name"
+        # Retry with the next node number
+        NODE_NUMBER=$((NODE_NUMBER + 1))
+      fi
+    fi
+  done
+
+fi

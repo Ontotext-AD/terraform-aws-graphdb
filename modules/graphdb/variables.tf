@@ -106,6 +106,13 @@ variable "lb_subnets" {
   type        = list(string)
 }
 
+# Monitoring Parameters
+
+variable "deploy_monitoring" {
+  description = "Enable or disable toggle for monitoring"
+  type        = bool
+}
+
 # Backup Parameters
 
 variable "deploy_backup" {

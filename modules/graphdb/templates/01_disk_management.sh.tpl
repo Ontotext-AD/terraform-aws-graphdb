@@ -17,15 +17,15 @@ echo "#    Creating/Attaching managed disks     #"
 echo "###########################################"
 
 # Set common variables used throughout the script.
-IMDS_TOKEN=$( curl -Ss -H "X-aws-ec2-metadata-token-ttl-seconds: 6000" -XPUT 169.254.169.254/latest/api/token )
-INSTANCE_ID=$( curl -Ss -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" 169.254.169.254/latest/meta-data/instance-id )
-AVAILABILITY_ZONE=$( curl -Ss -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" 169.254.169.254/latest/meta-data/placement/availability-zone )
+IMDS_TOKEN=$(curl -Ss -H "X-aws-ec2-metadata-token-ttl-seconds: 6000" -XPUT 169.254.169.254/latest/api/token)
+INSTANCE_ID=$(curl -Ss -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" 169.254.169.254/latest/meta-data/instance-id)
+AVAILABILITY_ZONE=$(curl -Ss -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" 169.254.169.254/latest/meta-data/placement/availability-zone)
 VOLUME_ID=""
+AVAILABLE_VOLUMES=()
 
 # Search for an available EBS volume to attach to the instance. Wait one minute for a volume to become available,
 # if no volume is found - create new one, attach, format and mount the volume.
 for i in $(seq 1 6); do
-
   VOLUME_ID=$(
     aws --cli-connect-timeout 300 ec2 describe-volumes \
       --filters "Name=status,Values=available" "Name=availability-zone,Values=$AVAILABILITY_ZONE" "Name=tag:Name,Values=${name}-graphdb-data" \
@@ -42,8 +42,20 @@ for i in $(seq 1 6); do
   fi
 done
 
-if [ -z "$${VOLUME_ID:-}" ]; then
+# Transforms the returned result to an AVAILABLE_VOLUMES
+if [ -n "$VOLUME_ID" ]; then
+  # Loop through each element in VOLUME_ID and add it to the AVAILABLE_VOLUMES
+  while read -r element; do
+    AVAILABLE_VOLUMES+=("$element")
+  done <<< "$VOLUME_ID"
+  echo "Found volumes: $${AVAILABLE_VOLUMES[@]}"
+else
+  echo "No volumes found"
+fi
 
+# Function which creates a volume
+create_volume() {
+  echo "Creating new volume"
   VOLUME_ID=$(
     aws --cli-connect-timeout 300 ec2 create-volume \
       --availability-zone "$AVAILABILITY_ZONE" \
@@ -56,17 +68,51 @@ if [ -z "$${VOLUME_ID:-}" ]; then
       --tag-specifications "ResourceType=volume,Tags=[{Key=Name,Value=${name}-graphdb-data}]" | \
       jq -r .VolumeId
   )
+  # Transforms the returned result to an AVAILABLE_VOLUMES
+  while read -r element; do
+    AVAILABLE_VOLUMES+=("$element")
+  done <<< "$VOLUME_ID"
 
+  # wait for the volume to be available
   aws --cli-connect-timeout 300 ec2 wait volume-available --volume-ids "$VOLUME_ID"
+  echo "Successfully created volume: $VOLUME_ID"
+}
+
+attach_volumes() {
+  local volume total_volumes
+  total_volumes=$${#AVAILABLE_VOLUMES[@]}
+  for ((index = 0; index < total_volumes; index++)); do
+    volume=$${AVAILABLE_VOLUMES[index]}
+    echo "Trying to attach volume: $volume"
+
+    if aws --cli-connect-timeout 300 ec2 attach-volume \
+      --volume-id "$volume" \
+      --instance-id "$INSTANCE_ID" \
+      --device "${device_name}"; then
+      echo "Volume $volume attached successfully"
+      break
+    else
+      echo "Failed to attach volume $volume"
+      echo "Will try again with the next volume"
+
+      # Check if this is the last available volume
+      if ((index == total_volumes - 1)); then
+        echo "Attempting to create a new volume..."
+        # Resetting the AVAILABLE_VOLUMES
+        AVAILABLE_VOLUMES=()
+        create_volume
+        attach_volumes # Retry attaching volumes including the newly created one
+        break
+      fi
+    fi
+  done
+}
+
+if [[ -z "$${AVAILABLE_VOLUMES[@]}" ]]; then
+  create_volume
 fi
 
-aws --cli-connect-timeout 300 ec2 attach-volume \
-  --volume-id "$VOLUME_ID" \
-  --instance-id "$INSTANCE_ID" \
-  --device "${device_name}"
-
-# Storing it to be used in another script
-echo $VOLUME_ID > /tmp/volume_id
+attach_volumes
 
 # Handle the EBS volume used for the GraphDB data directory.
 # beware, here be dragons...
