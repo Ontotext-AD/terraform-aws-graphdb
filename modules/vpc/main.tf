@@ -127,4 +127,3 @@ resource "aws_route_table_association" "graphdb_private_route_table_association"
   route_table_id = aws_route_table.graphdb_private_route_table[count.index].id
   subnet_id      = aws_subnet.graphdb_private_subnet[count.index].id
 }
-
