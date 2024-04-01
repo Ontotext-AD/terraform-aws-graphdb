@@ -1,8 +1,3 @@
-variable "azs" {
-  description = "availability zones to use in AWS region"
-  type        = list(string)
-}
-
 variable "resource_name_prefix" {
   description = "Prefix for resource names (e.g. \"prod\")"
   type        = string

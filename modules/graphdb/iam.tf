@@ -1,3 +1,42 @@
+resource "aws_iam_instance_profile" "graphdb" {
+  name_prefix = "${var.resource_name_prefix}-graphdb"
+  role        = aws_iam_role.graphdb.name
+}
+
+resource "aws_iam_role_policy_attachment" "cloudwatch_agent_policy" {
+  role       = aws_iam_role.graphdb.id
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+}
+
+resource "aws_iam_role_policy_attachment" "cloudwatch_admin_policy" {
+  role       = aws_iam_role.graphdb.id
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentAdminPolicy"
+}
+
+resource "aws_iam_role_policy_attachment" "cloudwatch_access_policy" {
+  role       = aws_iam_role.graphdb.id
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchFullAccessV2"
+}
+
+resource "aws_iam_role" "graphdb" {
+  name_prefix        = "${var.resource_name_prefix}-graphdb-"
+  assume_role_policy = data.aws_iam_policy_document.instance_role.json
+}
+
+data "aws_iam_policy_document" "instance_role" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "sts:AssumeRole"
+    ]
+
+    principals {
+      type        = "Service"
+      identifiers = ["ec2.amazonaws.com"]
+    }
+  }
+}
+
 resource "aws_iam_role_policy" "instance_volume" {
   name   = "${var.resource_name_prefix}-graphdb-instance-volume"
   role   = var.iam_role_id
@@ -70,5 +109,23 @@ data "aws_iam_policy_document" "instance_volume_tagging" {
         "CreateSnapshot"
       ]
     }
+  }
+}
+
+resource "aws_iam_role_policy" "route53_instance_registration" {
+  name   = "${var.resource_name_prefix}-graphdb-route53-instance-registration"
+  role   = var.iam_role_id
+  policy = data.aws_iam_policy_document.route53_instance_registration.json
+}
+
+data "aws_iam_policy_document" "route53_instance_registration" {
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "route53:ChangeResourceRecordSets"
+    ]
+
+    resources = ["arn:aws:route53:::hostedzone/${aws_route53_zone.zone.zone_id}"]
   }
 }
