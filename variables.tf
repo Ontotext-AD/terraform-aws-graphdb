@@ -12,6 +12,11 @@ variable "aws_region" {
 }
 
 # Backup configurations
+variable "deploy_backup" {
+  description = "Deploy backup module"
+  type        = bool
+  default     = true
+}
 
 variable "backup_schedule" {
   description = "Cron expression for the backup job."

@@ -1,4 +1,3 @@
-
 # Common parameters
 
 variable "resource_name_prefix" {
@@ -109,6 +108,11 @@ variable "lb_subnets" {
 
 # Backup Parameters
 
+variable "deploy_backup" {
+  description = "Deploy backup module"
+  type        = bool
+}
+
 variable "backup_schedule" {
   description = "Cron expression for the backup job."
   type        = string
@@ -119,7 +123,7 @@ variable "backup_bucket_name" {
   type        = string
 
   validation {
-    condition     = can(regex("^[a-z0-9_-]+$", var.backup_bucket_name))
+    condition     = var.backup_bucket_name == "" || can(regex("^[a-z0-9_-]+$", var.backup_bucket_name))
     error_message = "Bucket name can only contain lowercase letters, numbers, hyphens, and underscores."
   }
 }

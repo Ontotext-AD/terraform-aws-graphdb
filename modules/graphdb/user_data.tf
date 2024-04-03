@@ -56,6 +56,7 @@ data "cloudinit_config" "graphdb_user_data" {
       backup_schedule : var.backup_schedule
       backup_retention_count : var.backup_retention_count
       backup_bucket_name : var.backup_bucket_name
+      deploy_backup : var.deploy_backup
     })
   }
 
