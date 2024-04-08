@@ -1,0 +1,29 @@
+name: "Continuous Integration: Terraform Docs"
+
+on:
+  pull_request:
+
+jobs:
+  docs:
+    name: Generate Terraform documentation
+    runs-on: ubuntu-22.04
+    timeout-minutes: 1
+    steps:
+      - id: clone_repository
+        name: Clone repository
+        # actions/checkout@v4.1.1
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      - id: run_terraform_docs
+        name: Render terraform docs and push changes back to PR
+        # terraform-docs/gh-actions@1.0.0
+        uses: terraform-docs/gh-actions@f6d59f89a280fa0a3febf55ef68f146784b20ba0
+        with:
+          working-dir: .
+          output-file: README.md
+          config-file: terraform-docs.yml
+          output-method: inject
+          git-push: "true"
+          git-commit-message: "terraform-docs: updated markdown table"
