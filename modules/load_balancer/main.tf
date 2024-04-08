@@ -1,9 +1,9 @@
 locals {
-  lb_name        = "${var.resource_name_prefix}-graphdb"
+  lb_name        = var.resource_name_prefix
   lb_tls_enabled = var.lb_tls_certificate_arn != null ? true : false
 }
 
-resource "aws_lb" "graphdb" {
+resource "aws_lb" "graphdb_lb" {
   name                       = local.lb_name
   internal                   = var.lb_internal
   load_balancer_type         = "network"
@@ -12,7 +12,7 @@ resource "aws_lb" "graphdb" {
   security_groups            = var.lb_security_groups
 }
 
-resource "aws_lb_target_group" "graphdb" {
+resource "aws_lb_target_group" "graphdb_lb_target_group" {
   name   = local.lb_name
   vpc_id = var.vpc_id
 
@@ -31,23 +31,23 @@ resource "aws_lb_target_group" "graphdb" {
   }
 }
 
-resource "aws_lb_listener" "graphdb" {
+resource "aws_lb_listener" "graphdb_listener" {
   count = local.lb_tls_enabled ? 0 : 1
 
-  load_balancer_arn = aws_lb.graphdb.id
+  load_balancer_arn = aws_lb.graphdb_lb.id
   port              = 80
   protocol          = "TCP"
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.graphdb.arn
+    target_group_arn = aws_lb_target_group.graphdb_lb_target_group.arn
   }
 }
 
 resource "aws_lb_listener" "graphdb_tls" {
   count = local.lb_tls_enabled ? 1 : 0
 
-  load_balancer_arn = aws_lb.graphdb.id
+  load_balancer_arn = aws_lb.graphdb_lb.id
   port              = 443
   protocol          = "TLS"
   certificate_arn   = var.lb_tls_certificate_arn
@@ -55,6 +55,6 @@ resource "aws_lb_listener" "graphdb_tls" {
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.graphdb.arn
+    target_group_arn = aws_lb_target_group.graphdb_lb_target_group.arn
   }
 }

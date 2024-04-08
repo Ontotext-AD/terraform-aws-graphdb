@@ -3,7 +3,7 @@ data "aws_availability_zones" "available" {}
 
 locals {
   tags = {
-    Name = "${var.resource_name_prefix}-graphdb"
+    Name = "${var.resource_name_prefix}"
   }
 
   azs                = slice(data.aws_availability_zones.available.names, 0, 3)

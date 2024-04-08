@@ -1,9 +1,14 @@
 # Common configurations
 
 variable "common_tags" {
-  type        = map(string)
   description = "(Optional) Map of common tags for all taggable AWS resources."
+  type        = map(string)
   default     = {}
+}
+
+variable "resource_name_prefix" {
+  description = "Resource name prefix used for tagging and naming AWS resources"
+  type        = string
 }
 
 variable "aws_region" {
@@ -39,14 +44,14 @@ variable "lb_internal" {
 }
 
 variable "lb_deregistration_delay" {
-  type        = string
   description = "Amount time, in seconds, for GraphDB LB target group to wait before changing the state of a deregistering target from draining to unused."
+  type        = string
   default     = 300
 }
 
 variable "lb_health_check_path" {
-  type        = string
   description = "The endpoint to check for GraphDB's health status."
+  type        = string
   default     = "/rest/cluster/node/status"
 }
 
@@ -69,34 +74,34 @@ variable "lb_tls_policy" {
 }
 
 variable "allowed_inbound_cidrs_lb" {
-  type        = list(string)
   description = "(Optional) List of CIDR blocks to permit inbound traffic from to load balancer"
+  type        = list(string)
   default     = null
 }
 
 variable "allowed_inbound_cidrs_ssh" {
-  type        = list(string)
   description = "(Optional) List of CIDR blocks to permit for SSH to GraphDB nodes"
+  type        = list(string)
   default     = null
 }
 
-variable "instance_type" {
+variable "ec2_instance_type" {
+  description = "EC2 instance type"
   type        = string
   default     = "r6g.2xlarge"
-  description = "EC2 instance type"
   nullable    = false
 }
 
-variable "key_name" {
+variable "ec2_key_name" {
+  description = "(Optional) key pair to use for SSH access to instance"
   type        = string
   default     = null
-  description = "(Optional) key pair to use for SSH access to instance"
 }
 
-variable "node_count" {
+variable "graphdb_node_count" {
+  description = "Number of GraphDB nodes to deploy in ASG"
   type        = number
   default     = 3
-  description = "Number of GraphDB nodes to deploy in ASG"
 }
 
 variable "vpc_dns_hostnames" {
@@ -155,21 +160,16 @@ variable "enable_nat_gateway" {
   default     = true
 }
 
-variable "resource_name_prefix" {
-  type        = string
-  description = "Resource name prefix used for tagging and naming AWS resources"
-}
-
 variable "ami_id" {
-  type        = string
   description = "(Optional) User-provided AMI ID to use with GraphDB instances. If you provide this value, please ensure it will work with the default userdata script (assumes latest version of Ubuntu LTS). Otherwise, please provide your own userdata script using the user_supplied_userdata_path variable."
+  type        = string
   default     = null
 }
 
 variable "graphdb_version" {
   description = "GraphDB version"
   type        = string
-  default     = "10.4.0"
+  default     = "10.6.2"
   nullable    = false
 }
 
@@ -224,24 +224,24 @@ variable "graphdb_license_path" {
 variable "graphdb_admin_password" {
   description = "Password for the 'admin' user in GraphDB."
   type        = string
-  sensitive   = true
   default     = null
+  sensitive   = true
 }
 
 variable "graphdb_cluster_token" {
   description = "Cluster token used for authenticating the communication between the nodes."
   type        = string
-  sensitive   = true
   default     = null
+  sensitive   = true
 }
 
-variable "zone_dns_name" {
+variable "route53_zone_dns_name" {
   description = "DNS name for the private hosted zone in Route 53"
   type        = string
   default     = "graphdb.cluster"
 
   validation {
-    condition     = !can(regex(".*\\.local$", var.zone_dns_name))
+    condition     = !can(regex(".*\\.local$", var.route53_zone_dns_name))
     error_message = "The DNS name cannot end with '.local'."
   }
 }

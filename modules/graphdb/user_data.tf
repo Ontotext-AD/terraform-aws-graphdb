@@ -35,11 +35,11 @@ data "cloudinit_config" "graphdb_user_data" {
   part {
     content_type = "text/x-shellscript"
     content = templatefile("${path.module}/templates/02_dns_provisioning.sh.tpl", {
-      zone_id : var.zone_id
-      zone_dns_name : var.zone_dns_name
+      zone_id : var.route53_zone_id
+      zone_dns_name : var.route53_zone_dns_name
       name : var.resource_name_prefix
       region : var.aws_region
-      node_count : var.node_count
+      node_count : var.graphdb_node_count
     })
   }
 
@@ -83,8 +83,8 @@ data "cloudinit_config" "graphdb_user_data" {
     content = templatefile("${path.module}/templates/07_cluster_setup.sh.tpl", {
       name : var.resource_name_prefix
       region : var.aws_region
-      zone_id : var.zone_id
-      node_count : var.node_count
+      zone_id : var.route53_zone_id
+      node_count : var.graphdb_node_count
     })
   }
 
@@ -93,8 +93,8 @@ data "cloudinit_config" "graphdb_user_data" {
     content = templatefile("${path.module}/templates/08_node_rejoin.sh.tpl", {
       region : var.aws_region
       name : var.resource_name_prefix
-      zone_id : var.zone_id
-      node_count : var.node_count
+      zone_id : var.route53_zone_id
+      node_count : var.graphdb_node_count
     })
   }
 }
