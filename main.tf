@@ -56,7 +56,7 @@ module "monitoring" {
   aws_region                        = var.aws_region
   route53_availability_check_region = var.monitoring_route53_health_check_aws_region
   actions_enabled                   = var.monitoring_actions_enabled
-  sns_topic_endpoint                = var.monitoring_sns_topic_endpoint
+  sns_topic_endpoint                = var.deploy_monitoring ? var.monitoring_sns_topic_endpoint : null
   endpoint_auto_confirms            = var.monitoring_endpoint_auto_confirms
   sns_protocol                      = var.monitoring_sns_protocol
   log_group_retention_in_days       = var.monitoring_log_group_retention_in_days
