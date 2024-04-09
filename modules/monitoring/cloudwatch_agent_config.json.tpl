@@ -9,7 +9,7 @@
                 "collect_list": [
                     {
                         "file_path": "/var/opt/graphdb/node/logs/main.log",
-                        "log_group_name": "${name}-graphdb",
+                        "log_group_name": "${name}",
                         "log_stream_name": "{local_hostname}",
                         "filters": [
                             {
@@ -23,11 +23,11 @@
         },
         "metrics_collected": {
             "prometheus": {
-                "log_group_name": "${name}-graphdb",
+                "log_group_name": "${name}",
                 "prometheus_config_path": "/etc/prometheus/prometheus.yaml",
                 "emf_processor": {
                     "metric_declaration_dedup": true,
-                    "metric_namespace": "${name}-graphdb",
+                    "metric_namespace": "${name}",
                     "metric_unit": {
                         "graphdb_nonheap_used_mem": "Bytes",
                         "graphdb_work_dir_used": "Bytes",

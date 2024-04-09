@@ -1,29 +1,29 @@
-resource "aws_iam_instance_profile" "graphdb" {
-  name_prefix = "${var.resource_name_prefix}-graphdb"
-  role        = aws_iam_role.graphdb.name
+resource "aws_iam_instance_profile" "graphdb_iam_instance_profile" {
+  name_prefix = "${var.resource_name_prefix}-instance-profile"
+  role        = aws_iam_role.graphdb_iam_role.name
 }
 
-resource "aws_iam_role_policy_attachment" "cloudwatch_agent_policy" {
-  role       = aws_iam_role.graphdb.id
+resource "aws_iam_role_policy_attachment" "graphdb_cloudwatch_agent_policy" {
+  role       = aws_iam_role.graphdb_iam_role.id
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
 }
 
-resource "aws_iam_role_policy_attachment" "cloudwatch_admin_policy" {
-  role       = aws_iam_role.graphdb.id
+resource "aws_iam_role_policy_attachment" "graphdb_cloudwatch_admin_policy" {
+  role       = aws_iam_role.graphdb_iam_role.id
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentAdminPolicy"
 }
 
-resource "aws_iam_role_policy_attachment" "cloudwatch_access_policy" {
-  role       = aws_iam_role.graphdb.id
+resource "aws_iam_role_policy_attachment" "graphdb_cloudwatch_access_policy" {
+  role       = aws_iam_role.graphdb_iam_role.id
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchFullAccessV2"
 }
 
-resource "aws_iam_role" "graphdb" {
-  name_prefix        = "${var.resource_name_prefix}-graphdb-"
-  assume_role_policy = data.aws_iam_policy_document.instance_role.json
+resource "aws_iam_role" "graphdb_iam_role" {
+  name_prefix        = var.resource_name_prefix
+  assume_role_policy = data.aws_iam_policy_document.graphdb_instance_role.json
 }
 
-data "aws_iam_policy_document" "instance_role" {
+data "aws_iam_policy_document" "graphdb_instance_role" {
   statement {
     effect = "Allow"
     actions = [
@@ -37,30 +37,30 @@ data "aws_iam_policy_document" "instance_role" {
   }
 }
 
-resource "aws_iam_role_policy" "instance_volume" {
-  name   = "${var.resource_name_prefix}-graphdb-instance-volume"
+resource "aws_iam_role_policy" "graphdb_instance_volume" {
+  name   = "${var.resource_name_prefix}-instance-volume"
   role   = var.iam_role_id
-  policy = data.aws_iam_policy_document.instance_volume.json
+  policy = data.aws_iam_policy_document.graphdb_instance_volume.json
 }
 
-resource "aws_iam_role_policy" "instance_volume_tagging" {
-  name   = "${var.resource_name_prefix}-graphdb-instance-volume-tagging"
+resource "aws_iam_role_policy" "graphdb_instance_volume_tagging" {
+  name   = "${var.resource_name_prefix}-volume-tagging"
   role   = var.iam_role_id
-  policy = data.aws_iam_policy_document.instance_volume_tagging.json
+  policy = data.aws_iam_policy_document.graphdb_instance_volume_tagging.json
 }
 
-resource "aws_iam_role_policy_attachment" "systems-manager-policy" {
+resource "aws_iam_role_policy_attachment" "graphdb_systems_manager_policy" {
   role       = var.iam_role_id
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
-resource "aws_iam_role_policy" "instance_ssm" {
-  name   = "${var.resource_name_prefix}-graphdb-ssm-describe"
+resource "aws_iam_role_policy" "graphdb_instance_ssm_iam_role_policy" {
+  name   = var.resource_name_prefix
   role   = var.iam_role_id
-  policy = data.aws_iam_policy_document.instance_ssm.json
+  policy = data.aws_iam_policy_document.graphdb_instance_ssm.json
 }
 
-data "aws_iam_policy_document" "instance_ssm" {
+data "aws_iam_policy_document" "graphdb_instance_ssm" {
   statement {
     effect = "Allow"
 
@@ -72,7 +72,7 @@ data "aws_iam_policy_document" "instance_ssm" {
   }
 }
 
-data "aws_iam_policy_document" "instance_volume" {
+data "aws_iam_policy_document" "graphdb_instance_volume" {
   statement {
     effect = "Allow"
 
@@ -88,7 +88,7 @@ data "aws_iam_policy_document" "instance_volume" {
   }
 }
 
-data "aws_iam_policy_document" "instance_volume_tagging" {
+data "aws_iam_policy_document" "graphdb_instance_volume_tagging" {
   statement {
     effect = "Allow"
 
@@ -112,13 +112,13 @@ data "aws_iam_policy_document" "instance_volume_tagging" {
   }
 }
 
-resource "aws_iam_role_policy" "route53_instance_registration" {
-  name   = "${var.resource_name_prefix}-graphdb-route53-instance-registration"
+resource "aws_iam_role_policy" "graphdb_route53_instance_registration" {
+  name   = "${var.resource_name_prefix}-route53-instance-registration"
   role   = var.iam_role_id
-  policy = data.aws_iam_policy_document.route53_instance_registration.json
+  policy = data.aws_iam_policy_document.graphdb_route53_instance_registration.json
 }
 
-data "aws_iam_policy_document" "route53_instance_registration" {
+data "aws_iam_policy_document" "graphdb_route53_instance_registration" {
   statement {
     effect = "Allow"
 
@@ -126,6 +126,6 @@ data "aws_iam_policy_document" "route53_instance_registration" {
       "route53:ChangeResourceRecordSets"
     ]
 
-    resources = ["arn:aws:route53:::hostedzone/${aws_route53_zone.zone.zone_id}"]
+    resources = ["arn:aws:route53:::hostedzone/${aws_route53_zone.graphdb_zone.zone_id}"]
   }
 }

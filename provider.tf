@@ -5,7 +5,7 @@ provider "aws" {
     tags = merge(
       {
         Release_Name = var.resource_name_prefix
-        Name         = "${var.resource_name_prefix}-graphdb"
+        Name         = "${var.resource_name_prefix}"
       },
       var.common_tags
     )
@@ -19,7 +19,7 @@ provider "aws" {
     tags = merge(
       {
         Release_Name = var.resource_name_prefix
-        Name         = "${var.resource_name_prefix}-graphdb"
+        Name         = "${var.resource_name_prefix}"
       },
       var.common_tags
     )

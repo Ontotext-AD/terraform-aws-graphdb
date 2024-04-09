@@ -10,7 +10,7 @@ variable "resource_name_prefix" {
   }
 }
 
-variable "instance_type" {
+variable "ec2_instance_type" {
   description = "EC2 instance type"
   type        = string
 }
@@ -169,12 +169,12 @@ variable "ebs_kms_key_arn" {
 
 # DNS Parameters
 
-variable "zone_dns_name" {
+variable "route53_zone_dns_name" {
   description = "DNS name for the private hosted zone in Route 53"
   type        = string
 }
 
-variable "zone_id" {
+variable "route53_zone_id" {
   description = "Route 53 private hosted zone id"
   type        = string
 }
@@ -205,19 +205,19 @@ variable "allowed_inbound_cidrs_ssh" {
   default     = null
 }
 
-variable "key_name" {
+variable "ec2_key_name" {
   description = "key pair to use for SSH access to instance"
   type        = string
   default     = null
 }
 
-variable "node_count" {
+variable "graphdb_node_count" {
   description = "Number of GraphDB nodes to deploy in ASG"
   type        = number
   default     = 3
 }
 
-variable "userdata_script" {
+variable "ec2_userdata_script" {
   description = "Userdata script for EC2 instance"
   type        = string
 }

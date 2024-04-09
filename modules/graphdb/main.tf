@@ -1,7 +1,7 @@
 data "aws_ec2_instance_type" "graphdb" {
   count = var.ami_id != null ? 0 : 1
 
-  instance_type = var.instance_type
+  instance_type = var.ec2_instance_type
 }
 
 data "aws_ami" "graphdb" {
@@ -28,7 +28,9 @@ data "aws_ami" "graphdb" {
   }
 }
 
-data "aws_default_tags" "current" {}
+data "aws_default_tags" "current" {
+  provider = aws.main
+}
 
 data "aws_subnet" "subnet" {
   count = length(var.graphdb_subnets)
@@ -46,13 +48,13 @@ locals {
 }
 
 resource "aws_launch_template" "graphdb" {
-  name          = "${var.resource_name_prefix}-graphdb"
+  name          = var.resource_name_prefix
   image_id      = var.ami_id != null ? var.ami_id : data.aws_ami.graphdb[0].id
-  instance_type = var.instance_type
-  key_name      = var.key_name != null ? var.key_name : null
-  user_data     = var.userdata_script
+  instance_type = var.ec2_instance_type
+  key_name      = var.ec2_key_name != null ? var.ec2_key_name : null
+  user_data     = var.ec2_userdata_script
   vpc_security_group_ids = [
-    aws_security_group.graphdb.id
+    aws_security_group.graphdb_security_group.id
   ]
 
   ebs_optimized = "true"
@@ -67,11 +69,11 @@ resource "aws_launch_template" "graphdb" {
   }
 }
 
-resource "aws_autoscaling_group" "graphdb" {
-  name                = "${var.resource_name_prefix}-graphdb"
-  min_size            = var.node_count
-  max_size            = var.node_count
-  desired_capacity    = var.node_count
+resource "aws_autoscaling_group" "graphdb_auto_scalling_group" {
+  name                = var.resource_name_prefix
+  min_size            = var.graphdb_node_count
+  max_size            = var.graphdb_node_count
+  desired_capacity    = var.graphdb_node_count
   vpc_zone_identifier = var.graphdb_subnets
 
   target_group_arns = var.graphdb_target_group_arns

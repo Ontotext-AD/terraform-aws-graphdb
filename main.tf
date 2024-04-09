@@ -52,16 +52,16 @@ module "monitoring" {
 
   count = var.deploy_monitoring ? 1 : 0
 
-  resource_name_prefix              = var.resource_name_prefix
-  aws_region                        = var.aws_region
-  route53_availability_check_region = var.monitoring_route53_health_check_aws_region
-  actions_enabled                   = var.monitoring_actions_enabled
-  sns_topic_endpoint                = var.deploy_monitoring ? var.monitoring_sns_topic_endpoint : null
-  endpoint_auto_confirms            = var.monitoring_endpoint_auto_confirms
-  sns_protocol                      = var.monitoring_sns_protocol
-  log_group_retention_in_days       = var.monitoring_log_group_retention_in_days
-  web_test_availability_request_url = module.load_balancer.lb_dns_name
-  measure_latency                   = var.monitoring_route53_measure_latency
+  resource_name_prefix                   = var.resource_name_prefix
+  aws_region                             = var.aws_region
+  route53_availability_check_region      = var.monitoring_route53_health_check_aws_region
+  cloudwatch_alarms_actions_enabled      = var.monitoring_actions_enabled
+  sns_topic_endpoint                     = var.deploy_monitoring ? var.monitoring_sns_topic_endpoint : null
+  sns_endpoint_auto_confirms             = var.monitoring_endpoint_auto_confirms
+  sns_protocol                           = var.monitoring_sns_protocol
+  cloudwatch_log_group_retention_in_days = var.monitoring_log_group_retention_in_days
+  route53_availability_request_url       = module.load_balancer.lb_dns_name
+  route53_availability_measure_latency   = var.monitoring_route53_measure_latency
 
   providers = {
     aws.main       = aws.main
@@ -71,6 +71,10 @@ module "monitoring" {
 
 module "graphdb" {
   source = "./modules/graphdb"
+
+  providers = {
+    aws.main = aws.main
+  }
 
   resource_name_prefix = var.resource_name_prefix
   aws_region           = data.aws_region.current.name
@@ -104,10 +108,10 @@ module "graphdb" {
 
   # VMs
 
-  instance_type   = var.instance_type
-  node_count      = var.node_count
-  userdata_script = module.graphdb.graphdb_userdata_base64_encoded
-  key_name        = var.key_name
+  ec2_instance_type   = var.ec2_instance_type
+  graphdb_node_count  = var.graphdb_node_count
+  ec2_userdata_script = module.graphdb.graphdb_userdata_base64_encoded
+  ec2_key_name        = var.ec2_key_name
 
   # Backup Configuration
 
@@ -132,8 +136,8 @@ module "graphdb" {
 
   # DNS
 
-  zone_id       = module.graphdb.zone_id
-  zone_dns_name = var.zone_dns_name
+  route53_zone_id       = module.graphdb.route53_zone_id
+  route53_zone_dns_name = var.route53_zone_dns_name
 
   # User data scripts
   deploy_monitoring = var.deploy_monitoring

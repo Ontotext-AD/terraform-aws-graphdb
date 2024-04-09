@@ -4,13 +4,13 @@ locals {
   account_id = data.aws_caller_identity.current.account_id
 }
 
-resource "aws_s3_bucket" "backup" {
-  bucket = "${var.resource_name_prefix}-graphdb-backup-${local.account_id}"
+resource "aws_s3_bucket" "graphdb_backup" {
+  bucket = "${var.resource_name_prefix}-backup-${local.account_id}"
 }
 
 # Explicitly disable public access
 resource "aws_s3_bucket_public_access_block" "backup" {
-  bucket = aws_s3_bucket.backup.id
+  bucket = aws_s3_bucket.graphdb_backup.id
 
   block_public_acls       = true
   block_public_policy     = true
@@ -19,7 +19,7 @@ resource "aws_s3_bucket_public_access_block" "backup" {
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "backup" {
-  bucket = aws_s3_bucket.backup.id
+  bucket = aws_s3_bucket.graphdb_backup.id
 
   rule {
     bucket_key_enabled = true
@@ -32,7 +32,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "backup" {
 }
 
 resource "aws_s3_bucket_versioning" "backup" {
-  bucket = aws_s3_bucket.backup.id
+  bucket = aws_s3_bucket.graphdb_backup.id
 
   versioning_configuration {
     status = "Enabled"
@@ -40,7 +40,7 @@ resource "aws_s3_bucket_versioning" "backup" {
 }
 
 resource "aws_s3_bucket_policy" "disallow-non-tls-access-to-bucket" {
-  bucket = aws_s3_bucket.backup.id
+  bucket = aws_s3_bucket.graphdb_backup.id
   policy = data.aws_iam_policy_document.disallow-non-tls-access-to-bucket.json
 }
 
@@ -56,8 +56,8 @@ data "aws_iam_policy_document" "disallow-non-tls-access-to-bucket" {
       identifiers = ["*"]
     }
     resources = [
-      aws_s3_bucket.backup.arn,
-      "${aws_s3_bucket.backup.arn}/*",
+      aws_s3_bucket.graphdb_backup.arn,
+      "${aws_s3_bucket.graphdb_backup.arn}/*",
     ]
     condition {
       variable = "aws:SecureTransport"
@@ -88,8 +88,8 @@ data "aws_iam_policy_document" "backup_s3_crud" {
     ]
     resources = [
       # the exact ARN is needed for the list bucket action, star for put,get,delete
-      "arn:aws:s3:::${aws_s3_bucket.backup.bucket}",
-      "arn:aws:s3:::${aws_s3_bucket.backup.bucket}/*"
+      "arn:aws:s3:::${aws_s3_bucket.graphdb_backup.bucket}",
+      "arn:aws:s3:::${aws_s3_bucket.graphdb_backup.bucket}/*"
     ]
   }
 }

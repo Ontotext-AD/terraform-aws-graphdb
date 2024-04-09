@@ -88,7 +88,7 @@
           "type": "metric",
           "properties": {
               "metrics": [
-                  [ { "expression": "SELECT AVG(graphdb_data_dir_free) FROM \"${resource_name_prefix}-graphdb\" GROUP BY host", "label": "Query1", "id": "q1", "region": "${aws_region}" } ]
+                  [ { "expression": "SELECT AVG(graphdb_data_dir_free) FROM \"${resource_name_prefix}\" GROUP BY host", "label": "Query1", "id": "q1", "region": "${aws_region}" } ]
               ],
               "region": "${aws_region}",
               "stacked": false,
@@ -116,7 +116,7 @@
           "type": "metric",
           "properties": {
               "metrics": [
-                  [ { "expression": "SELECT AVG(graphdb_data_dir_used) FROM \"${resource_name_prefix}-graphdb\" GROUP BY host", "label": "Query1", "id": "q1", "region": "${aws_region}" } ]
+                  [ { "expression": "SELECT AVG(graphdb_data_dir_used) FROM \"${resource_name_prefix}\" GROUP BY host", "label": "Query1", "id": "q1", "region": "${aws_region}" } ]
               ],
               "region": "${aws_region}",
               "stacked": false,
@@ -144,7 +144,7 @@
           "type": "metric",
           "properties": {
               "metrics": [
-                  [ { "expression": "SELECT COUNT(graphdb_failure_recoveries_count) FROM \"${resource_name_prefix}-graphdb\"", "label": "Query1", "id": "q1", "region": "${aws_region}" } ]
+                  [ { "expression": "SELECT COUNT(graphdb_failure_recoveries_count) FROM \"${resource_name_prefix}\"", "label": "Query1", "id": "q1", "region": "${aws_region}" } ]
               ],
               "region": "${aws_region}",
               "stacked": false,
@@ -172,7 +172,7 @@
           "type": "metric",
           "properties": {
               "metrics": [
-                  [ { "expression": "SELECT MAX(graphdb_nodes_disconnected) FROM \"${resource_name_prefix}-graphdb\"", "label": "Query1", "id": "q1", "region": "${aws_region}" } ]
+                  [ { "expression": "SELECT MAX(graphdb_nodes_disconnected) FROM \"${resource_name_prefix}\"", "label": "Query1", "id": "q1", "region": "${aws_region}" } ]
               ],
               "region": "${aws_region}",
               "stacked": false,
@@ -200,7 +200,7 @@
         "type": "metric",
         "properties": {
             "metrics": [
-                [ { "expression": "SELECT MAX(graphdb_nodes_out_of_sync) FROM \"${resource_name_prefix}-graphdb\"", "label": "Query1", "id": "q1", "region": "${aws_region}" } ]
+                [ { "expression": "SELECT MAX(graphdb_nodes_out_of_sync) FROM \"${resource_name_prefix}\"", "label": "Query1", "id": "q1", "region": "${aws_region}" } ]
             ],
             "region": "${aws_region}",
             "stacked": false,
