@@ -17,6 +17,9 @@ echo "#######################################"
 echo "#   GraphDB configuration overrides   #"
 echo "#######################################"
 
+LB_DNS_RECORD=${graphdb_lb_dns_name}
+NODE_DNS_RECORD=$(cat /var/opt/graphdb/node_dns)
+
 # Get and store the GraphDB license
 aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/license" --with-decryption | \
   jq -r .Parameter.Value | \
@@ -24,25 +27,23 @@ aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${na
 
 # Get the cluster token
 GRAPHDB_CLUSTER_TOKEN="$(aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/cluster_token" --with-decryption | jq -r .Parameter.Value | base64 -d)"
-# Get the NODE_DNS value from the previous script
-NODE_DNS=$(cat /tmp/node_dns)
+# Get the NODE_DNS_RECORD value from the previous script
+SSM_PARAMETERS=$(aws ssm describe-parameters --cli-connect-timeout 300 --region ${region} --query "Parameters[?starts_with(Name, '/${name}/graphdb/')].Name" --output text)
 
 cat << EOF > /etc/graphdb/graphdb.properties
 graphdb.auth.token.secret=$GRAPHDB_CLUSTER_TOKEN
 graphdb.connector.port=7201
-graphdb.external-url=http://$${NODE_DNS}:7201
-graphdb.rpc.address=$${NODE_DNS}:7301
+graphdb.external-url=http://$${NODE_DNS_RECORD}:7201
+graphdb.rpc.address=$${NODE_DNS_RECORD}:7301
 EOF
-
-LB_DNS=$(aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/lb_dns_name" | jq -r .Parameter.Value)
 
 cat << EOF > /etc/graphdb-cluster-proxy/graphdb.properties
 graphdb.auth.token.secret=$GRAPHDB_CLUSTER_TOKEN
 graphdb.connector.port=7200
-graphdb.external-url=http://$${LB_DNS}
-graphdb.vhosts=http://$${LB_DNS},http://$${NODE_DNS}:7200
-graphdb.rpc.address=$${NODE_DNS}:7300
-graphdb.proxy.hosts=$${NODE_DNS}:7301
+graphdb.external-url=http://$${LB_DNS_RECORD}
+graphdb.vhosts=http://$${LB_DNS_RECORD},http://$${NODE_DNS_RECORD}:7200
+graphdb.rpc.address=$${NODE_DNS_RECORD}:7300
+graphdb.proxy.hosts=$${NODE_DNS_RECORD}:7301
 EOF
 
 mkdir -p /etc/systemd/system/graphdb.service.d/
@@ -60,16 +61,14 @@ cat << EOF > /etc/systemd/system/graphdb.service.d/overrides.conf
 Environment="GDB_HEAP_SIZE=$${JVM_MAX_MEMORY}g"
 EOF
 
-parameters=$(aws ssm describe-parameters --cli-connect-timeout 300 --region ${region} --query "Parameters[?starts_with(Name, '/${name}/graphdb/')].Name" --output text)
-
 # Appends configuration overrides to graphdb.properties
-if [[ $parameters == *"/${name}/graphdb/graphdb_properties"* ]]; then
+if [[ $SSM_PARAMETERS == *"/${name}/graphdb/graphdb_properties"* ]]; then
   aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/graphdb_properties" --with-decryption | jq -r .Parameter.Value | \
     base64 -d >> /etc/graphdb/graphdb.properties
 fi
 
 # Appends environment overrides to GDB_JAVA_OPTS
-if [[ $parameters == *"/${name}/graphdb/graphdb_java_options"* ]]; then
+if [[ $SSM_PARAMETERS == *"/${name}/graphdb/graphdb_java_options"* ]]; then
   extra_graphdb_java_options="$(aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/graphdb_java_options" --with-decryption | jq -r .Parameter.Value)"
   (
     source /etc/graphdb/graphdb.env

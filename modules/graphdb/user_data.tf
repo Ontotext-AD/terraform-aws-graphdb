@@ -37,6 +37,9 @@ data "cloudinit_config" "graphdb_user_data" {
     content = templatefile("${path.module}/templates/02_dns_provisioning.sh.tpl", {
       zone_id : var.zone_id
       zone_dns_name : var.zone_dns_name
+      name : var.resource_name_prefix
+      region : var.aws_region
+      node_count : var.node_count
     })
   }
 
@@ -45,6 +48,7 @@ data "cloudinit_config" "graphdb_user_data" {
     content = templatefile("${path.module}/templates/03_gdb_conf_overrides.sh.tpl", {
       name : var.resource_name_prefix
       region : var.aws_region
+      graphdb_lb_dns_name : var.graphdb_lb_dns_name
     })
   }
 
@@ -69,6 +73,7 @@ data "cloudinit_config" "graphdb_user_data" {
     content_type = "text/x-shellscript"
     content = templatefile("${path.module}/templates/06_cloudwatch_setup.sh.tpl", {
       name : var.resource_name_prefix
+      deploy_monitoring : var.deploy_monitoring
       region : var.aws_region
     })
   }
@@ -79,6 +84,17 @@ data "cloudinit_config" "graphdb_user_data" {
       name : var.resource_name_prefix
       region : var.aws_region
       zone_id : var.zone_id
+      node_count : var.node_count
+    })
+  }
+
+  part {
+    content_type = "text/x-shellscript"
+    content = templatefile("${path.module}/templates/08_node_rejoin.sh.tpl", {
+      region : var.aws_region
+      name : var.resource_name_prefix
+      zone_id : var.zone_id
+      node_count : var.node_count
     })
   }
 }
