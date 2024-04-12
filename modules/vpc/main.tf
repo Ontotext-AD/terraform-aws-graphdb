@@ -2,10 +2,6 @@
 data "aws_availability_zones" "available" {}
 
 locals {
-  tags = {
-    Name = "${var.resource_name_prefix}"
-  }
-
   azs                = slice(data.aws_availability_zones.available.names, 0, 3)
   len_public_subnets = max(length(var.vpc_private_subnet_cidrs))
 
@@ -17,7 +13,6 @@ locals {
 # GraphDB VPC
 
 resource "aws_vpc" "graphdb_vpc" {
-
   cidr_block           = var.vpc_cidr_block
   enable_dns_hostnames = var.vpc_dns_hostnames
   enable_dns_support   = var.vpc_dns_support
@@ -40,7 +35,7 @@ resource "aws_subnet" "graphdb_public_subnet" {
   cidr_block        = var.vpc_public_subnet_cidrs[count.index]
   availability_zone = local.azs[count.index]
 
-  tags = { "Name" = "${local.tags.Name}-public-subnet-${count.index}" }
+  tags = { "Name" = "${var.resource_name_prefix}-public-subnet-${count.index}" }
 }
 
 # GraphDB Private Subnet
@@ -53,7 +48,7 @@ resource "aws_subnet" "graphdb_private_subnet" {
   availability_zone = local.azs[count.index]
 
   tags = {
-    "Name" = "${local.tags.Name}-private-subnet-${count.index}"
+    "Name" = "${var.resource_name_prefix}-private-subnet-${count.index}"
   }
 }
 
@@ -89,7 +84,7 @@ resource "aws_route_table" "graphdb_public_route_table" {
   }
 
   tags = {
-    Name = "${local.tags.Name}-public-route-table-${count.index}"
+    Name = "${var.resource_name_prefix}-public-route-table-${count.index}"
   }
 }
 
@@ -108,7 +103,7 @@ resource "aws_route_table" "graphdb_private_route_table" {
   vpc_id = aws_vpc.graphdb_vpc.id
 
   tags = {
-    Name = "${local.tags.Name}-private-route-table-${count.index}"
+    Name = "${var.resource_name_prefix}-private-route-table-${count.index}"
   }
 
   dynamic "route" {
@@ -126,4 +121,14 @@ resource "aws_route_table_association" "graphdb_private_route_table_association"
 
   route_table_id = aws_route_table.graphdb_private_route_table[count.index].id
   subnet_id      = aws_subnet.graphdb_private_subnet[count.index].id
+}
+
+# GraphDB Private Link Service
+
+resource "aws_vpc_endpoint_service" "graphdb_vpc_endpoint_service" {
+  count = var.lb_enable_private_access ? 1 : 0
+
+  network_load_balancer_arns = var.network_load_balancer_arns
+  acceptance_required        = var.vpc_endpoint_service_accept_connection_requests
+  allowed_principals         = var.vpc_endpoint_service_allowed_principals
 }
