@@ -66,6 +66,8 @@ resource "aws_launch_template" "graphdb" {
     http_endpoint = "enabled"
     http_tokens   = "required"
   }
+
+  update_default_version = "true"
 }
 
 resource "aws_autoscaling_group" "graphdb_auto_scalling_group" {
@@ -79,7 +81,7 @@ resource "aws_autoscaling_group" "graphdb_auto_scalling_group" {
 
   launch_template {
     id      = aws_launch_template.graphdb.id
-    version = "$Latest"
+    version = aws_launch_template.graphdb.latest_version
   }
 
   dynamic "tag" {
