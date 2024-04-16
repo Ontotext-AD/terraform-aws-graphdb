@@ -112,10 +112,9 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | vpc\_dns\_support | Enable or disable the support of the DNS service | `bool` | `true` | no |
 | single\_nat\_gateway | Enable or disable the option to have single NAT Gateway. | `bool` | `false` | no |
 | enable\_nat\_gateway | Enable or disable the creation of the NAT Gateway | `bool` | `true` | no |
-| vpc\_endpoint\_service\_acceptance\_required | (Required) Whether or not VPC endpoint connection requests to the service must be accepted by the service owner - true or false. | `bool` | n/a | yes |
-| vpc\_endpoint\_service\_allowed\_principals | (Optional) The ARNs of one or more principals allowed to discover the endpoint service. | `list(string)` | n/a | yes |
-| network\_load\_balancer\_arns | Describe the ARN(s) of the load balancer(s) to which you want to have access. | `list(string)` | n/a | yes |
-| graphdb\_enable\_private\_access | Enable or disable the private access via PrivateLink to the GraphDB Cluster | `bool` | n/a | yes |
+| accept\_vpc\_endpoint\_connection\_requests | (Required) Whether or not VPC endpoint connection requests to the service must be accepted by the service owner - true or false. | `bool` | `true` | no |
+| vpc\_endpoint\_service\_allowed\_principals | (Optional) The ARNs of one or more principals allowed to discover the endpoint service. | `list(string)` | `null` | no |
+| lb\_enable\_private\_access | Enable or disable the private access via PrivateLink to the GraphDB Cluster | `bool` | `false` | no |
 | ami\_id | (Optional) User-provided AMI ID to use with GraphDB instances. If you provide this value, please ensure it will work with the default userdata script (assumes latest version of Ubuntu LTS). Otherwise, please provide your own userdata script using the user\_supplied\_userdata\_path variable. | `string` | `null` | no |
 | graphdb\_version | GraphDB version | `string` | `"10.6.3"` | no |
 | device\_name | The device to which EBS volumes for the GraphDB data directory will be mapped. | `string` | `"/dev/sdf"` | no |
