@@ -49,6 +49,9 @@ locals {
 
 module "monitoring" {
   source = "./modules/monitoring"
+  providers = {
+    aws.monitoring = aws.monitoring
+  }
 
   count = var.deploy_monitoring ? 1 : 0
 
@@ -62,19 +65,10 @@ module "monitoring" {
   cloudwatch_log_group_retention_in_days = var.monitoring_log_group_retention_in_days
   route53_availability_request_url       = module.load_balancer.lb_dns_name
   route53_availability_measure_latency   = var.monitoring_route53_measure_latency
-
-  providers = {
-    aws.main       = aws.main
-    aws.monitoring = aws.monitoring
-  }
 }
 
 module "graphdb" {
   source = "./modules/graphdb"
-
-  providers = {
-    aws.main = aws.main
-  }
 
   resource_name_prefix = var.resource_name_prefix
   aws_region           = data.aws_region.current.name
