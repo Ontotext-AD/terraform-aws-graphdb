@@ -106,10 +106,11 @@ module "graphdb" {
 
   # VMs
 
-  ec2_instance_type   = var.ec2_instance_type
-  graphdb_node_count  = var.graphdb_node_count
-  ec2_userdata_script = module.graphdb.graphdb_userdata_base64_encoded
-  ec2_key_name        = var.ec2_key_name
+  ec2_instance_type          = var.ec2_instance_type
+  graphdb_node_count         = var.graphdb_node_count
+  ec2_userdata_script        = module.graphdb.graphdb_userdata_base64_encoded
+  ec2_key_name               = var.ec2_key_name
+  enable_detailed_monitoring = var.monitoring_enable_detailed_instance_monitoring
 
   # Backup Configuration
 

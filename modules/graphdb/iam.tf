@@ -81,6 +81,7 @@ data "aws_iam_policy_document" "graphdb_instance_volume" {
       "ec2:AttachVolume",
       "ec2:DescribeVolumes",
       "ec2:DescribeInstances",
+      "ec2:MonitorInstances",
       "route53:ListResourceRecordSets"
     ]
 

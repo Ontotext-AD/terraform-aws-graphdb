@@ -67,15 +67,13 @@ resource "aws_cloudwatch_metric_alarm" "graphdb_low_disk_space_alarm" {
   depends_on = [aws_cloudwatch_log_metric_filter.graphdb_low_disk_space_metric_filter]
 }
 
-# TODO: Currently this alarm won't work because it relies on the instance IDs which need to be parsed dynamically. The workarounds are remote state, or restructruting the current modules in order to parse the EC2 InstanceIDs from the VM module.
-
 resource "aws_cloudwatch_metric_alarm" "graphdb_memory_utilization" {
   alarm_name          = "al-${var.resource_name_prefix}-memory-utilization"
   alarm_description   = "Alarm will trigger if Memory utilization is above 90%"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = var.cloudwatch_evaluation_periods
   period              = var.cloudwatch_period
-  statistic           = "Average"
+  statistic           = "Maximum"
   threshold           = var.cloudwatch_al_low_memory_warning_threshold
   actions_enabled     = var.cloudwatch_alarms_actions_enabled
   alarm_actions       = [aws_sns_topic.graphdb_sns_topic.arn]
@@ -84,9 +82,9 @@ resource "aws_cloudwatch_metric_alarm" "graphdb_memory_utilization" {
   namespace   = "CWAgent"
   unit        = "Percent"
 
-  //dimensions = {
-  // InstanceId = data.aws_instances.filtered_instances.ids[count.index]
-  // }
+  dimensions = {
+    AutoScalingGroupName = var.resource_name_prefix
+  }
 }
 
 # Alarm for CPU Utilization for Autoscaling Group
@@ -97,7 +95,7 @@ resource "aws_cloudwatch_metric_alarm" "graphdb_cpu_utilization" {
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = var.cloudwatch_evaluation_periods
   period              = var.cloudwatch_period
-  statistic           = "Average"
+  statistic           = "Maximum"
   threshold           = 80
   actions_enabled     = var.cloudwatch_alarms_actions_enabled
   alarm_actions       = [aws_sns_topic.graphdb_sns_topic.arn]
@@ -105,8 +103,9 @@ resource "aws_cloudwatch_metric_alarm" "graphdb_cpu_utilization" {
   metric_name = "CPUUtilization"
   namespace   = "AWS/EC2"
   unit        = "Percent"
+
   dimensions = {
-    AutoScalingGroupName = "${var.resource_name_prefix}"
+    AutoScalingGroupName = var.resource_name_prefix
   }
 }
 

@@ -51,6 +51,11 @@ resource "aws_launch_template" "graphdb" {
   instance_type = var.ec2_instance_type
   key_name      = var.ec2_key_name != null ? var.ec2_key_name : null
   user_data     = var.ec2_userdata_script
+
+  monitoring {
+    enabled = var.enable_detailed_monitoring
+  }
+
   vpc_security_group_ids = [
     aws_security_group.graphdb_security_group.id
   ]
