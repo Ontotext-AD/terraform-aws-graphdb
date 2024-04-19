@@ -24,7 +24,7 @@ output "s3_iam_role_name" {
 
 output "asg_name" {
   description = "Name of autoscaling group"
-  value       = aws_autoscaling_group.graphdb_auto_scalling_group.name
+  value       = aws_autoscaling_group.graphdb_auto_scaling_group.name
 }
 
 output "launch_template_id" {

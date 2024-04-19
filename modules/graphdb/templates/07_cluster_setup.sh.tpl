@@ -240,7 +240,7 @@ check_license() {
 
   # Check if the response contains the word "free"
   if [[ "$response" == *"free"* ]]; then
-    echo "Free license detecting"
+    echo "Free license detected, EE license required, exiting!"
     exit 1
   fi
 }

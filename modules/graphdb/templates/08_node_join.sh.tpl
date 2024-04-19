@@ -41,12 +41,37 @@ check_gdb() {
   fi
 }
 
-# Function to add a node to the existing cluster
-rejoin_cluster() {
+# This function should be used only after the Leader node is found
+get_cluster_state() {
+  curl_response=$(curl "http://$${LEADER_NODE}/rest/monitor/cluster" -s -u "admin:$GRAPHDB_ADMIN_PASSWORD")
+  nodes_in_cluster=$(echo "$curl_response" | grep -oP 'graphdb_nodes_in_cluster \K\d+')
+  nodes_in_sync=$(echo "$curl_response" | grep -oP 'graphdb_nodes_in_sync \K\d+')
+  echo "$nodes_in_cluster $nodes_in_sync"
+}
 
-  echo "#############################"
-  echo "#    Rejoin cluster node    #"
-  echo "#############################"
+# Function to wait until total quorum is achieved
+wait_for_total_quorum() {
+  while true; do
+    cluster_metrics=$(get_cluster_state)
+    nodes_in_cluster=$(echo "$cluster_metrics" | awk '{print $1}')
+    nodes_in_sync=$(echo "$cluster_metrics" | awk '{print $2}')
+
+    if [ "$nodes_in_sync" -eq "$nodes_in_cluster" ]; then
+      echo "Total quorum achieved: graphdb_nodes_in_sync: $nodes_in_sync equals graphdb_nodes_in_cluster: $nodes_in_cluster"
+      break
+    else
+      echo "Waiting for total quorum... (graphdb_nodes_in_sync: $nodes_in_sync, graphdb_nodes_in_cluster: $nodes_in_cluster)"
+      sleep 30
+    fi
+  done
+}
+
+# Function to add a node to the existing cluster
+join_cluster() {
+
+  echo "#########################"
+  echo "#    Joining cluster    #"
+  echo "#########################"
 
   # Waits for all nodes to be available (Handles rolling upgrades)
   for node in "$${EXISTING_RECORDS_ARRAY[@]}"; do
@@ -77,33 +102,19 @@ rejoin_cluster() {
     sleep 5
   done
 
-  echo "Attempting to rejoin the cluster"
-  # Step 1: Remove the node from the cluster.
-  echo "Attempting to delete $${CURRENT_NODE_NAME}:7301 from the cluster"
+  # Waits for total quorum of the cluster before continuing with joining the cluster
+  wait_for_total_quorum
 
-  # To handle cluster scale up we return true if the delete operation fails.
-  curl -X DELETE -s \
-    --fail-with-body \
-    -o "/dev/null" \
-    -H 'Content-Type: application/json' \
-    -H 'Accept: application/json' \
-    -w "%%{http_code}" \
-    -u "admin:$${GRAPHDB_ADMIN_PASSWORD}" \
-    -d "{\"nodes\": [\"$${CURRENT_NODE_NAME}:7301\"]}" \
-    "http://$${LEADER_NODE}/rest/cluster/config/node" || true
-
-  # Step 2: Add the current node to the cluster with the same address.
   echo "Attempting to add $${CURRENT_NODE_NAME}:7301 to the cluster"
   # This operation might take a while depending on the size of the repositories.
   CURL_MAX_REQUEST_TIME=21600 # 6 hours
-
   ADD_NODE=$(
     curl -X POST -s \
       -m $CURL_MAX_REQUEST_TIME \
+      -w "%%{http_code}" \
       -o "/dev/null" \
       -H 'Content-Type: application/json' \
       -H 'Accept: application/json' \
-      -w "%%{http_code}" \
       -u "admin:$${GRAPHDB_ADMIN_PASSWORD}" \
       -d"{\"nodes\": [\"$${CURRENT_NODE_NAME}:7301\"]}" \
       "http://$${LEADER_NODE}/rest/cluster/config/node"
@@ -112,7 +123,7 @@ rejoin_cluster() {
   if [[ "$ADD_NODE" == 200 ]]; then
     echo "$${CURRENT_NODE_NAME} was successfully added to the cluster."
   else
-    echo "Node $${CURRENT_NODE_NAME} failed to rejoin the cluster, check the logs!"
+    echo "Node $${CURRENT_NODE_NAME} failed to join the cluster, check the logs!"
   fi
 }
 
@@ -129,14 +140,15 @@ if [ ! -d "$RAFT_DIR" ]; then
       echo "Raft directory not found yet. Waiting (attempt $i of 30)..."
       sleep 5
       if [ $i == 30 ]; then
-        echo "$RAFT_DIR folder is not found, rejoining node to cluster"
-        rejoin_cluster
+        echo "$RAFT_DIR folder is not found, joining node to cluster"
+        join_cluster
       fi
     else
       echo "Found Raft directory"
       if [ -z "$(ls -A $RAFT_DIR)" ]; then
-        echo "$RAFT_DIR folder is empty, rejoining node to cluster"
-        rejoin_cluster
+        # TODO check if the data folder is empty as well, otherwise this will fail.
+        echo "$RAFT_DIR folder is empty, joining node to cluster"
+        join_cluster
       else
         break
       fi

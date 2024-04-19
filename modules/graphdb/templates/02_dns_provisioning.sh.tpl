@@ -16,12 +16,13 @@ echo "#   DNS Provisioning   #"
 echo "########################"
 
 IMDS_TOKEN=$(curl -Ss -H "X-aws-ec2-metadata-token-ttl-seconds: 6000" -XPUT 169.254.169.254/latest/api/token)
+INSTANCE_ID=$(curl -s -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" 169.254.169.254/latest/meta-data/instance-id)
 LOCAL_IPv4=$(curl -Ss -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" 169.254.169.254/latest/meta-data/local-ipv4)
 AVAILABILITY_ZONE_ID=$(curl -Ss -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" 169.254.169.254/latest/meta-data/placement/availability-zone-id)
 NODE_DNS_PATH="/var/opt/graphdb/node_dns"
 # Extract only the numeric part from the AVAILABILITY_ZONE_ID
 AVAILABILITY_ZONE_ID_NUMBER="$${AVAILABILITY_ZONE_ID//*-az}"
-NODE_NUMBER=0
+NODE_NUMBER=1
 
 # Handles instance reboots or recreations when the node has already been part of a cluster
 if [ -f $NODE_DNS_PATH ]; then
@@ -38,11 +39,13 @@ if [ -f $NODE_DNS_PATH ]; then
   hostnamectl set-hostname "$NODE_DNS_RECORD"
   echo "DNS record for $NODE_DNS_RECORD has been updated"
 else
+  # TODO this will create a new DNS record if the VM is moved to another zone for any reason.
+  # TODO We need a mechanism to check which DNS record does not respond and update the non responding record
   echo "$NODE_DNS_PATH does not exist. New DNS record will be created."
 
   while true; do
     # Concatenate "node" with the extracted number
-    NODE_NAME="node-$NODE_NUMBER-zone-$AVAILABILITY_ZONE_ID_NUMBER"
+    NODE_NAME="node-$NODE_NUMBER"
 
     # Check if the Route 53 record exists for the node name
     DNS_RECORD_TAKEN=$(aws route53 list-resource-record-sets --hosted-zone-id ${zone_id} --query "ResourceRecordSets[?contains(Name, '$NODE_NAME')]" --output text)
@@ -71,5 +74,7 @@ else
       fi
     fi
   done
-
 fi
+
+# Updating the EC2 name tag
+aws ec2 create-tags --resources "$INSTANCE_ID" --tags "Key=Name,Value=${name}:$NODE_DNS_RECORD"

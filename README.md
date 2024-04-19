@@ -14,7 +14,7 @@ for more details.
 - [Inputs](#inputs)
 - [Usage](#usage)
 - [Examples](#examples)
-- [Updating configurations on an active deployment](#updating-configurations-on-an-active-deployment)
+- [Updating configurations and GraphDB version on an active deployment](#updating-configurations-and-graphdb-version-on-an-active-deployment)
 - [Local Development](#local-development)
 - [Release History](#release-history)
 - [Contributing](#contributing)
@@ -318,19 +318,45 @@ s3_enable_replication_rule = true
 
 ## Updating configurations on an active deployment
 
-In case your license has expired, and you need to renew it, or you need to make some changes to the `graphdb.properties`
-file, or other GraphDB related configurations, you will need to apply the changes via `terraform apply` and then either:
+### Updating Configurations
 
-- Terminate the instances one by one, starting with the follower nodes, and leaving the leader node to be the last
-  instance to be terminated
-- Scale down to 0 and back to number of nodes you originally had.
+When faced with scenarios such as an expired license, or the need to modify the graphdb.properties file or other
+GraphDB-related configurations, you can apply changes via `terraform apply` and then you can either:
+
+- Manually terminate instances one by one, beginning with the follower nodes and concluding with the leader node
+as the last instance to be terminated.
+- Scale in the number of instances in the scale set to zero and then scale back up to the original number of nodes.
+- Set the graphdb_enable_userdata_scripts_on_reboot variable to true. This ensures that user data scripts are executed
+on each reboot, allowing you to update the configuration of each node.
+The reboot option would essentially achieve the same outcome as the termination and replacement approach, but it is still experimental.
 
 ```text
-Please be aware that the latter option will result in some downtime.
+Please note that the scale in and up option will result in greater downtime than the other options, where the downtime should be less.
 ```
 
-Both actions would trigger the user data script to be run again and update all files and properties overrides with the
-updated values.
+Both actions will trigger the user data script to run again, updating files and properties overrides with the new values.
+Please note that changing the `graphdb_admin_password` via `terraform apply` will not update the password in GraphDB.
+Support for this will be introduced in the future.
+
+### Upgrading GraphDB Version
+
+To automatically update the GraphDB version with `terraform apply`, you need to set `enable_instance_refresh` to `true`
+in your `tfvars` file. This configuration will refresh your already running instances with new ones,
+replacing them one at a time.
+
+Please note that by default, the instance refresh process will wait for one hour before moving on to update the next instance.
+This is a precautionary measure as GraphDB may need time to sync with the other nodes.
+You can control this delay by updating the value of `instance_refresh_checkpoint_delay`.
+
+It's important to note that if you have made changes to any GraphDB configurations,
+they will be applied during the instance refresh process with the exception for the `graphdb_admin_password`.
+Support for this will be introduced in the future.
+
+**Important:** Having `enable_instance_refresh` enabled when scaling up the GraphDB cluster may lead to data
+replication issues, as existing instances will still undergo the refresh process.
+Depending on the data size, the new nodes might fail in joining the cluster due to the instance refresh.
+
+**We strongly recommend you to set `enable_instance_refresh` to `false` when scaling up the cluster.**
 
 ## Local Development
 
