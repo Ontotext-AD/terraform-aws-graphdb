@@ -19,6 +19,8 @@ module "vpc" {
   network_load_balancer_arns                      = [module.load_balancer.lb_arn]
   vpc_endpoint_service_allowed_principals         = var.vpc_endpoint_service_allowed_principals
   vpc_endpoint_service_accept_connection_requests = var.vpc_endpoint_service_accept_connection_requests
+  vpc_enable_flow_logs                            = var.vpc_enable_flow_logs
+  vpc_flow_log_bucket_arn                         = var.vpc_enable_flow_logs && var.deploy_logging_module ? module.logging[0].graphdb_logging_bucket_arn : null
 }
 
 module "backup" {
@@ -26,8 +28,64 @@ module "backup" {
 
   count = var.deploy_backup ? 1 : 0
 
-  resource_name_prefix = var.resource_name_prefix
-  iam_role_id          = module.graphdb.iam_role_id
+  resource_name_prefix       = var.resource_name_prefix
+  iam_role_id                = module.graphdb.iam_role_id
+  s3_enable_access_logs      = var.s3_enable_access_logs
+  s3_access_logs_bucket_name = var.deploy_logging_module && var.s3_enable_access_logs ? module.logging[0].graphdb_logging_bucket_name : null
+}
+
+module "logging" {
+  source = "./modules/logging"
+
+  count = var.deploy_logging_module ? 1 : 0
+
+  resource_name_prefix                 = var.resource_name_prefix
+  lb_access_logs_expiration_days       = var.deploy_logging_module && var.lb_enable_access_logs ? var.lb_access_logs_expiration_days : null
+  lb_access_logs_lifecycle_rule_status = var.deploy_logging_module && var.lb_enable_access_logs ? var.lb_access_logs_lifecycle_rule_status : "Disabled"
+  s3_access_logs_expiration_days       = var.deploy_logging_module && var.s3_enable_access_logs ? var.s3_access_logs_expiration_days : null
+  s3_access_logs_lifecycle_rule_status = var.deploy_logging_module && var.s3_enable_access_logs ? var.s3_access_logs_lifecycle_rule_status : "Disabled"
+  vpc_flow_logs_expiration_days        = var.deploy_logging_module && var.vpc_enable_flow_logs ? var.vpc_flow_logs_expiration_days : null
+  vpc_flow_logs_lifecycle_rule_status  = var.deploy_logging_module && var.vpc_enable_flow_logs ? var.vpc_flow_logs_lifecycle_rule_status : "Disabled"
+  expired_object_delete_marker         = var.s3_expired_object_delete_marker
+  mfa_delete                           = var.s3_mfa_delete
+  versioning_enabled                   = var.s3_versioning_enabled
+  abort_multipart_upload               = var.s3_abort_multipart_upload
+}
+
+module "logging_replication" {
+  source = "./modules/logging_replication"
+
+  providers = {
+    aws.bucket_replication_destination_region = aws.bucket_replication_destination_region
+  }
+
+  count = var.logging_enable_bucket_replication ? 1 : 0
+
+  resource_name_prefix       = var.resource_name_prefix
+  graphdb_logging_bucket_id  = var.deploy_logging_module && var.logging_enable_bucket_replication ? module.logging[0].graphdb_logging_bucket_id : null
+  graphdb_logging_bucket_arn = var.deploy_logging_module && var.logging_enable_bucket_replication ? module.logging[0].graphdb_logging_bucket_arn : null
+  s3_iam_role_arn            = module.graphdb.s3_iam_role_arn
+  mfa_delete                 = var.s3_mfa_delete
+  enable_replication         = var.s3_enable_replication_rule
+  versioning_enabled         = var.s3_versioning_enabled
+}
+
+module "backup_replication" {
+  source = "./modules/backup_replication"
+
+  providers = {
+    aws.bucket_replication_destination_region = aws.bucket_replication_destination_region
+  }
+
+  count = var.backup_enable_bucket_replication ? 1 : 0
+
+  resource_name_prefix      = var.resource_name_prefix
+  graphdb_backup_bucket_id  = var.deploy_backup && var.backup_enable_bucket_replication ? module.backup[0].bucket_id : null
+  graphdb_backup_bucket_arn = var.deploy_backup && var.backup_enable_bucket_replication ? module.backup[0].bucket_arn : null
+  s3_iam_role_arn           = module.graphdb.s3_iam_role_arn
+  mfa_delete                = var.s3_mfa_delete
+  enable_replication        = var.s3_enable_replication_rule
+  versioning_enabled        = var.s3_versioning_enabled
 }
 
 module "load_balancer" {
@@ -43,6 +101,8 @@ module "load_balancer" {
   lb_enable_deletion_protection = var.prevent_resource_deletion
   lb_tls_certificate_arn        = var.lb_tls_certificate_arn
   lb_tls_policy                 = var.lb_tls_policy
+  lb_access_logs_bucket_name    = var.lb_enable_access_logs && var.deploy_logging_module ? module.logging[0].graphdb_logging_bucket_name : null
+  lb_enable_access_logs         = var.lb_enable_access_logs
 }
 
 locals {
@@ -54,7 +114,7 @@ locals {
 module "monitoring" {
   source = "./modules/monitoring"
   providers = {
-    aws.monitoring = aws.monitoring
+    aws.useast1 = aws.useast1
   }
 
   count = var.deploy_monitoring ? 1 : 0
@@ -91,11 +151,6 @@ module "graphdb" {
   lb_subnets               = var.lb_internal ? module.vpc[0].private_subnet_ids : module.vpc[0].public_subnet_ids
   graphdb_lb_dns_name      = module.load_balancer.lb_dns_name
 
-  # Identity
-
-  iam_instance_profile = module.graphdb.iam_instance_profile
-  iam_role_id          = module.graphdb.iam_role_id
-
   # GraphDB Configurations
 
   graphdb_admin_password  = var.graphdb_admin_password
@@ -108,7 +163,6 @@ module "graphdb" {
 
   ec2_instance_type          = var.ec2_instance_type
   graphdb_node_count         = var.graphdb_node_count
-  ec2_userdata_script        = module.graphdb.graphdb_userdata_base64_encoded
   ec2_key_name               = var.ec2_key_name
   enable_detailed_monitoring = var.monitoring_enable_detailed_instance_monitoring
 
@@ -135,9 +189,24 @@ module "graphdb" {
 
   # DNS
 
-  route53_zone_id       = module.graphdb.route53_zone_id
   route53_zone_dns_name = var.route53_zone_dns_name
 
   # User data scripts
+
   deploy_monitoring = var.deploy_monitoring
+
+  # S3 Replication Logging Bucket Policy
+
+  graphdb_logging_bucket_name             = var.deploy_logging_module ? module.logging[0].graphdb_logging_bucket_name : ""
+  graphdb_logging_replication_bucket_name = var.deploy_logging_module && var.logging_enable_bucket_replication ? module.logging_replication[0].graphdb_logging_bucket_name : ""
+
+  # Variables for Backup Bucket IAM Policy
+
+  graphdb_backup_bucket_name             = var.deploy_backup ? module.backup[0].bucket_name : ""
+  graphdb_backup_replication_bucket_name = var.deploy_backup && var.backup_enable_bucket_replication ? module.backup_replication[0].graphdb_backup_replication_bucket_name : ""
+
+  # Variables for Logging Bucket IAM Policy
+
+  logging_enable_replication = var.logging_enable_bucket_replication
+  backup_enable_replication  = var.backup_enable_bucket_replication
 }

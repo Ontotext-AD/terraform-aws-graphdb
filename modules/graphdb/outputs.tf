@@ -8,6 +8,20 @@ output "iam_role_id" {
   value       = aws_iam_role.graphdb_iam_role.id
 }
 
+output "iam_role_arn" {
+  description = "IAM role ARN to use for instance"
+  value       = aws_iam_role.graphdb_iam_role.arn
+}
+
+output "s3_iam_role_arn" {
+  description = "IAM Role to use for replication"
+  value       = aws_iam_role.graphdb_s3_replication_role.arn
+}
+
+output "s3_iam_role_name" {
+  value = aws_iam_role.graphdb_s3_replication_role.name
+}
+
 output "asg_name" {
   description = "Name of autoscaling group"
   value       = aws_autoscaling_group.graphdb_auto_scalling_group.name

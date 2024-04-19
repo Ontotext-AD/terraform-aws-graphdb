@@ -6,6 +6,8 @@ data "aws_ec2_instance_type" "graphdb" {
 
 data "aws_default_tags" "current" {}
 
+data "aws_caller_identity" "current" {}
+
 data "aws_ami" "graphdb" {
   count = var.ami_id != null ? 0 : 1
 
@@ -50,7 +52,7 @@ resource "aws_launch_template" "graphdb" {
   image_id      = var.ami_id != null ? var.ami_id : data.aws_ami.graphdb[0].id
   instance_type = var.ec2_instance_type
   key_name      = var.ec2_key_name != null ? var.ec2_key_name : null
-  user_data     = var.ec2_userdata_script
+  user_data     = data.cloudinit_config.graphdb_user_data.rendered
 
   monitoring {
     enabled = var.enable_detailed_monitoring
@@ -63,7 +65,7 @@ resource "aws_launch_template" "graphdb" {
   ebs_optimized = "true"
 
   iam_instance_profile {
-    name = var.iam_instance_profile
+    name = aws_iam_instance_profile.graphdb_iam_instance_profile.id
   }
 
   metadata_options {

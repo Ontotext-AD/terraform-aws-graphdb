@@ -35,6 +35,12 @@ variable "backup_retention_count" {
   default     = 7
 }
 
+variable "backup_enable_bucket_replication" {
+  description = "Enable or disable S3 bucket replication"
+  type        = bool
+  default     = false
+}
+
 # Load balancer & TLS
 
 variable "lb_internal" {
@@ -172,6 +178,24 @@ variable "vpc_endpoint_service_allowed_principals" {
   default     = null
 }
 
+variable "vpc_enable_flow_logs" {
+  description = "Enable or disable VPC Flow logs"
+  type        = bool
+  default     = false
+}
+
+variable "vpc_flow_logs_lifecycle_rule_status" {
+  description = "Define status of the S3 lifecycle rule. Possible options are enabled or disabled."
+  type        = string
+  default     = "Disabled"
+}
+
+variable "vpc_flow_logs_expiration_days" {
+  description = "Define the days after which the VPC flow logs should be deleted"
+  type        = number
+  default     = 7
+}
+
 variable "lb_enable_private_access" {
   description = "Enable or disable the private access via PrivateLink to the GraphDB Cluster"
   type        = bool
@@ -275,13 +299,13 @@ variable "deploy_monitoring" {
 variable "monitoring_route53_measure_latency" {
   description = "Enable or disable route53 function to measure latency"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "monitoring_actions_enabled" {
   description = "Enable or disable actions on alarms"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "monitoring_sns_topic_endpoint" {
@@ -332,4 +356,89 @@ variable "graphdb_java_options" {
   description = "GraphDB options to pass to GraphDB with GRAPHDB_JAVA_OPTS environment variable."
   type        = string
   default     = null
+}
+
+# Logging
+
+variable "deploy_logging_module" {
+  description = "Enable or disable logging module"
+  type        = bool
+  default     = false
+}
+
+variable "logging_enable_bucket_replication" {
+  description = "Enable or disable S3 bucket replication"
+  type        = bool
+  default     = false
+}
+
+variable "s3_enable_access_logs" {
+  description = "Enable or disable access logs"
+  type        = bool
+  default     = false
+}
+
+variable "s3_access_logs_lifecycle_rule_status" {
+  description = "Define status of the S3 lifecycle rule. Possible options are enabled or disabled."
+  type        = string
+  default     = "Disabled"
+}
+
+variable "s3_access_logs_expiration_days" {
+  description = "Define the days after which the S3 access logs should be deleted."
+  type        = number
+  default     = 30
+}
+
+variable "s3_expired_object_delete_marker" {
+  description = "Indicates whether Amazon S3 will remove a delete marker with no noncurrent versions. If set to true, the delete marker will be expired; if set to false the policy takes no action."
+  type        = bool
+  default     = true
+}
+
+variable "s3_mfa_delete" {
+  description = "Enable MFA delete for either Change the versioning state of your bucket or Permanently delete an object version. Default is false. This cannot be used to toggle this setting but is available to allow managed buckets to reflect the state in AWS"
+  type        = string
+  default     = "Disabled"
+}
+
+variable "s3_versioning_enabled" {
+  description = "Enable versioning. Once you version-enable a bucket, it can never return to an unversioned state. You can, however, suspend versioning on that bucket."
+  type        = string
+  default     = "Enabled"
+}
+
+variable "s3_abort_multipart_upload" {
+  description = "Specifies the number of days after initiating a multipart upload when the multipart upload must be completed."
+  type        = number
+  default     = 7
+}
+
+variable "s3_enable_replication_rule" {
+  description = "Enable or disable S3 bucket replication"
+  type        = string
+  default     = "Disabled"
+}
+
+variable "lb_access_logs_lifecycle_rule_status" {
+  description = "Define status of the S3 lifecycle rule. Possible options are enabled or disabled."
+  type        = string
+  default     = "Disabled"
+}
+
+variable "lb_enable_access_logs" {
+  description = "Enable or disable access logs for the NLB"
+  type        = bool
+  default     = false
+}
+
+variable "lb_access_logs_expiration_days" {
+  description = "Define the days after which the LB access logs should be deleted."
+  type        = number
+  default     = 14
+}
+
+variable "bucket_replication_destination_region" {
+  description = "Define in which Region should the bucket be replicated"
+  type        = string
 }

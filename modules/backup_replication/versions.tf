@@ -5,7 +5,7 @@ terraform {
     aws = {
       source                = "hashicorp/aws"
       version               = "~> 5.15"
-      configuration_aliases = [aws.useast1]
+      configuration_aliases = [aws.bucket_replication_destination_region]
     }
   }
 }

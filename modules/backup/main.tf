@@ -1,11 +1,7 @@
 data "aws_caller_identity" "current" {}
 
-locals {
-  account_id = data.aws_caller_identity.current.account_id
-}
-
 resource "aws_s3_bucket" "graphdb_backup" {
-  bucket = "${var.resource_name_prefix}-backup-${local.account_id}"
+  bucket = "${var.resource_name_prefix}-backup-${data.aws_caller_identity.current.account_id}"
 }
 
 # Explicitly disable public access
@@ -26,7 +22,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "backup" {
 
     apply_server_side_encryption_by_default {
       kms_master_key_id = var.kms_key_arn
-      sse_algorithm     = "aws:kms"
+      sse_algorithm     = "AES256"
     }
   }
 }
@@ -55,6 +51,7 @@ data "aws_iam_policy_document" "disallow-non-tls-access-to-bucket" {
       type        = "AWS"
       identifiers = ["*"]
     }
+
     resources = [
       aws_s3_bucket.graphdb_backup.arn,
       "${aws_s3_bucket.graphdb_backup.arn}/*",
@@ -92,4 +89,13 @@ data "aws_iam_policy_document" "backup_s3_crud" {
       "arn:aws:s3:::${aws_s3_bucket.graphdb_backup.bucket}/*"
     ]
   }
+}
+
+resource "aws_s3_bucket_logging" "graphdb_backup_bucket_logs" {
+  count = var.s3_enable_access_logs ? 1 : 0
+
+  bucket = aws_s3_bucket.graphdb_backup.id
+
+  target_bucket = var.s3_access_logs_bucket_name
+  target_prefix = "s3_access_logs/"
 }
