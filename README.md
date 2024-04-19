@@ -14,6 +14,7 @@ for more details.
 - [Inputs](#inputs)
 - [Usage](#usage)
 - [Examples](#examples)
+- [Updating configurations on an active deployment](#updating-configurations-on-an-active-deployment)
 - [Local Development](#local-development)
 - [Release History](#release-history)
 - [Contributing](#contributing)
@@ -235,6 +236,22 @@ deploy_monitoring = true
 # Example ARN
 lb_tls_certificate_arn = "arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012"
 ```
+
+## Updating configurations on an active deployment
+
+In case your license has expired, and you need to renew it, or you need to make some changes to the `graphdb.properties`
+file, or other GraphDB related configurations, you will need to apply the changes via `terraform apply` and then either:
+
+- Terminate the instances one by one, starting with the follower nodes, and leaving the leader node to be the last
+  instance to be terminated
+- Scale down to 0 and back to number of nodes you originally had.
+
+```text
+Please be aware that the latter option will result in some downtime.
+```
+
+Both actions would trigger the user data script to be run again and update all files and properties overrides with the
+updated values.
 
 ## Local Development
 
