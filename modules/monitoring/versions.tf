@@ -5,7 +5,7 @@ terraform {
     aws = {
       source                = "hashicorp/aws"
       version               = "~> 5.15"
-      configuration_aliases = [aws.main, aws.monitoring]
+      configuration_aliases = [aws.monitoring]
     }
   }
 }

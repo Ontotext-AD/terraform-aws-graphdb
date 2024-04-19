@@ -29,7 +29,6 @@ data "aws_ami" "graphdb" {
 }
 
 data "aws_default_tags" "current" {
-  provider = aws.main
 }
 
 data "aws_subnet" "subnet" {
