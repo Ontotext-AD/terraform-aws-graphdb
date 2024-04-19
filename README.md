@@ -113,7 +113,7 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | single\_nat\_gateway | Enable or disable the option to have single NAT Gateway. | `bool` | `false` | no |
 | enable\_nat\_gateway | Enable or disable the creation of the NAT Gateway | `bool` | `true` | no |
 | ami\_id | (Optional) User-provided AMI ID to use with GraphDB instances. If you provide this value, please ensure it will work with the default userdata script (assumes latest version of Ubuntu LTS). Otherwise, please provide your own userdata script using the user\_supplied\_userdata\_path variable. | `string` | `null` | no |
-| graphdb\_version | GraphDB version | `string` | `"10.6.2"` | no |
+| graphdb\_version | GraphDB version | `string` | `"10.6.3"` | no |
 | device\_name | The device to which EBS volumes for the GraphDB data directory will be mapped. | `string` | `"/dev/sdf"` | no |
 | ebs\_volume\_type | Type of the EBS volumes, used by the GraphDB nodes. | `string` | `"gp3"` | no |
 | ebs\_volume\_size | The size of the EBS volumes, used by the GraphDB nodes. | `number` | `500` | no |
@@ -208,7 +208,7 @@ Note: The options mention above will be appended to the ones set in the user dat
 
 **Customize GraphDB Version**
 ```hcl
-graphdb_version = "10.6.2"
+graphdb_version = "10.6.3"
 ```
 
 **Purge Protection**
