@@ -133,7 +133,7 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | monitoring\_actions\_enabled | Enable or disable actions on alarms | `bool` | `true` | no |
 | monitoring\_sns\_topic\_endpoint | Define an SNS endpoint which will be receiving the alerts via email | `string` | `null` | no |
 | monitoring\_sns\_protocol | Define an SNS protocol that you will use to receive alerts. Possible options are: Email, Email-JSON, HTTP, HTTPS. | `string` | `"email"` | no |
-| monitoring\_enable\_detailed\_monitoring | If true, the launched EC2 instance will have detailed monitoring enabled | `bool` | `false` | no |
+| monitoring\_enable\_detailed\_instance\_monitoring | If true, the launched EC2 instance will have detailed monitoring enabled | `bool` | `false` | no |
 | monitoring\_endpoint\_auto\_confirms | Enable or disable endpoint auto confirm subscription to the sns topic | `bool` | `false` | no |
 | monitoring\_log\_group\_retention\_in\_days | Log group retention in days | `number` | `30` | no |
 | monitoring\_route53\_health\_check\_aws\_region | Define the region in which you want the monitoring to be deployed. It is used to define where the Route53 Availability Check will be deployed, since if it is not specified it will deploy the check in us-east-1 and if you deploy in different region it will not find the dimensions. | `string` | `"us-east-1"` | no |
