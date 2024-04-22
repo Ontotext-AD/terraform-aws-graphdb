@@ -4,6 +4,8 @@ data "aws_ec2_instance_type" "graphdb" {
   instance_type = var.ec2_instance_type
 }
 
+data "aws_default_tags" "current" {}
+
 data "aws_ami" "graphdb" {
   count = var.ami_id != null ? 0 : 1
 
@@ -26,9 +28,6 @@ data "aws_ami" "graphdb" {
     name   = "architecture"
     values = data.aws_ec2_instance_type.graphdb[0].supported_architectures
   }
-}
-
-data "aws_default_tags" "current" {
 }
 
 data "aws_subnet" "subnet" {

@@ -39,3 +39,23 @@ variable "enable_nat_gateway" {
   description = "Enalbe or disable the creation of the NAT Gateway"
   type        = bool
 }
+
+variable "vpc_endpoint_service_accept_connection_requests" {
+  description = "(Required) Whether or not VPC endpoint connection requests to the service must be accepted by the service owner - true or false."
+  type        = bool
+}
+
+variable "vpc_endpoint_service_allowed_principals" {
+  description = "(Optional) The ARNs of one or more principals allowed to discover the endpoint service."
+  type        = list(string)
+}
+
+variable "network_load_balancer_arns" {
+  description = "Describe the ARN(s) of the load balancer(s) to which you want to have access."
+  type        = list(string)
+}
+
+variable "lb_enable_private_access" {
+  description = "Enable or disable the private access via PrivateLink to the GraphDB Cluster"
+  type        = bool
+}

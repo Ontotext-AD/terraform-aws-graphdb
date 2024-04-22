@@ -221,3 +221,8 @@ variable "ec2_userdata_script" {
   description = "Userdata script for EC2 instance"
   type        = string
 }
+
+variable "lb_enable_private_access" {
+  description = "Enable or disable the private access via PrivateLink to the GraphDB Cluster"
+  type        = bool
+}

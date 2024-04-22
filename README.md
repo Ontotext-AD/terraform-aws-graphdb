@@ -112,6 +112,9 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | vpc\_dns\_support | Enable or disable the support of the DNS service | `bool` | `true` | no |
 | single\_nat\_gateway | Enable or disable the option to have single NAT Gateway. | `bool` | `false` | no |
 | enable\_nat\_gateway | Enable or disable the creation of the NAT Gateway | `bool` | `true` | no |
+| vpc\_endpoint\_service\_accept\_connection\_requests | (Required) Whether or not VPC endpoint connection requests to the service must be accepted by the service owner - true or false. | `bool` | `true` | no |
+| vpc\_endpoint\_service\_allowed\_principals | (Optional) The ARNs of one or more principals allowed to discover the endpoint service. | `list(string)` | `null` | no |
+| lb\_enable\_private\_access | Enable or disable the private access via PrivateLink to the GraphDB Cluster | `bool` | `false` | no |
 | ami\_id | (Optional) User-provided AMI ID to use with GraphDB instances. If you provide this value, please ensure it will work with the default userdata script (assumes latest version of Ubuntu LTS). Otherwise, please provide your own userdata script using the user\_supplied\_userdata\_path variable. | `string` | `null` | no |
 | graphdb\_version | GraphDB version | `string` | `"10.6.3"` | no |
 | device\_name | The device to which EBS volumes for the GraphDB data directory will be mapped. | `string` | `"/dev/sdf"` | no |
@@ -236,6 +239,17 @@ deploy_monitoring = true
 # Example ARN
 lb_tls_certificate_arn = "arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012"
 ```
+
+**Private Deployment**
+
+To ensure access to GraphDB exclusively through a private network, you must set the following variables to `true`:
+```hcl
+# Enable creation of a private service endpoint
+lb_enable_private_access = true
+# Enable private access to the Network Load Balancer and disable public access
+lb_internal = true
+```
+By configuring these variables accordingly you enforce GraphDB accessibility solely via a private network, enhancing security and control over network traffic.
 
 ## Updating configurations on an active deployment
 

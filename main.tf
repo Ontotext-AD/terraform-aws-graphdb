@@ -7,14 +7,18 @@ module "vpc" {
 
   count = var.create_vpc ? 1 : 0
 
-  resource_name_prefix     = var.resource_name_prefix
-  vpc_dns_hostnames        = var.vpc_dns_hostnames
-  vpc_dns_support          = var.vpc_dns_support
-  vpc_private_subnet_cidrs = var.vpc_private_subnet_cidrs
-  vpc_public_subnet_cidrs  = var.vpc_public_subnet_cidrs
-  vpc_cidr_block           = var.vpc_cidr_block
-  single_nat_gateway       = var.single_nat_gateway
-  enable_nat_gateway       = var.enable_nat_gateway
+  resource_name_prefix                            = var.resource_name_prefix
+  vpc_dns_hostnames                               = var.vpc_dns_hostnames
+  vpc_dns_support                                 = var.vpc_dns_support
+  vpc_private_subnet_cidrs                        = var.vpc_private_subnet_cidrs
+  vpc_public_subnet_cidrs                         = var.vpc_public_subnet_cidrs
+  vpc_cidr_block                                  = var.vpc_cidr_block
+  single_nat_gateway                              = var.single_nat_gateway
+  enable_nat_gateway                              = var.enable_nat_gateway
+  lb_enable_private_access                        = var.lb_enable_private_access
+  network_load_balancer_arns                      = [module.load_balancer.lb_arn]
+  vpc_endpoint_service_allowed_principals         = var.vpc_endpoint_service_allowed_principals
+  vpc_endpoint_service_accept_connection_requests = var.vpc_endpoint_service_accept_connection_requests
 }
 
 module "backup" {
@@ -83,9 +87,9 @@ module "graphdb" {
   vpc_id                    = module.vpc[0].vpc_id
 
   # Network Load Balancer
-
-  lb_subnets          = var.lb_internal ? module.vpc[0].private_subnet_ids : module.vpc[0].public_subnet_ids
-  graphdb_lb_dns_name = module.load_balancer.lb_dns_name
+  lb_enable_private_access = var.lb_internal ? var.lb_enable_private_access : false
+  lb_subnets               = var.lb_internal ? module.vpc[0].private_subnet_ids : module.vpc[0].public_subnet_ids
+  graphdb_lb_dns_name      = module.load_balancer.lb_dns_name
 
   # Identity
 

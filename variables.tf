@@ -160,6 +160,24 @@ variable "enable_nat_gateway" {
   default     = true
 }
 
+variable "vpc_endpoint_service_accept_connection_requests" {
+  description = "(Required) Whether or not VPC endpoint connection requests to the service must be accepted by the service owner - true or false."
+  type        = bool
+  default     = true
+}
+
+variable "vpc_endpoint_service_allowed_principals" {
+  description = "(Optional) The ARNs of one or more principals allowed to discover the endpoint service."
+  type        = list(string)
+  default     = null
+}
+
+variable "lb_enable_private_access" {
+  description = "Enable or disable the private access via PrivateLink to the GraphDB Cluster"
+  type        = bool
+  default     = false
+}
+
 variable "ami_id" {
   description = "(Optional) User-provided AMI ID to use with GraphDB instances. If you provide this value, please ensure it will work with the default userdata script (assumes latest version of Ubuntu LTS). Otherwise, please provide your own userdata script using the user_supplied_userdata_path variable."
   type        = string
