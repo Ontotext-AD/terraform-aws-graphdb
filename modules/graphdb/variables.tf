@@ -113,7 +113,7 @@ variable "deploy_monitoring" {
   type        = bool
 }
 
-variable "enable_detailed_monitoring"{
+variable "enable_detailed_monitoring" {
   description = "If true, the launched EC2 instance will have detailed monitoring enabled"
   type        = bool
 }
