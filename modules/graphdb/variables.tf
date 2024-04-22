@@ -113,6 +113,11 @@ variable "deploy_monitoring" {
   type        = bool
 }
 
+variable "enable_detailed_monitoring" {
+  description = "If true, the launched EC2 instance will have detailed monitoring enabled"
+  type        = bool
+}
+
 # Backup Parameters
 
 variable "deploy_backup" {
