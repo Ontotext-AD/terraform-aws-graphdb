@@ -296,6 +296,12 @@ variable "monitoring_sns_protocol" {
   default     = "email"
 }
 
+variable "monitoring_enable_detailed_instance_monitoring" {
+  description = "If true, the launched EC2 instance will have detailed monitoring enabled"
+  type        = bool
+  default     = false
+}
+
 variable "monitoring_endpoint_auto_confirms" {
   description = "Enable or disable endpoint auto confirm subscription to the sns topic"
   type        = bool

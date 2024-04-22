@@ -20,8 +20,8 @@ if [ ${deploy_monitoring} == "true" ]; then
   echo "$CWAGENT_CONFIG" >/etc/graphdb/cloudwatch-agent-config.json
 
   tmp=$(mktemp)
-  jq '.logs.metrics_collected.prometheus.log_group_name = "${name}-graphdb"' /etc/graphdb/cloudwatch-agent-config.json >"$tmp" && mv "$tmp" /etc/graphdb/cloudwatch-agent-config.json
-  jq '.logs.metrics_collected.prometheus.emf_processor.metric_namespace = "${name}-graphdb"' /etc/graphdb/cloudwatch-agent-config.json >"$tmp" && mv "$tmp" /etc/graphdb/cloudwatch-agent-config.json
+  jq '.logs.metrics_collected.prometheus.log_group_name = "${name}"' /etc/graphdb/cloudwatch-agent-config.json >"$tmp" && mv "$tmp" /etc/graphdb/cloudwatch-agent-config.json
+  jq '.logs.metrics_collected.prometheus.emf_processor.metric_namespace = "${name}"' /etc/graphdb/cloudwatch-agent-config.json >"$tmp" && mv "$tmp" /etc/graphdb/cloudwatch-agent-config.json
   cat /etc/prometheus/prometheus.yaml | yq '.scrape_configs[].static_configs[].targets = ["localhost:7201"]' >"$tmp" && mv "$tmp" /etc/prometheus/prometheus.yaml
   cat /etc/prometheus/prometheus.yaml | yq '.scrape_configs[].basic_auth.username = "admin"' | yq ".scrape_configs[].basic_auth.password = \"$${GRAPHDB_ADMIN_PASSWORD}\"" >"$tmp" && mv "$tmp" /etc/prometheus/prometheus.yaml
 

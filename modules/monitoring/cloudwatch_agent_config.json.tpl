@@ -117,7 +117,6 @@
     "metrics": {
         "aggregation_dimensions": [
             [
-                "InstanceId",
                 "AutoScalingGroupName"
             ]
         ],
