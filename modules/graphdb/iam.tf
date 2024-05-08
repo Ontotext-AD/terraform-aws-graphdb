@@ -39,24 +39,24 @@ data "aws_iam_policy_document" "graphdb_instance_role" {
 
 resource "aws_iam_role_policy" "graphdb_instance_volume" {
   name   = "${var.resource_name_prefix}-instance-volume"
-  role   = var.iam_role_id
+  role   = aws_iam_role.graphdb_iam_role.id
   policy = data.aws_iam_policy_document.graphdb_instance_volume.json
 }
 
 resource "aws_iam_role_policy" "graphdb_instance_volume_tagging" {
   name   = "${var.resource_name_prefix}-volume-tagging"
-  role   = var.iam_role_id
+  role   = aws_iam_role.graphdb_iam_role.id
   policy = data.aws_iam_policy_document.graphdb_instance_volume_tagging.json
 }
 
 resource "aws_iam_role_policy_attachment" "graphdb_systems_manager_policy" {
-  role       = var.iam_role_id
+  role       = aws_iam_role.graphdb_iam_role.id
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
 resource "aws_iam_role_policy" "graphdb_instance_ssm_iam_role_policy" {
   name   = var.resource_name_prefix
-  role   = var.iam_role_id
+  role   = aws_iam_role.graphdb_iam_role.id
   policy = data.aws_iam_policy_document.graphdb_instance_ssm.json
 }
 
@@ -81,11 +81,14 @@ data "aws_iam_policy_document" "graphdb_instance_volume" {
       "ec2:AttachVolume",
       "ec2:DescribeVolumes",
       "ec2:DescribeInstances",
-      "ec2:MonitorInstances",
-      "route53:ListResourceRecordSets"
+      "ec2:MonitorInstances"
     ]
 
-    resources = ["*"]
+    resources = [
+      "arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.current.account_id}:volume/*",
+      "arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.current.account_id}:instance/*",
+      "arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.current.account_id}:network-interface/*"
+    ]
   }
 }
 
@@ -98,8 +101,8 @@ data "aws_iam_policy_document" "graphdb_instance_volume_tagging" {
     ]
 
     resources = [
-      "arn:aws:ec2:*:*:volume/*",
-      "arn:aws:ec2:*:*:snapshot/*"
+      "arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.current.account_id}:volume/*",
+      "arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.current.account_id}:snapshot/*"
     ]
 
     condition {
@@ -115,7 +118,7 @@ data "aws_iam_policy_document" "graphdb_instance_volume_tagging" {
 
 resource "aws_iam_role_policy" "graphdb_route53_instance_registration" {
   name   = "${var.resource_name_prefix}-route53-instance-registration"
-  role   = var.iam_role_id
+  role   = aws_iam_role.graphdb_iam_role.id
   policy = data.aws_iam_policy_document.graphdb_route53_instance_registration.json
 }
 
@@ -124,9 +127,117 @@ data "aws_iam_policy_document" "graphdb_route53_instance_registration" {
     effect = "Allow"
 
     actions = [
-      "route53:ChangeResourceRecordSets"
+      "route53:ChangeResourceRecordSets",
+      "route53:ListResourceRecordSets"
     ]
 
     resources = ["arn:aws:route53:::hostedzone/${aws_route53_zone.graphdb_zone.zone_id}"]
   }
+}
+
+
+resource "aws_iam_role_policy" "graphdb_s3_replication_policy_logging" {
+  count  = var.logging_enable_replication ? 1 : 0
+  name   = "${var.resource_name_prefix}-s3-replication_policy-logging"
+  role   = aws_iam_role.graphdb_s3_replication_role.id
+  policy = data.aws_iam_policy_document.graphdb_s3_replication_policy_logging.json
+}
+
+data "aws_iam_policy_document" "graphdb_s3_replication_policy_logging" {
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "s3:GetReplicationConfiguration",
+      "s3:ListBucket",
+    ]
+
+    resources = ["arn:aws:s3:::${var.graphdb_logging_bucket_name}/*"]
+  }
+
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "s3:GetObjectVersionForReplication",
+      "s3:GetObjectVersionAcl",
+      "s3:GetObjectVersionTagging",
+    ]
+
+    resources = ["arn:aws:s3:::${var.graphdb_logging_bucket_name}/*"]
+  }
+
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "s3:ReplicateObject",
+      "s3:ReplicateDelete",
+      "s3:ReplicateTags",
+    ]
+
+    resources = ["arn:aws:s3:::${var.graphdb_logging_replication_bucket_name}/*"]
+  }
+}
+
+resource "aws_iam_role_policy" "graphdb_s3_replication_policy_backup" {
+  count  = var.backup_enable_replication ? 1 : 0
+  name   = "${var.resource_name_prefix}-s3-replication_policy-backup"
+  role   = aws_iam_role.graphdb_s3_replication_role.id
+  policy = data.aws_iam_policy_document.graphdb_s3_replication_policy_backup.json
+}
+
+data "aws_iam_policy_document" "graphdb_s3_replication_policy_backup" {
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "s3:GetReplicationConfiguration",
+      "s3:ListBucket",
+    ]
+
+    resources = ["arn:aws:s3:::${var.graphdb_backup_bucket_name}/*"]
+  }
+
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "s3:GetObjectVersionForReplication",
+      "s3:GetObjectVersionAcl",
+      "s3:GetObjectVersionTagging",
+    ]
+
+    resources = ["arn:aws:s3:::${var.graphdb_backup_bucket_name}/*"]
+  }
+
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "s3:ReplicateObject",
+      "s3:ReplicateDelete",
+      "s3:ReplicateTags",
+    ]
+
+    resources = ["arn:aws:s3:::${var.graphdb_backup_replication_bucket_name}/*"]
+  }
+}
+
+data "aws_iam_policy_document" "graphdb_s3_assume_role" {
+  statement {
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["s3.amazonaws.com"]
+    }
+
+    actions = ["sts:AssumeRole"]
+  }
+}
+
+resource "aws_iam_role" "graphdb_s3_replication_role" {
+  name               = "${var.resource_name_prefix}-replication-role"
+  assume_role_policy = data.aws_iam_policy_document.graphdb_s3_assume_role.json
 }

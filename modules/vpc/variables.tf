@@ -59,3 +59,14 @@ variable "lb_enable_private_access" {
   description = "Enable or disable the private access via PrivateLink to the GraphDB Cluster"
   type        = bool
 }
+
+variable "vpc_enable_flow_logs" {
+  description = "Enable or disable VPC Flow logs"
+  type        = bool
+}
+
+variable "vpc_flow_log_bucket_arn" {
+  description = "Define the ARN of the bucket for the VPC flow logs"
+  type        = string
+  default     = null
+}

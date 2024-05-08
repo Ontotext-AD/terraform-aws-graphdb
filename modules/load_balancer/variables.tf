@@ -1,21 +1,11 @@
 variable "vpc_id" {
   description = "VPC ID where GraphDB will be deployed"
   type        = string
-
-  validation {
-    condition     = can(regex("^vpc-[a-zA-Z0-9-]+$", var.vpc_id))
-    error_message = "VPC ID must start with 'vpc-' and can only contain letters, numbers, and hyphens."
-  }
 }
 
 variable "resource_name_prefix" {
   description = "Resource name prefix used for tagging and naming AWS resources."
   type        = string
-
-  validation {
-    condition     = can(regex("^[a-zA-Z0-9-]+$", var.resource_name_prefix)) && !can(regex("^-", var.resource_name_prefix))
-    error_message = "Resource name prefix cannot start with a hyphen and can only contain letters, numbers, and hyphens."
-  }
 }
 
 variable "lb_subnets" {
@@ -83,4 +73,14 @@ variable "lb_tls_policy" {
   description = "TLS security policy on the listener."
   type        = string
   default     = "ELBSecurityPolicy-TLS13-1-2-2021-06"
+}
+
+variable "lb_enable_access_logs" {
+  description = "Enable or disable the access logging for the NLB"
+  type        = bool
+}
+
+variable "lb_access_logs_bucket_name" {
+  description = "Define name for the bucket where the access logs will be hosted"
+  type        = string
 }

@@ -123,6 +123,17 @@ resource "aws_route_table_association" "graphdb_private_route_table_association"
   subnet_id      = aws_subnet.graphdb_private_subnet[count.index].id
 }
 
+# GraphDB VPC Flow Logs
+
+resource "aws_flow_log" "graphdb_vpc_flow_log" {
+  count = var.vpc_enable_flow_logs ? 1 : 0
+
+  traffic_type         = "ALL"
+  log_destination_type = "s3"
+  log_destination      = var.vpc_flow_log_bucket_arn
+  vpc_id               = aws_vpc.graphdb_vpc.id
+}
+
 # GraphDB Private Link Service
 
 resource "aws_vpc_endpoint_service" "graphdb_vpc_endpoint_service" {

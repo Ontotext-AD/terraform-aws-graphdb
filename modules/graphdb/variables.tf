@@ -3,11 +3,6 @@
 variable "resource_name_prefix" {
   description = "Resource name prefix used for tagging and naming AWS resources."
   type        = string
-
-  validation {
-    condition     = can(regex("^[a-zA-Z0-9-]+$", var.resource_name_prefix)) && !can(regex("^-", var.resource_name_prefix))
-    error_message = "Resource name prefix cannot start with a hyphen and can only contain letters, numbers, and hyphens."
-  }
 }
 
 variable "ec2_instance_type" {
@@ -60,28 +55,11 @@ variable "graphdb_version" {
   type        = string
 }
 
-# IAM Parameters
-
-variable "iam_instance_profile" {
-  description = "IAM instance profile name to use for GraphDB instances"
-  type        = string
-}
-
-variable "iam_role_id" {
-  description = "IAM role ID to attach permission policies to"
-  type        = string
-}
-
 # Network Parameters
 
 variable "vpc_id" {
   description = "VPC ID where GraphDB will be deployed"
   type        = string
-
-  validation {
-    condition     = can(regex("^vpc-[a-zA-Z0-9-]+$", var.vpc_id))
-    error_message = "VPC ID must start with 'vpc-' and can only contain letters, numbers, and hyphens."
-  }
 }
 
 variable "graphdb_subnets" {
@@ -133,11 +111,6 @@ variable "backup_schedule" {
 variable "backup_bucket_name" {
   description = "Name of the S3 bucket for storing GraphDB backups"
   type        = string
-
-  validation {
-    condition     = var.backup_bucket_name == "" || can(regex("^[a-z0-9_-]+$", var.backup_bucket_name))
-    error_message = "Bucket name can only contain lowercase letters, numbers, hyphens, and underscores."
-  }
 }
 
 # EBS Volume Parameters
@@ -179,11 +152,6 @@ variable "route53_zone_dns_name" {
   type        = string
 }
 
-variable "route53_zone_id" {
-  description = "Route 53 private hosted zone id"
-  type        = string
-}
-
 # Optional Parameters
 
 variable "backup_retention_count" {
@@ -222,12 +190,37 @@ variable "graphdb_node_count" {
   default     = 3
 }
 
-variable "ec2_userdata_script" {
-  description = "Userdata script for EC2 instance"
+variable "lb_enable_private_access" {
+  description = "Enable or disable the private access via PrivateLink to the GraphDB Cluster"
+  type        = bool
+}
+
+variable "graphdb_logging_bucket_name" {
+  description = "Define GraphDB logging bucket name"
   type        = string
 }
 
-variable "lb_enable_private_access" {
-  description = "Enable or disable the private access via PrivateLink to the GraphDB Cluster"
+variable "graphdb_logging_replication_bucket_name" {
+  description = "Define GraphDB backup replication bucket name"
+  type        = string
+}
+
+variable "graphdb_backup_bucket_name" {
+  description = "Define GraphDB backup bucket name"
+  type        = string
+}
+
+variable "graphdb_backup_replication_bucket_name" {
+  description = "Define GraphDB backup replication bucket name"
+  type        = string
+}
+
+variable "logging_enable_replication" {
+  description = "Enable or disable logging bucket replication"
+  type        = bool
+}
+
+variable "backup_enable_replication" {
+  description = "Enable or disable backup bucket replication"
   type        = bool
 }

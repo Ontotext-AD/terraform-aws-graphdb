@@ -10,6 +10,14 @@ resource "aws_lb" "graphdb_lb" {
   subnets                    = var.lb_subnets
   enable_deletion_protection = var.lb_enable_deletion_protection
   security_groups            = var.lb_security_groups
+
+  dynamic "access_logs" {
+    for_each = var.lb_enable_access_logs ? ["enabled"] : []
+    content {
+      bucket  = var.lb_access_logs_bucket_name
+      enabled = var.lb_enable_access_logs
+    }
+  }
 }
 
 resource "aws_lb_target_group" "graphdb_lb_target_group" {

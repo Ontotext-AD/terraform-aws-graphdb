@@ -93,6 +93,7 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | deploy\_backup | Deploy backup module | `bool` | `true` | no |
 | backup\_schedule | Cron expression for the backup job. | `string` | `"0 0 * * *"` | no |
 | backup\_retention\_count | Number of backups to keep. | `number` | `7` | no |
+| backup\_enable\_bucket\_replication | Enable or disable S3 bucket replication | `bool` | `false` | no |
 | lb\_internal | Whether the load balancer will be internal or public | `bool` | `false` | no |
 | lb\_deregistration\_delay | Amount time, in seconds, for GraphDB LB target group to wait before changing the state of a deregistering target from draining to unused. | `string` | `300` | no |
 | lb\_health\_check\_path | The endpoint to check for GraphDB's health status. | `string` | `"/rest/cluster/node/status"` | no |
@@ -114,6 +115,9 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | enable\_nat\_gateway | Enable or disable the creation of the NAT Gateway | `bool` | `true` | no |
 | vpc\_endpoint\_service\_accept\_connection\_requests | (Required) Whether or not VPC endpoint connection requests to the service must be accepted by the service owner - true or false. | `bool` | `true` | no |
 | vpc\_endpoint\_service\_allowed\_principals | (Optional) The ARNs of one or more principals allowed to discover the endpoint service. | `list(string)` | `null` | no |
+| vpc\_enable\_flow\_logs | Enable or disable VPC Flow logs | `bool` | `false` | no |
+| vpc\_flow\_logs\_lifecycle\_rule\_status | Define status of the S3 lifecycle rule. Possible options are enabled or disabled. | `string` | `"Disabled"` | no |
+| vpc\_flow\_logs\_expiration\_days | Define the days after which the VPC flow logs should be deleted | `number` | `7` | no |
 | lb\_enable\_private\_access | Enable or disable the private access via PrivateLink to the GraphDB Cluster | `bool` | `false` | no |
 | ami\_id | (Optional) User-provided AMI ID to use with GraphDB instances. If you provide this value, please ensure it will work with the default userdata script (assumes latest version of Ubuntu LTS). Otherwise, please provide your own userdata script using the user\_supplied\_userdata\_path variable. | `string` | `null` | no |
 | graphdb\_version | GraphDB version | `string` | `"10.6.3"` | no |
@@ -129,8 +133,8 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | graphdb\_cluster\_token | Cluster token used for authenticating the communication between the nodes. | `string` | `null` | no |
 | route53\_zone\_dns\_name | DNS name for the private hosted zone in Route 53 | `string` | `"graphdb.cluster"` | no |
 | deploy\_monitoring | Enable or disable toggle for monitoring | `bool` | `false` | no |
-| monitoring\_route53\_measure\_latency | Enable or disable route53 function to measure latency | `bool` | `true` | no |
-| monitoring\_actions\_enabled | Enable or disable actions on alarms | `bool` | `true` | no |
+| monitoring\_route53\_measure\_latency | Enable or disable route53 function to measure latency | `bool` | `false` | no |
+| monitoring\_actions\_enabled | Enable or disable actions on alarms | `bool` | `false` | no |
 | monitoring\_sns\_topic\_endpoint | Define an SNS endpoint which will be receiving the alerts via email | `string` | `null` | no |
 | monitoring\_sns\_protocol | Define an SNS protocol that you will use to receive alerts. Possible options are: Email, Email-JSON, HTTP, HTTPS. | `string` | `"email"` | no |
 | monitoring\_enable\_detailed\_instance\_monitoring | If true, the launched EC2 instance will have detailed monitoring enabled | `bool` | `false` | no |
@@ -139,6 +143,20 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | monitoring\_route53\_health\_check\_aws\_region | Define the region in which you want the monitoring to be deployed. It is used to define where the Route53 Availability Check will be deployed, since if it is not specified it will deploy the check in us-east-1 and if you deploy in different region it will not find the dimensions. | `string` | `"us-east-1"` | no |
 | graphdb\_properties\_path | Path to a local file containing GraphDB properties (graphdb.properties) that would be appended to the default in the VM. | `string` | `null` | no |
 | graphdb\_java\_options | GraphDB options to pass to GraphDB with GRAPHDB\_JAVA\_OPTS environment variable. | `string` | `null` | no |
+| deploy\_logging\_module | Enable or disable logging module | `bool` | `false` | no |
+| logging\_enable\_bucket\_replication | Enable or disable S3 bucket replication | `bool` | `false` | no |
+| s3\_enable\_access\_logs | Enable or disable access logs | `bool` | `false` | no |
+| s3\_access\_logs\_lifecycle\_rule\_status | Define status of the S3 lifecycle rule. Possible options are enabled or disabled. | `string` | `"Disabled"` | no |
+| s3\_access\_logs\_expiration\_days | Define the days after which the S3 access logs should be deleted. | `number` | `30` | no |
+| s3\_expired\_object\_delete\_marker | Indicates whether Amazon S3 will remove a delete marker with no noncurrent versions. If set to true, the delete marker will be expired; if set to false the policy takes no action. | `bool` | `true` | no |
+| s3\_mfa\_delete | Enable MFA delete for either Change the versioning state of your bucket or Permanently delete an object version. Default is false. This cannot be used to toggle this setting but is available to allow managed buckets to reflect the state in AWS | `string` | `"Disabled"` | no |
+| s3\_versioning\_enabled | Enable versioning. Once you version-enable a bucket, it can never return to an unversioned state. You can, however, suspend versioning on that bucket. | `string` | `"Enabled"` | no |
+| s3\_abort\_multipart\_upload | Specifies the number of days after initiating a multipart upload when the multipart upload must be completed. | `number` | `7` | no |
+| s3\_enable\_replication\_rule | Enable or disable S3 bucket replication | `string` | `"Disabled"` | no |
+| lb\_access\_logs\_lifecycle\_rule\_status | Define status of the S3 lifecycle rule. Possible options are enabled or disabled. | `string` | `"Disabled"` | no |
+| lb\_enable\_access\_logs | Enable or disable access logs for the NLB | `bool` | `false` | no |
+| lb\_access\_logs\_expiration\_days | Define the days after which the LB access logs should be deleted. | `number` | `14` | no |
+| bucket\_replication\_destination\_region | Define in which Region should the bucket be replicated | `string` | n/a | yes |
 <!-- END_TF_DOCS -->
 
 ## Usage
@@ -251,6 +269,52 @@ lb_enable_private_access = true
 lb_internal = true
 ```
 By configuring these variables accordingly you enforce GraphDB accessibility solely via a private network, enhancing security and control over network traffic.
+
+**Logging**
+
+To enable the logging feature the first thing that you should do is to switch the `deploy_logging` variable to `true`.
+
+There are several logging features that can be enabled with the following variables:
+
+#### S3 Access Logs
+
+To enable the S3 Bucket access logs for the backup bucket you should switch the following values to `true`:
+
+```hcl
+deploy_logging = true
+s3_access_logs_lifecycle_rule_status = true
+s3_enable_access_logs = true
+```
+
+#### Load Balancer Access Logs
+
+To enable the load balancer logs you should enable the following variables to `true`:
+```hcl
+deploy_logging = true
+lb_access_logs_lifecycle_rule_status = true
+lb_enable_access_logs = true
+```
+
+#### VPC Flow Logs
+
+To enable the VPC Flow logs you should switch the following variables to `true`:
+
+```hcl
+deploy_logging = true
+vpc_enable_flow_logs = true
+vpc_flow_logs_lifecycle_rule_status = true
+```
+
+#### Replication
+
+You can enable S3 Bucket replication for the S3 buckets.
+
+To do so you should switch the following variables to true:
+
+```hcl
+logging_enable_bucket_replication = true
+s3_enable_replication_rule = true
+```
 
 ## Updating configurations on an active deployment
 
