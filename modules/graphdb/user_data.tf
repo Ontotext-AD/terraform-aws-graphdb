@@ -21,6 +21,14 @@ data "cloudinit_config" "graphdb_user_data" {
 
   part {
     content_type = "text/x-shellscript"
+    content = templatefile("${path.module}/templates/00_wait_node_count.sh.tpl", {
+      name : var.resource_name_prefix
+      node_count : var.graphdb_node_count
+    })
+  }
+
+  part {
+    content_type = "text/x-shellscript"
     content = templatefile("${path.module}/templates/01_disk_management.sh.tpl", {
       name : var.resource_name_prefix
       ebs_volume_type : var.ebs_volume_type
@@ -39,7 +47,6 @@ data "cloudinit_config" "graphdb_user_data" {
       zone_dns_name : var.route53_zone_dns_name
       name : var.resource_name_prefix
       region : var.aws_region
-      node_count : var.graphdb_node_count
     })
   }
 
@@ -90,11 +97,24 @@ data "cloudinit_config" "graphdb_user_data" {
 
   part {
     content_type = "text/x-shellscript"
-    content = templatefile("${path.module}/templates/08_node_rejoin.sh.tpl", {
+    content = templatefile("${path.module}/templates/08_node_join.sh.tpl", {
       region : var.aws_region
       name : var.resource_name_prefix
       zone_id : aws_route53_zone.graphdb_zone.id
       node_count : var.graphdb_node_count
     })
+  }
+
+  dynamic "part" {
+    for_each = var.graphdb_enable_userdata_scripts_on_reboot ? [1] : []
+    content {
+      content_type = "text/cloud-config"
+      filename     = "cloud-config.txt"
+      content      = <<-EOF
+      #cloud-config
+      cloud_final_modules:
+        - [scripts-user, always]
+    EOF
+    }
   }
 }

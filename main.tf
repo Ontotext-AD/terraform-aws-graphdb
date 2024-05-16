@@ -209,4 +209,9 @@ module "graphdb" {
 
   logging_enable_replication = var.logging_enable_bucket_replication
   backup_enable_replication  = var.backup_enable_bucket_replication
+
+  # ASG instance deployment options
+  asg_enable_instance_refresh               = var.asg_enable_instance_refresh
+  asg_instance_refresh_checkpoint_delay     = var.asg_instance_refresh_checkpoint_delay
+  graphdb_enable_userdata_scripts_on_reboot = var.graphdb_enable_userdata_scripts_on_reboot
 }

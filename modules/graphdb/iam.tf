@@ -55,7 +55,7 @@ resource "aws_iam_role_policy_attachment" "graphdb_systems_manager_policy" {
 }
 
 resource "aws_iam_role_policy" "graphdb_instance_ssm_iam_role_policy" {
-  name   = var.resource_name_prefix
+  name   = "${var.resource_name_prefix}-describe-ssm_params"
   role   = aws_iam_role.graphdb_iam_role.id
   policy = data.aws_iam_policy_document.graphdb_instance_ssm.json
 }
@@ -68,7 +68,33 @@ data "aws_iam_policy_document" "graphdb_instance_ssm" {
       "ssm:DescribeParameters"
     ]
 
-    resources = ["arn:aws:ssm:${var.aws_region}:${var.aws_subscription_id}:*"]
+    resources = [
+      "arn:aws:ssm:${var.aws_region}:${var.aws_subscription_id}:*"
+    ]
+  }
+}
+
+resource "aws_iam_role_policy" "graphdb_describe_resources_iam_role_policy" {
+  name   = "${var.resource_name_prefix}-describe-resources"
+  role   = aws_iam_role.graphdb_iam_role.id
+  policy = data.aws_iam_policy_document.graphdb_describe_resources.json
+}
+
+data "aws_iam_policy_document" "graphdb_describe_resources" {
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "ec2:DescribeInstanceStatus",
+      "ec2:DescribeInstances",
+      "autoscaling:DescribeInstanceRefreshes",
+      "autoscaling:DescribeAutoScalingInstances",
+      "autoscaling:DescribeScalingActivities"
+    ]
+
+    resources = [
+      "*"
+    ]
   }
 }
 
@@ -80,8 +106,8 @@ data "aws_iam_policy_document" "graphdb_instance_volume" {
       "ec2:CreateVolume",
       "ec2:AttachVolume",
       "ec2:DescribeVolumes",
-      "ec2:DescribeInstances",
-      "ec2:MonitorInstances"
+      "ec2:MonitorInstances",
+      "ec2:CreateTags"
     ]
 
     resources = [

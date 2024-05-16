@@ -9,6 +9,9 @@ All scripts are designed to be run on AWS EC2 instances and must be executed in 
 Each script is a template file (*.sh.tpl) that contains the necessary commands and configurations.
 These templates are used by Terraform to generate the actual user data scripts deployed to the instances during provisioning.
 
+# 00_wait_node_count.sh.tpl
+This script handles waiting for nodes and disk during instance refresh
+
 # 01_disk_management.sh.tpl
 This script manages the EBS volumes associated with the instance.
 It searches for available volumes and creates new ones if none are found.

@@ -46,7 +46,7 @@ variable "lb_unhealthy_threshold" {
 variable "lb_health_check_path" {
   description = "(Optional) The endpoint to check for GraphDB's health status. Defaults to /protocol."
   type        = string
-  default     = "/rest/cluster/node/status"
+  default     = "/protocol"
 }
 
 variable "lb_health_check_interval" {

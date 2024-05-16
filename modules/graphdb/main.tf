@@ -62,7 +62,7 @@ resource "aws_launch_template" "graphdb" {
     aws_security_group.graphdb_security_group.id
   ]
 
-  ebs_optimized = "true"
+  ebs_optimized = true
 
   iam_instance_profile {
     name = aws_iam_instance_profile.graphdb_iam_instance_profile.id
@@ -73,10 +73,10 @@ resource "aws_launch_template" "graphdb" {
     http_tokens   = "required"
   }
 
-  update_default_version = "true"
+  update_default_version = true
 }
 
-resource "aws_autoscaling_group" "graphdb_auto_scalling_group" {
+resource "aws_autoscaling_group" "graphdb_auto_scaling_group" {
   name                = var.resource_name_prefix
   min_size            = var.graphdb_node_count
   max_size            = var.graphdb_node_count
@@ -88,6 +88,24 @@ resource "aws_autoscaling_group" "graphdb_auto_scalling_group" {
   launch_template {
     id      = aws_launch_template.graphdb.id
     version = aws_launch_template.graphdb.latest_version
+  }
+
+  dynamic "instance_refresh" {
+    for_each = var.asg_enable_instance_refresh ? [1] : []
+    content {
+      strategy = "Rolling"
+
+      preferences {
+        min_healthy_percentage = var.asg_instance_refresh_min_healthy_percentage
+        instance_warmup        = var.asg_instance_refresh_instance_warmup
+        skip_matching          = var.asg_instance_refresh_skip_matching
+        checkpoint_delay       = var.asg_instance_refresh_checkpoint_delay
+        checkpoint_percentages = [
+          for i in range(var.graphdb_node_count) :
+          floor((i + 1) * 100 / var.graphdb_node_count)
+        ]
+      }
+    }
   }
 
   dynamic "tag" {
