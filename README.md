@@ -275,7 +275,7 @@ By configuring these variables accordingly you enforce GraphDB accessibility sol
 
 **Logging**
 
-To enable the logging feature the first thing that you should do is to switch the `deploy_logging` variable to `true`.
+To enable the logging feature the first thing that you should do is to switch the `deploy_logging_module` variable to `true`.
 
 There are several logging features that can be enabled with the following variables:
 
@@ -284,8 +284,8 @@ There are several logging features that can be enabled with the following variab
 To enable the S3 Bucket access logs for the backup bucket you should switch the following values to `true`:
 
 ```hcl
-deploy_logging = true
-s3_access_logs_lifecycle_rule_status = true
+deploy_logging_module = true
+s3_access_logs_lifecycle_rule_status = "Enabled"
 s3_enable_access_logs = true
 ```
 
@@ -293,7 +293,7 @@ s3_enable_access_logs = true
 
 To enable the load balancer logs you should enable the following variables to `true`:
 ```hcl
-deploy_logging = true
+deploy_logging_module = true
 lb_access_logs_lifecycle_rule_status = true
 lb_enable_access_logs = true
 ```
@@ -303,9 +303,9 @@ lb_enable_access_logs = true
 To enable the VPC Flow logs you should switch the following variables to `true`:
 
 ```hcl
-deploy_logging = true
+deploy_logging_module = true
 vpc_enable_flow_logs = true
-vpc_flow_logs_lifecycle_rule_status = true
+vpc_flow_logs_lifecycle_rule_status = "Enabled"
 ```
 
 #### Replication
@@ -316,7 +316,7 @@ To do so you should switch the following variables to true:
 
 ```hcl
 logging_enable_bucket_replication = true
-s3_enable_replication_rule = true
+s3_enable_replication_rule = "Enabled"
 ```
 
 ## Updating configurations on an active deployment
@@ -343,13 +343,13 @@ Support for this will be introduced in the future.
 
 ### Upgrading GraphDB Version
 
-To automatically update the GraphDB version with `terraform apply`, you could set `enable_instance_refresh` to `true`
+To automatically update the GraphDB version with `terraform apply`, you could set `asg_enable_instance_refresh` to `true`
 in your `tfvars` file. This configuration will enable [instance refresh](https://docs.aws.amazon.com/autoscaling/ec2/userguide/instance-refresh-overview.html)
 for the ASG and will replace your already running instances with new ones, one at a time.
 
 By default, the instance refresh process waits for one hour before updating the next instance.
 This delay allows GraphDB time to sync with other nodes.
-You can adjust this delay by changing the `instance_refresh_checkpoint_delay` value.
+You can adjust this delay by changing the `asg_instance_refresh_checkpoint_delay` value.
 If there are many writes to the cluster, consider increasing this delay.
 
 
@@ -358,11 +358,11 @@ except for the `graphdb_admin_password`.
 Support for updating the admin password will be introduced in a future release.
 
 ### ⚠️ **WARNING**
-Enabling `enable_instance_refresh` while scaling out the GraphDB cluster may lead to data replication issues or broken cluster configuration.
+Enabling `asg_enable_instance_refresh` while scaling out the GraphDB cluster may lead to data replication issues or broken cluster configuration.
 Existing instances could still undergo the refresh process, might change their original Availability zone
 and new nodes might fail to join the cluster due to the instance refresh, depending on the data size.
 
-**We strongly recommend disabling enable_instance_refresh when scaling up the cluster.**
+**We strongly recommend disabling `asg_enable_instance_refresh` when scaling up the cluster.**
 
 To work around this issue, you can manually set "Scale-in protection" on the existing nodes, scale out the cluster,
 and then remove the "Scale-in protection".
