@@ -12,6 +12,11 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
+# Function to print messages with timestamps
+log_with_timestamp() {
+  echo "$(date '+%Y-%m-%d %H:%M:%S'): $1"
+}
+
 echo "###########################################"
 echo "#    Creating/Attaching managed disks     #"
 echo "###########################################"
@@ -25,7 +30,7 @@ AVAILABLE_VOLUMES=()
 
 # Function to create a volume
 create_volume() {
-  echo "Creating new volume"
+  log_with_timestamp "Creating new volume"
   VOLUME_ID=$(aws ec2 create-volume \
     --availability-zone "$AVAILABILITY_ZONE" \
     --encrypted \
@@ -41,22 +46,22 @@ create_volume() {
 
   # Wait for the volume to be available
   aws ec2 wait volume-available --volume-ids "$VOLUME_ID"
-  echo "Successfully created volume: $VOLUME_ID"
+  log_with_timestamp "Successfully created volume: $VOLUME_ID"
 }
 
 # Function to attach volumes
 attach_volumes() {
   for volume in "$${AVAILABLE_VOLUMES[@]}"; do
-    echo "Trying to attach volume: $volume"
+    log_with_timestamp "Trying to attach volume: $volume"
     if aws ec2 attach-volume --volume-id "$volume" --instance-id "$INSTANCE_ID" --device "${device_name}"; then
-      echo "Volume $volume attached successfully"
+      log_with_timestamp "Volume $volume attached successfully"
       return
     else
-      echo "Failed to attach volume $volume. Trying the next volume..."
+      log_with_timestamp "Failed to attach volume $volume. Trying the next volume..."
     fi
   done
 
-  echo "No available volumes to attach. Creating a new volume..."
+  log_with_timestamp "No available volumes to attach. Creating a new volume..."
   AVAILABLE_VOLUMES=()
   create_volume
   attach_volumes
@@ -64,7 +69,7 @@ attach_volumes() {
 
 # Check if the device is already mounted
 if mount | grep -q "on $disk_mount_point"; then
-  echo "Device is already mounted at $disk_mount_point"
+  log_with_timestamp "Device is already mounted at $disk_mount_point"
 else
   for _ in {1..6}; do
     VOLUME_ID=$(aws ec2 describe-volumes \
@@ -73,10 +78,10 @@ else
 
     if [ -n "$VOLUME_ID" ]; then
       AVAILABLE_VOLUMES=($VOLUME_ID)
-      echo "Found volumes: $${AVAILABLE_VOLUMES[*]}"
+      log_with_timestamp "Found volumes: $${AVAILABLE_VOLUMES[*]}"
       break
     else
-      echo "EBS volume not yet available. Retrying..."
+      log_with_timestamp "EBS volume not yet available. Retrying..."
       sleep 10
     fi
   done
@@ -84,7 +89,7 @@ else
   if [ -z "$${AVAILABLE_VOLUMES[*]}" ]; then
     create_volume
   fi
-  echo "No device is mounted at $disk_mount_point"
+  log_with_timestamp "No device is mounted at $disk_mount_point"
   attach_volumes
 
   # Handle the EBS volume used for the GraphDB data directory.
@@ -105,17 +110,17 @@ else
         real_device=$(nvme id-ctrl --raw-binary "$volume" | cut -c3073-3104 | tr -s ' ' | sed 's/ $//')
         if [[ "$device_mapping_full" == "$real_device" || "$device_mapping_short" == "$real_device" ]]; then
           graphdb_device="$volume"
-          echo "Device found: $graphdb_device"
+          log_with_timestamp "Device found: $graphdb_device"
           break 2
         fi
       fi
     done
-    echo "Device not available, retrying ..."
+    log_with_timestamp "Device not available, retrying ..."
     sleep 5
   done
 
   if [ "$graphdb_device: data" == "$(file -s "$graphdb_device")" ]; then
-    echo "Creating file system for $graphdb_device"
+    log_with_timestamp "Creating file system for $graphdb_device"
     mkfs -t ext4 "$graphdb_device"
   fi
 
@@ -125,9 +130,9 @@ else
   fi
 
   mount "$disk_mount_point"
-  echo "The disk at $graphdb_device is now mounted at $disk_mount_point."
+  log_with_timestamp "The disk at $graphdb_device is now mounted at $disk_mount_point."
 
-  echo "Creating data folders"
+  log_with_timestamp "Creating data folders"
   mkdir -p "$disk_mount_point/node" "$disk_mount_point/cluster-proxy"
   chown -R graphdb:graphdb "$disk_mount_point"
 fi

@@ -343,29 +343,36 @@ Support for this will be introduced in the future.
 
 ### Upgrading GraphDB Version
 
-To automatically update the GraphDB version with `terraform apply`, you need to set `enable_instance_refresh` to `true`
-in your `tfvars` file. This configuration will refresh your already running instances with new ones,
-replacing them one at a time.
+To automatically update the GraphDB version with `terraform apply`, you could set `enable_instance_refresh` to `true`
+in your `tfvars` file. This configuration will enable [instance refresh](https://docs.aws.amazon.com/autoscaling/ec2/userguide/instance-refresh-overview.html)
+for the ASG and will replace your already running instances with new ones, one at a time.
 
-Please note that by default, the instance refresh process will wait for one hour before moving on to update the next instance.
-This is a precautionary measure as GraphDB may need time to sync with the other nodes.
-You can control this delay by updating the value of `instance_refresh_checkpoint_delay`.
+By default, the instance refresh process waits for one hour before updating the next instance.
+This delay allows GraphDB time to sync with other nodes.
+You can adjust this delay by changing the `instance_refresh_checkpoint_delay` value.
+If there are many writes to the cluster, consider increasing this delay.
 
-It's important to note that if you have made changes to any GraphDB configurations,
-they will be applied during the instance refresh process with the exception for the `graphdb_admin_password`.
-Support for this will be introduced in the future.
 
-**Important:** Having `enable_instance_refresh` enabled when scaling up the GraphDB cluster may lead to data
-replication issues, as existing instances will still undergo the refresh process.
-Depending on the data size, the new nodes might fail in joining the cluster due to the instance refresh.
+Note that any changes to GraphDB configurations will be applied during the instance refresh process,
+except for the `graphdb_admin_password`.
+Support for updating the admin password will be introduced in a future release.
 
-**We strongly recommend you to set `enable_instance_refresh` to `false` when scaling up the cluster.**
+### ⚠️ **WARNING**
+Enabling `enable_instance_refresh` while scaling out the GraphDB cluster may lead to data replication issues or broken cluster configuration.
+Existing instances will still undergo the refresh process, they might change their original Availability zone
+and new nodes might fail to join the cluster due to the instance refresh, depending on the data size.
+
+**We strongly recommend disabling enable_instance_refresh when scaling up the cluster.**
+
+To work around this issue, you can manually set "Scale-in protection" on the existing nodes, scale out the cluster,
+and then remove the "Scale-in protection".
+However, any configuration changes will not be applied to the old instances, which could cause them to drift apart.
 
 ## Local Development
 
 Instead of using the module dependency, you can create a local variables file named `terraform.tfvars` and provide
 configuration overrides there.
-Here's an example of a terraform.tfvars file:
+Here's an example of a `terraform.tfvars` file:
 
 ### terraform.tfvars
 

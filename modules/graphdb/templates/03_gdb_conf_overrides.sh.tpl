@@ -13,6 +13,11 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
+# Function to print messages with timestamps
+log_with_timestamp() {
+  echo "$(date '+%Y-%m-%d %H:%M:%S'): $1"
+}
+
 echo "#######################################"
 echo "#   GraphDB configuration overrides   #"
 echo "#######################################"
@@ -48,7 +53,7 @@ EOF
 
 mkdir -p /etc/systemd/system/graphdb.service.d/
 
-echo "Calculating 85 percent of total memory"
+log_with_timestamp "Calculating 85 percent of total memory"
 # Get total memory in kilobytes
 TOTAL_MEMORY_KB=$(grep -i "MemTotal" /proc/meminfo | awk '{print $2}')
 # Convert total memory to gigabytes
@@ -76,4 +81,4 @@ if [[ $SSM_PARAMETERS == *"/${name}/graphdb/graphdb_java_options"* ]]; then
   )
 fi
 
-echo "Completed applying overrides"
+log_with_timestamp "Completed applying overrides"
