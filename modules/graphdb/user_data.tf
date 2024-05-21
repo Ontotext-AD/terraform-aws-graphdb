@@ -21,15 +21,21 @@ data "cloudinit_config" "graphdb_user_data" {
 
   part {
     content_type = "text/x-shellscript"
-    content = templatefile("${path.module}/templates/00_wait_node_count.sh.tpl", {
+    content = templatefile("${path.module}/templates/00_functions.sh", {
       name : var.resource_name_prefix
-      node_count : var.graphdb_node_count
     })
   }
 
   part {
     content_type = "text/x-shellscript"
-    content = templatefile("${path.module}/templates/01_disk_management.sh.tpl", {
+    content = templatefile("${path.module}/templates/01_wait_node_count.sh.tpl", {
+      name : var.resource_name_prefix
+    })
+  }
+
+  part {
+    content_type = "text/x-shellscript"
+    content = templatefile("${path.module}/templates/02_disk_management.sh.tpl", {
       name : var.resource_name_prefix
       ebs_volume_type : var.ebs_volume_type
       ebs_volume_size : var.ebs_volume_size
@@ -42,7 +48,7 @@ data "cloudinit_config" "graphdb_user_data" {
 
   part {
     content_type = "text/x-shellscript"
-    content = templatefile("${path.module}/templates/02_dns_provisioning.sh.tpl", {
+    content = templatefile("${path.module}/templates/03_dns_provisioning.sh.tpl", {
       zone_id : aws_route53_zone.graphdb_zone.id
       zone_dns_name : var.route53_zone_dns_name
       name : var.resource_name_prefix
@@ -52,7 +58,7 @@ data "cloudinit_config" "graphdb_user_data" {
 
   part {
     content_type = "text/x-shellscript"
-    content = templatefile("${path.module}/templates/03_gdb_conf_overrides.sh.tpl", {
+    content = templatefile("${path.module}/templates/04_gdb_conf_overrides.sh.tpl", {
       name : var.resource_name_prefix
       region : var.aws_region
       graphdb_lb_dns_name : var.graphdb_lb_dns_name
@@ -61,7 +67,7 @@ data "cloudinit_config" "graphdb_user_data" {
 
   part {
     content_type = "text/x-shellscript"
-    content = templatefile("${path.module}/templates/04_gdb_backup_conf.sh.tpl", {
+    content = templatefile("${path.module}/templates/05_gdb_backup_conf.sh.tpl", {
       name : var.resource_name_prefix
       region : var.aws_region
       backup_schedule : var.backup_schedule
@@ -73,12 +79,12 @@ data "cloudinit_config" "graphdb_user_data" {
 
   part {
     content_type = "text/x-shellscript"
-    content      = templatefile("${path.module}/templates/05_linux_overrides.sh.tpl", {})
+    content      = templatefile("${path.module}/templates/06_linux_overrides.sh.tpl", {})
   }
 
   part {
     content_type = "text/x-shellscript"
-    content = templatefile("${path.module}/templates/06_cloudwatch_setup.sh.tpl", {
+    content = templatefile("${path.module}/templates/07_cloudwatch_setup.sh.tpl", {
       name : var.resource_name_prefix
       deploy_monitoring : var.deploy_monitoring
       region : var.aws_region
@@ -87,21 +93,19 @@ data "cloudinit_config" "graphdb_user_data" {
 
   part {
     content_type = "text/x-shellscript"
-    content = templatefile("${path.module}/templates/07_cluster_setup.sh.tpl", {
+    content = templatefile("${path.module}/templates/08_cluster_setup.sh.tpl", {
       name : var.resource_name_prefix
       region : var.aws_region
       zone_id : aws_route53_zone.graphdb_zone.id
-      node_count : var.graphdb_node_count
     })
   }
 
   part {
     content_type = "text/x-shellscript"
-    content = templatefile("${path.module}/templates/08_node_join.sh.tpl", {
+    content = templatefile("${path.module}/templates/09_node_join.sh.tpl", {
       region : var.aws_region
       name : var.resource_name_prefix
       zone_id : aws_route53_zone.graphdb_zone.id
-      node_count : var.graphdb_node_count
     })
   }
 

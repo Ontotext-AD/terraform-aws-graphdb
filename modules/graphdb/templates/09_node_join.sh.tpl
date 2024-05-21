@@ -9,13 +9,13 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-# Function to print messages with timestamps
-log_with_timestamp() {
-  echo "$(date '+%Y-%m-%d %H:%M:%S'): $1"
-}
+# Imports helper functions
+source /var/lib/cloud/instance/scripts/part-002
+
+NODE_COUNT=$(aws autoscaling describe-auto-scaling-groups --auto-scaling-group-names ${name} --query "AutoScalingGroups[0].DesiredCapacity" --output text)
 
 # Don't attempt to form a cluster if the node count is 1
-if [ "${node_count}" == 1 ]; then
+if [ "$${NODE_COUNT}" == 1 ]; then
   log_with_timestamp "Single node deployment, skipping node cluster rejoin "
   exit 0
 fi
@@ -24,8 +24,6 @@ GRAPHDB_ADMIN_PASSWORD=$(aws --cli-connect-timeout 300 ssm get-parameter --regio
 CURRENT_NODE_NAME=$(hostname)
 LEADER_NODE=""
 RAFT_DIR="/var/opt/graphdb/node/data/raft"
-RETRY_DELAY=5
-MAX_RETRIES=10
 
 # Get existing DNS records from Route53 which contain .graphdb.cluster in their name
 EXISTING_RECORDS=$(aws route53 list-resource-record-sets --hosted-zone-id "${zone_id}" --query "ResourceRecordSets[?contains(Name, '.graphdb.cluster') == \`true\`].Name")
@@ -92,7 +90,7 @@ join_cluster() {
       endpoint="http://$node:7201/rest/cluster/group/status"
       log_with_timestamp "Checking leader status for $node"
 
-      # Gets the address of the node if nodeState is LEADER, grpc port is returned therefor we replace port 7300 to 7200
+      # Gets the address of the node if nodeState is LEADER, grpc port is returned therefore we replace port 7300 to 7200
       LEADER_ADDRESS=$(curl -s "$endpoint" -u "admin:$${GRAPHDB_ADMIN_PASSWORD}" | jq -r '.[] | select(.nodeState == "LEADER") | .address' | sed 's/7301/7201/')
       if [ -n "$${LEADER_ADDRESS}" ]; then
         LEADER_NODE=$LEADER_ADDRESS
@@ -107,31 +105,59 @@ join_cluster() {
     sleep 5
   done
 
+  log_with_timestamp "Trying to delete $CURRENT_NODE_NAME"
+  # Removes node if already present in the cluster config
+  curl -X DELETE -s \
+    --fail-with-body \
+    -o "/dev/null" \
+    -H 'Content-Type: application/json' \
+    -H 'Accept: application/json' \
+    -w "%%{http_code}" \
+    -u "admin:$${GRAPHDB_ADMIN_PASSWORD}" \
+    -d "{\"nodes\": [\"$${CURRENT_NODE_NAME}:7301\"]}" \
+    "http://$${LEADER_NODE}/rest/cluster/config/node" || true
+
   # Waits for total quorum of the cluster before continuing with joining the cluster
   wait_for_total_quorum
 
   log_with_timestamp "Attempting to add $${CURRENT_NODE_NAME}:7301 to the cluster"
-  # This operation might take a while depending on the size of the repositories.
-  CURL_MAX_REQUEST_TIME=21600 # 6 hours
-  ADD_NODE=$(
-    curl -X POST -s \
-      -m $CURL_MAX_REQUEST_TIME \
-      -w "%%{http_code}" \
-      -o "/dev/null" \
-      -H 'Content-Type: application/json' \
-      -H 'Accept: application/json' \
-      -u "admin:$${GRAPHDB_ADMIN_PASSWORD}" \
-      -d"{\"nodes\": [\"$${CURRENT_NODE_NAME}:7301\"]}" \
-      "http://$${LEADER_NODE}/rest/cluster/config/node"
-  )
 
-  if [[ "$ADD_NODE" == 200 ]]; then
-    log_with_timestamp "$${CURRENT_NODE_NAME} was successfully added to the cluster."
-  else
-    log_with_timestamp "Node $${CURRENT_NODE_NAME} failed to join the cluster, check the logs!"
+  retry_count=0
+  max_retries=3
+  retry_interval=300 # 5 minutes in seconds
+
+  while [ $retry_count -lt $max_retries ]; do
+    # This operation might take a while depending on the size of the repositories.
+    CURL_MAX_REQUEST_TIME=21600 # 6 hours
+    ADD_NODE=$(
+      curl -X POST -s \
+        -m $CURL_MAX_REQUEST_TIME \
+        -w "%%{http_code}" \
+        -o "/dev/null" \
+        -H 'Content-Type: application/json' \
+        -H 'Accept: application/json' \
+        -u "admin:$${GRAPHDB_ADMIN_PASSWORD}" \
+        -d "{\"nodes\": [\"$${CURRENT_NODE_NAME}:7301\"]}" \
+        "http://$${LEADER_NODE}/rest/cluster/config/node"
+    )
+
+    if [[ "$ADD_NODE" == 200 ]]; then
+      log_with_timestamp "$${CURRENT_NODE_NAME} was successfully added to the cluster."
+      break
+    else
+      log_with_timestamp "Node $${CURRENT_NODE_NAME} failed to join the cluster, attempt $((retry_count + 1)) of $max_retries."
+      if [ $retry_count -lt $((max_retries - 1)) ]; then
+        log_with_timestamp "Retrying in 5 minutes..."
+        sleep $retry_interval
+      fi
+      retry_count=$((retry_count + 1))
+    fi
+  done
+
+  if [[ "$ADD_NODE" != 200 ]]; then
+    log_with_timestamp "Node $${CURRENT_NODE_NAME} failed to join the cluster after $max_retries attempts, check the logs!"
   fi
 }
-
 # Check if the Raft directory exists
 if [ ! -d "$RAFT_DIR" ]; then
   log_with_timestamp "$RAFT_DIR folder is missing, waiting..."

@@ -13,10 +13,8 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-# Function to print messages with timestamps
-log_with_timestamp() {
-  echo "$(date '+%Y-%m-%d %H:%M:%S'): $1"
-}
+# Imports helper functions
+source /var/lib/cloud/instance/scripts/part-002
 
 echo "#######################################"
 echo "#   GraphDB configuration overrides   #"

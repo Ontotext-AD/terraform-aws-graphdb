@@ -359,7 +359,7 @@ Support for updating the admin password will be introduced in a future release.
 
 ### ⚠️ **WARNING**
 Enabling `enable_instance_refresh` while scaling out the GraphDB cluster may lead to data replication issues or broken cluster configuration.
-Existing instances will still undergo the refresh process, they might change their original Availability zone
+Existing instances could still undergo the refresh process, might change their original Availability zone
 and new nodes might fail to join the cluster due to the instance refresh, depending on the data size.
 
 **We strongly recommend disabling enable_instance_refresh when scaling up the cluster.**

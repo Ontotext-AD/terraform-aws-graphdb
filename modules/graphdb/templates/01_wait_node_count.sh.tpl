@@ -11,10 +11,12 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-# Function to print messages with timestamps
-log_with_timestamp() {
-  echo "$(date '+%Y-%m-%d %H:%M:%S'): $1"
-}
+# Imports helper functions
+source /var/lib/cloud/instance/scripts/part-002
+
+echo "#####################################################"
+echo "#    Please be patient, these scripts take time     #"
+echo "#####################################################"
 
 # This handles instance refreshing where new and old nodes are both present.
 # Waiting until the ASG nodes are equal to the expected node count and proceeding with the provisioning afterwards.
@@ -58,7 +60,11 @@ if [ "$instance_refresh_status" != "[]" ]; then
     echo "$matching_activities" | jq '.'
 
     log_with_timestamp "Waiting for an available volume in $AZ"
-    while true; do
+
+    TIMEOUT=600 # Timeout in seconds (10 minutes)
+    ELAPSED=0
+
+    while [ $ELAPSED -lt $TIMEOUT ]; do
       # Get the list of volumes in the current availability zone
       available_volumes=$(aws ec2 describe-volumes --filters Name=availability-zone,Values=$AZ Name=status,Values=available Name=volume-type,Values=gp3 --query "Volumes[*].VolumeId" --output text)
       # Check if any volumes are available
@@ -67,7 +73,14 @@ if [ "$instance_refresh_status" != "[]" ]; then
         break
       fi
       sleep 5
+      ELAPSED=$((ELAPSED + 5))
     done
+
+    if [ $ELAPSED -ge $TIMEOUT ]; then
+      log_with_timestamp "Timeout reached while waiting for an available volume in $AZ. Exiting..."
+      exit 1
+    fi
+
   else
     log_with_timestamp "Current instance was not created in response to instance refresh. Proceeding with the volume provisioning."
   fi

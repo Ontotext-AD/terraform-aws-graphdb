@@ -11,22 +11,21 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-# Function to print messages with timestamps
-log_with_timestamp() {
-  echo "$(date '+%Y-%m-%d %H:%M:%S'): $1"
-}
+# Imports helper functions
+source /var/lib/cloud/instance/scripts/part-002
 
 NODE_DNS_RECORD=$(cat /var/opt/graphdb/node_dns)
 GRAPHDB_ADMIN_PASSWORD=$(aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/admin_password" --with-decryption --query "Parameter.Value" --output text | base64 -d)
 RETRY_DELAY=5
 MAX_RETRIES=10
+NODE_COUNT=$(aws autoscaling describe-auto-scaling-groups --auto-scaling-group-names ${name} --query "AutoScalingGroups[0].DesiredCapacity" --output text)
 
 echo "###########################"
 echo "#    Starting GraphDB     #"
 echo "###########################"
 
 # Don't attempt to form a cluster if the node count is 1
-if [ "${node_count}" == 1 ]; then
+if [ "$${NODE_COUNT}" == 1 ]; then
   log_with_timestamp "Starting Graphdb"
   systemctl daemon-reload
   systemctl start graphdb
@@ -49,12 +48,12 @@ wait_dns_records() {
   local all_dns_records=($(aws route53 list-resource-record-sets --hosted-zone-id "${zone_id}" --query "ResourceRecordSets[?contains(Name, '.graphdb.cluster') == \`true\`].Name" --output text))
   local all_dns_records_count="$${#all_dns_records[@]}"
 
-  if [ "$${all_dns_records_count}" -ne ${node_count} ]; then
+  if [ "$${all_dns_records_count}" -ne $${NODE_COUNT} ]; then
     sleep 5
-    log_with_timestamp "Private DNS zone record count is $${all_dns_records_count}, expecting ${node_count}"
+    log_with_timestamp "Private DNS zone record count is $${all_dns_records_count}, expecting $${NODE_COUNT}"
     wait_dns_records
   else
-    log_with_timestamp "Private DNS zone record count is $${all_dns_records_count}, expecting ${node_count}"
+    log_with_timestamp "Private DNS zone record count is $${all_dns_records_count}, expecting $${NODE_COUNT}"
   fi
 }
 

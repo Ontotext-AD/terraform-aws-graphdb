@@ -11,10 +11,8 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-# Function to print messages with timestamps
-log_with_timestamp() {
-  echo "$(date '+%Y-%m-%d %H:%M:%S'): $1"
-}
+# Imports helper functions
+source /var/lib/cloud/instance/scripts/part-002
 
 echo "########################"
 echo "#   DNS Provisioning   #"
@@ -34,19 +32,61 @@ if [ -f $NODE_DNS_PATH ]; then
   log_with_timestamp "Found $NODE_DNS_PATH"
   NODE_DNS_RECORD=$(cat $NODE_DNS_PATH)
 
-  # Updates the NODE_DSN record on file with the new IP.
-  log_with_timestamp "Updating IP address for $NODE_DNS_RECORD"
+  # Check if the existing DNS record is pointing to another IP
+  existing_record=$(aws route53 list-resource-record-sets --hosted-zone-id "${zone_id}" --query "ResourceRecordSets[?Name == '$${NODE_DNS_RECORD}.']" --output json)
+  existing_ip=$(echo "$existing_record" | jq -r '.[0].ResourceRecords[0].Value')
 
-  aws --cli-connect-timeout 300 route53 change-resource-record-sets \
-    --hosted-zone-id "${zone_id}" \
-    --change-batch '{"Changes": [{"Action": "UPSERT","ResourceRecordSet": {"Name": "'"$NODE_DNS_RECORD"'","Type": "A","TTL": 60,"ResourceRecords": [{"Value": "'"$LOCAL_IPv4"'"}]}}]}'
+  if [ "$existing_ip" != "$LOCAL_IPv4" ]; then
+    log_with_timestamp "Updating IP address for $NODE_DNS_RECORD"
 
-  hostnamectl set-hostname "$NODE_DNS_RECORD"
-  log_with_timestamp "DNS record for $NODE_DNS_RECORD has been updated"
+    aws --cli-connect-timeout 300 route53 change-resource-record-sets \
+      --hosted-zone-id "${zone_id}" \
+      --change-batch '{"Changes": [{"Action": "UPSERT","ResourceRecordSet": {"Name": "'"$NODE_DNS_RECORD"'","Type": "A","TTL": 60,"ResourceRecords": [{"Value": "'"$LOCAL_IPv4"'"}]}}]}'
+
+    hostnamectl set-hostname "$NODE_DNS_RECORD"
+    log_with_timestamp "DNS record for $NODE_DNS_RECORD has been updated"
+  else
+    log_with_timestamp "DNS record $NODE_DNS_RECORD already points to the correct IP $LOCAL_IPv4"
+  fi
 else
-  # TODO this will create a new DNS record if the VM is moved to another zone for any reason.
-  # TODO We need a mechanism to check which DNS record does not respond and update the non responding record
-  echo "$NODE_DNS_PATH does not exist. New DNS record will be created."
+  log_with_timestamp "$NODE_DNS_PATH does not exist. Checking for non-responding DNS records."
+
+  # Check for non-responding DNS records
+  existing_records=$(aws route53 list-resource-record-sets --hosted-zone-id "${zone_id}" --query "ResourceRecordSets[?contains(Name, 'node-')]" --output json)
+  for record in $(echo "$existing_records" | jq -r '.[].Name'); do
+    record_name=$${record%.}
+    record_ip=$(aws route53 list-resource-record-sets --hosted-zone-id "${zone_id}" --query "ResourceRecordSets[?Name == '$${record_name}.']" --output json | jq -r '.[0].ResourceRecords[0].Value')
+
+    found_count=0
+    for i in {1..3}; do
+      instance_check=$(aws ec2 describe-instances --filters "Name=private-ip-address,Values=$record_ip" --query "Reservations[*].Instances[*].InstanceId" --output text)
+      if [ -n "$instance_check" ]; then
+        log_with_timestamp "Instance found with IP $record_ip for record $record_name on attempt $i"
+        found_count=$((found_count + 1))
+      else
+        log_with_timestamp "No instance found with IP $record_ip for record $record_name on attempt $i"
+      fi
+
+      if [ "$found_count" -ge 3 ]; then
+        log_with_timestamp "Instance with IP $record_ip for record $record_name found consistently. Skipping update."
+        break
+      fi
+
+      sleep 10
+    done
+
+    if [ "$found_count" -lt 3 ]; then
+      log_with_timestamp "No instance found with IP $record_ip for record $record_name after 3 attempts. Updating to new IP $LOCAL_IPv4"
+      aws --cli-connect-timeout 300 route53 change-resource-record-sets \
+        --hosted-zone-id "${zone_id}" \
+        --change-batch '{"Changes": [{"Action": "UPSERT","ResourceRecordSet": {"Name": "'"$record_name"'","Type": "A","TTL": 60,"ResourceRecords": [{"Value": "'"$LOCAL_IPv4"'"}]}}]}'
+      echo "$record_name" >/var/opt/graphdb/node_dns
+      hostnamectl set-hostname "$record_name"
+      exit 0
+    fi
+  done
+
+  log_with_timestamp "No non-responding DNS records found. Creating a new DNS record."
 
   while true; do
     # Concatenate "node" with the extracted number
