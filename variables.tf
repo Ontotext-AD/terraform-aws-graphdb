@@ -449,7 +449,7 @@ variable "bucket_replication_destination_region" {
 variable "asg_enable_instance_refresh" {
   description = "Enables instance refresh for the GraphDB Auto scaling group. A refresh is started when any of the following Auto Scaling Group properties change: launch_configuration, launch_template, mixed_instances_policy"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "asg_instance_refresh_checkpoint_delay" {

@@ -9,6 +9,9 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
+# Imports helper functions
+source /var/lib/cloud/instance/scripts/part-002
+
 echo "#################################################"
 echo "#    Configuring the GraphDB backup cron job    #"
 echo "#################################################"
@@ -66,9 +69,9 @@ rotate_backups
 EOF
 
   chmod +x /usr/bin/graphdb_backup
-  echo "${backup_schedule} graphdb /usr/bin/graphdb_backup" >/etc/cron.d/graphdb_backup
+  log_with_timestamp "${backup_schedule} graphdb /usr/bin/graphdb_backup" >/etc/cron.d/graphdb_backup
 
-  echo "Cron job created"
+  log_with_timestamp "Cron job created"
 else
-  echo "Backup module is not deployed, skipping provisioning..."
+  log_with_timestamp "Backup module is not deployed, skipping provisioning..."
 fi

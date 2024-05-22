@@ -11,6 +11,13 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
+# Imports helper functions
+source /var/lib/cloud/instance/scripts/part-002
+
+echo "#####################################################"
+echo "#    Please be patient, these scripts take time     #"
+echo "#####################################################"
+
 # This handles instance refreshing where new and old nodes are both present.
 # Waiting until the ASG nodes are equal to the expected node count and proceeding with the provisioning afterwards.
 IMDS_TOKEN=$(curl -Ss -H "X-aws-ec2-metadata-token-ttl-seconds: 6000" -XPUT 169.254.169.254/latest/api/token)
@@ -20,13 +27,13 @@ ASG_NAME=${name}
 instance_refresh_status=$(aws autoscaling describe-instance-refreshes --auto-scaling-group-name "$ASG_NAME" --query 'InstanceRefreshes[?Status==`InProgress`]' --output json)
 
 if [ "$instance_refresh_status" != "[]" ]; then
-  echo "An instance refresh is currently in progress for the ASG: $ASG_NAME"
+  log_with_timestamp "An instance refresh is currently in progress for the ASG: $ASG_NAME"
   echo "$instance_refresh_status" | jq '.'
 
   IMDS_TOKEN=$(curl -Ss -H "X-aws-ec2-metadata-token-ttl-seconds: 6000" -XPUT 169.254.169.254/latest/api/token)
   INSTANCE_ID=$(curl -Ss -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" 169.254.169.254/latest/meta-data/instance-id)
 
-  echo "Waiting for default EC2 status check to pass for instance $INSTANCE_ID..."
+  log_with_timestamp "Waiting for default EC2 status check to pass for instance $INSTANCE_ID..."
 
   # Loop until the default status check passes
   while true; do
@@ -35,7 +42,7 @@ if [ "$instance_refresh_status" != "[]" ]; then
     system_status=$(aws ec2 describe-instance-status --instance-ids $INSTANCE_ID --query 'InstanceStatuses[0].SystemStatus.Status' --output text)
 
     if [[ "$instance_status" == "ok" && $system_status == "ok" ]]; then
-      echo "Default EC2 status check passed for instance $INSTANCE_ID."
+      log_with_timestamp "Default EC2 status check passed for instance $INSTANCE_ID."
       break
     fi
 
@@ -49,23 +56,34 @@ if [ "$instance_refresh_status" != "[]" ]; then
 
   # Find out if the current instance was created in response to an instance refresh
   if [ "$matching_activities" != "[]" ]; then
-    echo "Current instance was created in response to instance refresh:"
+    log_with_timestamp "Current instance was created in response to instance refresh:"
     echo "$matching_activities" | jq '.'
 
-    echo "Waiting for an available volume in $AZ"
-    while true; do
+    log_with_timestamp "Waiting for an available volume in $AZ"
+
+    TIMEOUT=600 # Timeout in seconds (10 minutes)
+    ELAPSED=0
+
+    while [ $ELAPSED -lt $TIMEOUT ]; do
       # Get the list of volumes in the current availability zone
       available_volumes=$(aws ec2 describe-volumes --filters Name=availability-zone,Values=$AZ Name=status,Values=available Name=volume-type,Values=gp3 --query "Volumes[*].VolumeId" --output text)
       # Check if any volumes are available
       if [ -n "$available_volumes" ]; then
-        echo "Found an available volume in $AZ."
+        log_with_timestamp "Found an available volume in $AZ."
         break
       fi
       sleep 5
+      ELAPSED=$((ELAPSED + 5))
     done
+
+    if [ $ELAPSED -ge $TIMEOUT ]; then
+      log_with_timestamp "Timeout reached while waiting for an available volume in $AZ. Exiting..."
+      exit 1
+    fi
+
   else
-    echo "Current instance was not created in response to instance refresh. Proceeding with the disk provisioning script"
+    log_with_timestamp "Current instance was not created in response to instance refresh. Proceeding with the volume provisioning."
   fi
 else
-  echo "No instance refresh is currently in progress for the ASG: $ASG_NAME"
+  log_with_timestamp "No instance refresh is currently in progress for the ASG: $ASG_NAME"
 fi

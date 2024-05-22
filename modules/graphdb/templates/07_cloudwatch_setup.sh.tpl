@@ -8,6 +8,9 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
+# Imports helper functions
+source /var/lib/cloud/instance/scripts/part-002
+
 echo "#################################"
 echo "#    Cloudwatch Provisioning    #"
 echo "#################################"
@@ -29,5 +32,5 @@ if [ ${deploy_monitoring} == "true" ]; then
   amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/etc/graphdb/cloudwatch-agent-config.json
 
 else
-  echo "Monitoring module was not deployed, skipping provisioning..."
+  log_with_timestamp "Monitoring module was not deployed, skipping provisioning..."
 fi

@@ -9,9 +9,14 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
+# Imports helper functions
+source /var/lib/cloud/instance/scripts/part-002
+
+NODE_COUNT=$(aws autoscaling describe-auto-scaling-groups --auto-scaling-group-names ${name} --query "AutoScalingGroups[0].DesiredCapacity" --output text)
+
 # Don't attempt to form a cluster if the node count is 1
-if [ "${node_count}" == 1 ]; then
-  echo "Single node deployment, skipping node cluster rejoin "
+if [ "$${NODE_COUNT}" == 1 ]; then
+  log_with_timestamp "Single node deployment, skipping node cluster rejoin "
   exit 0
 fi
 
@@ -19,8 +24,6 @@ GRAPHDB_ADMIN_PASSWORD=$(aws --cli-connect-timeout 300 ssm get-parameter --regio
 CURRENT_NODE_NAME=$(hostname)
 LEADER_NODE=""
 RAFT_DIR="/var/opt/graphdb/node/data/raft"
-RETRY_DELAY=5
-MAX_RETRIES=10
 
 # Get existing DNS records from Route53 which contain .graphdb.cluster in their name
 EXISTING_RECORDS=$(aws route53 list-resource-record-sets --hosted-zone-id "${zone_id}" --query "ResourceRecordSets[?contains(Name, '.graphdb.cluster') == \`true\`].Name")
@@ -33,10 +36,10 @@ readarray -t EXISTING_RECORDS_ARRAY <<<"$EXISTING_RECORDS"
 check_gdb() {
   local gdb_address="$1:7201/rest/monitor/infrastructure"
   if curl -s --head -u "admin:$${GRAPHDB_ADMIN_PASSWORD}" --fail "$gdb_address" >/dev/null; then
-    echo "Success, GraphDB node $gdb_address is available"
+    log_with_timestamp "Success, GraphDB node $gdb_address is available"
     return 0
   else
-    echo "GraphDB node $gdb_address is not available yet"
+    log_with_timestamp "GraphDB node $gdb_address is not available yet"
     return 1
   fi
 }
@@ -57,10 +60,10 @@ wait_for_total_quorum() {
     nodes_in_sync=$(echo "$cluster_metrics" | awk '{print $2}')
 
     if [ "$nodes_in_sync" -eq "$nodes_in_cluster" ]; then
-      echo "Total quorum achieved: graphdb_nodes_in_sync: $nodes_in_sync equals graphdb_nodes_in_cluster: $nodes_in_cluster"
+      log_with_timestamp "Total quorum achieved: graphdb_nodes_in_sync: $nodes_in_sync equals graphdb_nodes_in_cluster: $nodes_in_cluster"
       break
     else
-      echo "Waiting for total quorum... (graphdb_nodes_in_sync: $nodes_in_sync, graphdb_nodes_in_cluster: $nodes_in_cluster)"
+      log_with_timestamp "Waiting for total quorum... (graphdb_nodes_in_sync: $nodes_in_sync, graphdb_nodes_in_cluster: $nodes_in_cluster)"
       sleep 30
     fi
   done
@@ -76,7 +79,7 @@ join_cluster() {
   # Waits for all nodes to be available (Handles rolling upgrades)
   for node in "$${EXISTING_RECORDS_ARRAY[@]}"; do
     while ! check_gdb "$node"; do
-      echo "Waiting for GDB $node to start"
+      log_with_timestamp "Waiting for GDB $node to start"
       sleep 5
     done
   done
@@ -85,51 +88,79 @@ join_cluster() {
   while [ -z "$LEADER_NODE" ]; do
     for node in "$${EXISTING_RECORDS_ARRAY[@]}"; do
       endpoint="http://$node:7201/rest/cluster/group/status"
-      echo "Checking leader status for $node"
+      log_with_timestamp "Checking leader status for $node"
 
-      # Gets the address of the node if nodeState is LEADER, grpc port is returned therefor we replace port 7300 to 7200
+      # Gets the address of the node if nodeState is LEADER, grpc port is returned therefore we replace port 7300 to 7200
       LEADER_ADDRESS=$(curl -s "$endpoint" -u "admin:$${GRAPHDB_ADMIN_PASSWORD}" | jq -r '.[] | select(.nodeState == "LEADER") | .address' | sed 's/7301/7201/')
       if [ -n "$${LEADER_ADDRESS}" ]; then
         LEADER_NODE=$LEADER_ADDRESS
-        echo "Found leader address $LEADER_ADDRESS"
+        log_with_timestamp "Found leader address $LEADER_ADDRESS"
         break 2 # Exit both loops
       else
-        echo "No leader found at $node"
+        log_with_timestamp "No leader found at $node"
       fi
     done
 
-    echo "No leader found on any node. Retrying..."
+    log_with_timestamp "No leader found on any node. Retrying..."
     sleep 5
   done
+
+  log_with_timestamp "Trying to delete $CURRENT_NODE_NAME"
+  # Removes node if already present in the cluster config
+  curl -X DELETE -s \
+    --fail-with-body \
+    -o "/dev/null" \
+    -H 'Content-Type: application/json' \
+    -H 'Accept: application/json' \
+    -w "%%{http_code}" \
+    -u "admin:$${GRAPHDB_ADMIN_PASSWORD}" \
+    -d "{\"nodes\": [\"$${CURRENT_NODE_NAME}:7301\"]}" \
+    "http://$${LEADER_NODE}/rest/cluster/config/node" || true
 
   # Waits for total quorum of the cluster before continuing with joining the cluster
   wait_for_total_quorum
 
-  echo "Attempting to add $${CURRENT_NODE_NAME}:7301 to the cluster"
-  # This operation might take a while depending on the size of the repositories.
-  CURL_MAX_REQUEST_TIME=21600 # 6 hours
-  ADD_NODE=$(
-    curl -X POST -s \
-      -m $CURL_MAX_REQUEST_TIME \
-      -w "%%{http_code}" \
-      -o "/dev/null" \
-      -H 'Content-Type: application/json' \
-      -H 'Accept: application/json' \
-      -u "admin:$${GRAPHDB_ADMIN_PASSWORD}" \
-      -d"{\"nodes\": [\"$${CURRENT_NODE_NAME}:7301\"]}" \
-      "http://$${LEADER_NODE}/rest/cluster/config/node"
-  )
+  log_with_timestamp "Attempting to add $${CURRENT_NODE_NAME}:7301 to the cluster"
 
-  if [[ "$ADD_NODE" == 200 ]]; then
-    echo "$${CURRENT_NODE_NAME} was successfully added to the cluster."
-  else
-    echo "Node $${CURRENT_NODE_NAME} failed to join the cluster, check the logs!"
+  retry_count=0
+  max_retries=3
+  retry_interval=300 # 5 minutes in seconds
+
+  while [ $retry_count -lt $max_retries ]; do
+    # This operation might take a while depending on the size of the repositories.
+    CURL_MAX_REQUEST_TIME=21600 # 6 hours
+    ADD_NODE=$(
+      curl -X POST -s \
+        -m $CURL_MAX_REQUEST_TIME \
+        -w "%%{http_code}" \
+        -o "/dev/null" \
+        -H 'Content-Type: application/json' \
+        -H 'Accept: application/json' \
+        -u "admin:$${GRAPHDB_ADMIN_PASSWORD}" \
+        -d "{\"nodes\": [\"$${CURRENT_NODE_NAME}:7301\"]}" \
+        "http://$${LEADER_NODE}/rest/cluster/config/node"
+    )
+
+    if [[ "$ADD_NODE" == 200 ]]; then
+      log_with_timestamp "$${CURRENT_NODE_NAME} was successfully added to the cluster."
+      break
+    else
+      log_with_timestamp "Node $${CURRENT_NODE_NAME} failed to join the cluster, attempt $((retry_count + 1)) of $max_retries."
+      if [ $retry_count -lt $((max_retries - 1)) ]; then
+        log_with_timestamp "Retrying in 5 minutes..."
+        sleep $retry_interval
+      fi
+      retry_count=$((retry_count + 1))
+    fi
+  done
+
+  if [[ "$ADD_NODE" != 200 ]]; then
+    log_with_timestamp "Node $${CURRENT_NODE_NAME} failed to join the cluster after $max_retries attempts, check the logs!"
   fi
 }
-
 # Check if the Raft directory exists
 if [ ! -d "$RAFT_DIR" ]; then
-  echo "$RAFT_DIR folder is missing, waiting..."
+  log_with_timestamp "$RAFT_DIR folder is missing, waiting..."
 
   # The initial provisioning of scale set in AWS may take a while
   # therefore we need to be sure that this is not triggered before the first cluster initialization.
@@ -137,17 +168,17 @@ if [ ! -d "$RAFT_DIR" ]; then
 
   for i in {1..30}; do
     if [ ! -d "$RAFT_DIR" ]; then
-      echo "Raft directory not found yet. Waiting (attempt $i of 30)..."
+      log_with_timestamp "Raft directory not found yet. Waiting (attempt $i of 30)..."
       sleep 5
       if [ $i == 30 ]; then
-        echo "$RAFT_DIR folder is not found, joining node to cluster"
+        log_with_timestamp "$RAFT_DIR folder is not found, joining node to cluster"
         join_cluster
       fi
     else
-      echo "Found Raft directory"
+      log_with_timestamp "Found Raft directory"
       if [ -z "$(ls -A $RAFT_DIR)" ]; then
         # TODO check if the data folder is empty as well, otherwise this will fail.
-        echo "$RAFT_DIR folder is empty, joining node to cluster"
+        log_with_timestamp "$RAFT_DIR folder is empty, joining node to cluster"
         join_cluster
       else
         break
