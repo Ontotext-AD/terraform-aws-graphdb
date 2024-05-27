@@ -20,6 +20,11 @@ variable "aws_subscription_id" {
   type        = string
 }
 
+variable "override_owner_id" {
+  description = "Override the default owner ID used for the AMI images"
+  type        = string
+}
+
 # GraphDB Parameters
 
 variable "graphdb_admin_password" {
