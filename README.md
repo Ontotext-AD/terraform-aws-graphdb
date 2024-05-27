@@ -90,6 +90,7 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | common\_tags | (Optional) Map of common tags for all taggable AWS resources. | `map(string)` | `{}` | no |
 | resource\_name\_prefix | Resource name prefix used for tagging and naming AWS resources | `string` | n/a | yes |
 | aws\_region | AWS region to deploy resources into | `string` | n/a | yes |
+| override\_owner\_id | Override the default owner ID used for the AMI images | `string` | `null` | no |
 | deploy\_backup | Deploy backup module | `bool` | `true` | no |
 | backup\_schedule | Cron expression for the backup job. | `string` | `"0 0 * * *"` | no |
 | backup\_retention\_count | Number of backups to keep. | `number` | `7` | no |

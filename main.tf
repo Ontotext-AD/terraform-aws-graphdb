@@ -175,8 +175,9 @@ module "graphdb" {
 
   # VM Image
 
-  ami_id          = var.ami_id
-  graphdb_version = var.graphdb_version
+  ami_id            = var.ami_id
+  graphdb_version   = var.graphdb_version
+  override_owner_id = var.override_owner_id
 
   # Managed Disks
 

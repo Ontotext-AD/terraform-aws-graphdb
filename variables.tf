@@ -16,6 +16,12 @@ variable "aws_region" {
   type        = string
 }
 
+variable "override_owner_id" {
+  description = "Override the default owner ID used for the AMI images"
+  type        = string
+  default     = null
+}
+
 # Backup configurations
 variable "deploy_backup" {
   description = "Deploy backup module"

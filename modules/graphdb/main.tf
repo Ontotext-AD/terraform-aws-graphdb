@@ -11,7 +11,7 @@ data "aws_caller_identity" "current" {}
 data "aws_ami" "graphdb" {
   count = var.ami_id != null ? 0 : 1
 
-  owners      = ["770034820396"] # Ontotext
+  owners      = var.override_owner_id != null ? [var.override_owner_id] : ["679593333241"]
   most_recent = true
 
   filter {
