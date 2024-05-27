@@ -64,7 +64,7 @@ check_gdb() {
     return 1
   fi
 
-  local gdb_address="$1:7201/rest/monitor/infrastructure"
+  local gdb_address="http://$1:7201/rest/monitor/infrastructure"
   if curl -s --head -u "admin:$${GRAPHDB_ADMIN_PASSWORD}" --fail "$${gdb_address}" >/dev/null; then
     log_with_timestamp "Success, GraphDB node $${gdb_address} is available"
     return 0

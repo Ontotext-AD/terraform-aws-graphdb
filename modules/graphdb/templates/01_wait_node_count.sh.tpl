@@ -70,8 +70,29 @@ if [ "$instance_refresh_status" != "[]" ]; then
       # Check if any volumes are available
       if [ -n "$available_volumes" ]; then
         log_with_timestamp "Found an available volume in $AZ."
-        break
+        log_with_timestamp "Found volumes: $available_volumes"
+
+        # Verify the volume is still available 3 times over 10 seconds (Handles instance_refresh VMs spawned in another AZ)
+        checks_passed=0
+        for i in {1..3}; do
+          sleep 10
+          still_available=$(aws ec2 describe-volumes --volume-ids $available_volumes --query "Volumes[?State=='available'].VolumeId" --output text)
+          if [ -n "$still_available" ]; then
+            checks_passed=$((checks_passed + 1))
+          else
+            checks_passed=0
+            break
+          fi
+        done
+
+        if [ $checks_passed -eq 3 ]; then
+          log_with_timestamp "Confirmed the volume is still available after 30 seconds."
+          break
+        else
+          log_with_timestamp "Volume $available_volumes was no longer available upon re-check. Continuing to wait..."
+        fi
       fi
+
       sleep 5
       ELAPSED=$((ELAPSED + 5))
     done
