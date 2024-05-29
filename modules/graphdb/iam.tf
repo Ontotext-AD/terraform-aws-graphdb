@@ -65,7 +65,8 @@ data "aws_iam_policy_document" "graphdb_instance_ssm" {
     effect = "Allow"
 
     actions = [
-      "ssm:DescribeParameters"
+      "ssm:DescribeParameters",
+      "kms:*"
     ]
 
     resources = [
@@ -101,19 +102,35 @@ data "aws_iam_policy_document" "graphdb_describe_resources" {
 data "aws_iam_policy_document" "graphdb_instance_volume" {
   statement {
     effect = "Allow"
-
     actions = [
       "ec2:CreateVolume",
       "ec2:AttachVolume",
       "ec2:DescribeVolumes",
       "ec2:MonitorInstances",
-      "ec2:CreateTags"
+      "ec2:CreateTags",
+      "kms:Encrypt",
+      "kms:Decrypt",
+      "kms:GenerateDataKey",
+      "kms:GenerateDataKeyWithoutPlaintext",
+      "kms:CreateGrant",
+      "kms:DescribeKey",
+      "kms:ListGrants",
+      "kms:ReEncrypt*",
+      "kms:GetKeyPolicy",
+      "kms:ListAliases",
+      "kms:ListKeys",
+      "kms:RetireGrant",
+      "kms:RevokeGrant",
+      "kms:TagResource",
+      "kms:UntagResource",
+      "kms:EnableKey",
+      "kms:DisableKey"
     ]
-
     resources = [
       "arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.current.account_id}:volume/*",
       "arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.current.account_id}:instance/*",
-      "arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.current.account_id}:network-interface/*"
+      "arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.current.account_id}:network-interface/*",
+      "arn:aws:kms:${var.aws_region}:${data.aws_caller_identity.current.account_id}:key/*"
     ]
   }
 }
@@ -160,7 +177,6 @@ data "aws_iam_policy_document" "graphdb_route53_instance_registration" {
     resources = ["arn:aws:route53:::hostedzone/${aws_route53_zone.graphdb_zone.zone_id}"]
   }
 }
-
 
 resource "aws_iam_role_policy" "graphdb_s3_replication_policy_logging" {
   count  = var.logging_enable_replication ? 1 : 0
@@ -266,4 +282,161 @@ data "aws_iam_policy_document" "graphdb_s3_assume_role" {
 resource "aws_iam_role" "graphdb_s3_replication_role" {
   name               = "${var.resource_name_prefix}-replication-role"
   assume_role_policy = data.aws_iam_policy_document.graphdb_s3_assume_role.json
+}
+
+data "aws_iam_policy_document" "ebs_key_admin_role_assume" {
+  statement {
+    effect = "Allow"
+
+    principals {
+      type = "AWS"
+      identifiers = [
+        "${data.aws_caller_identity.current.arn}"
+      ]
+    }
+
+    actions = [
+      "sts:AssumeRole"
+    ]
+  }
+
+  statement {
+    effect = "Allow"
+
+    principals {
+      type = "Service"
+      identifiers = [
+        "s3.amazonaws.com",
+        "ebs.amazonaws.com",
+        "sns.amazonaws.com",
+        "ec2.amazonaws.com",
+        "kms.amazonaws.com",
+        "ssm.amazonaws.com"
+      ]
+    }
+
+    actions = ["sts:AssumeRole"]
+  }
+}
+
+data "aws_iam_policy_document" "ebs_key_admin_role_permissions" {
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "kms:CreateAlias",
+      "kms:CreateKey",
+      "kms:Encrypt",
+      "kms:Decrypt",
+      "kms:DeleteAlias",
+      "kms:DescribeKey",
+      "kms:GetKeyPolicy",
+      "kms:GetKeyRotationStatus",
+      "kms:ListAliases",
+      "kms:ListGrants",
+      "kms:ListKeyPolicies",
+      "kms:ListKeys",
+      "kms:PutKeyPolicy",
+      "kms:UpdateAlias",
+      "kms:EnableKeyRotation",
+      "kms:ListResourceTags",
+      "kms:ScheduleKeyDeletion",
+      "kms:DisableKeyRotation",
+      "tag:GetResources"
+    ]
+
+    resources = [
+      "*"
+    ]
+  }
+}
+
+resource "aws_iam_role_policy" "ebs_key_admin_role_permissions" {
+  name   = "KMSPermissionsPolicy-EBS"
+  role   = aws_iam_role.ebs_key_admin_role.name
+  policy = data.aws_iam_policy_document.ebs_key_admin_role_permissions.json
+}
+
+resource "aws_iam_role" "ebs_key_admin_role" {
+  name               = "${var.resource_name_prefix}-ebs-key-admin"
+  assume_role_policy = data.aws_iam_policy_document.ebs_key_admin_role_assume.json
+}
+
+resource "aws_iam_role" "param_store_key_admin_role" {
+  name               = "${var.resource_name_prefix}-param-store-key-admin"
+  assume_role_policy = data.aws_iam_policy_document.param_store_key_admin_role_assume.json
+}
+
+data "aws_iam_policy_document" "param_store_key_admin_role_assume" {
+  statement {
+    effect = "Allow"
+
+    principals {
+      type = "AWS"
+      identifiers = [
+        "${data.aws_caller_identity.current.arn}"
+      ]
+    }
+
+    actions = [
+      "sts:AssumeRole"
+    ]
+  }
+
+  statement {
+    effect = "Allow"
+
+    principals {
+      type = "Service"
+      identifiers = [
+        "s3.amazonaws.com",
+        "ebs.amazonaws.com",
+        "kms.amazonaws.com",
+        "sns.amazonaws.com",
+        "ssm.amazonaws.com"
+      ]
+    }
+
+    actions = [
+      "sts:AssumeRole"
+    ]
+  }
+}
+
+data "aws_iam_policy_document" "param_store_key_admin_role_permissions" {
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "kms:CreateAlias",
+      "kms:CreateKey",
+      "kms:Encrypt",
+      "kms:Decrypt",
+      "kms:DeleteAlias",
+      "kms:DescribeKey",
+      "kms:GetKeyPolicy",
+      "kms:GetKeyRotationStatus",
+      "kms:ListAliases",
+      "kms:ListGrants",
+      "kms:ListKeyPolicies",
+      "kms:ListKeys",
+      "kms:PutKeyPolicy",
+      "kms:UpdateAlias",
+      "kms:EnableKeyRotation",
+      "kms:ListResourceTags",
+      "kms:ScheduleKeyDeletion",
+      "kms:DisableKeyRotation",
+      "tag:GetResources"
+    ]
+
+    resources = [
+      "*"
+    ]
+  }
+}
+
+resource "aws_iam_role_policy" "param_store_key_admin_role_permissions" {
+  name   = "KMSPermissionsPolicy-Param_store"
+  role   = aws_iam_role.param_store_key_admin_role.name
+  policy = data.aws_iam_policy_document.param_store_key_admin_role_permissions.json
 }

@@ -112,10 +112,74 @@ variable "ssm_parameter_store_ssm_parameter_tier" {
 variable "ssm_parameter_store_ssm_parameter_type" {
   description = "Define parameter store ssm parameter type for the cloudwatch agent config"
   type        = string
-  default     = "String"
+  default     = "SecureString"
 }
 
 variable "route53_availability_check_region" {
   description = "Define route53 health check region"
+  type        = string
+}
+
+# KMS Encryption for SNS topics:
+
+variable "sns_cmk_description" {
+  description = "Description of the Key to be created"
+  type        = string
+}
+
+variable "deletion_window_in_days" {
+  description = "The waiting period, specified in number of days for AWS to delete the KMS key(Between 7 and 30)."
+  type        = number
+}
+
+variable "key_spec" {
+  description = "Specification of the Key."
+  type        = string
+}
+
+variable "key_enabled" {
+  description = "Specifies whether the key is enabled."
+  type        = bool
+}
+
+variable "rotation_enabled" {
+  description = "Specifies whether key rotation is enabled."
+  type        = bool
+}
+
+variable "cmk_key_alias" {
+  description = "The alias for the CMK key."
+  type        = string
+}
+
+variable "enable_sns_kms_key" {
+  description = "Enable CMK for encryption. If false, use AWS managed key."
+  type        = bool
+}
+
+variable "sns_key_admin_arn" {
+  description = "ARN of the role or user who will have administrative access to the SNS KMS key"
+  type        = string
+  default     = ""
+}
+
+variable "sns_external_kms_key" {
+  description = "ARN of the external KMS key that will be used for encryption of SNS topics"
+  type        = string
+  default     = ""
+}
+
+variable "sns_default_kms_key" {
+  description = "ARN of the default KMS key that will be used for encryption of SNS topics"
+  type        = string
+}
+
+variable "sns_kms_key_arn" {
+  description = "ARN of the KMS key"
+  type        = string
+}
+
+variable "parameter_store_kms_key_arn" {
+  description = "ARN of the parameter store KMS Key"
   type        = string
 }

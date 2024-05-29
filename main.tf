@@ -2,6 +2,47 @@ data "aws_region" "current" {}
 
 data "aws_caller_identity" "current" {}
 
+locals {
+  calculated_parameter_store_kms_key_arn = (var.create_parameter_store_kms_key ?
+    (var.parameter_store_external_kms_key != "" ?
+      var.parameter_store_external_kms_key :
+      (module.graphdb.parameter_store_cmk_arn != "" ?
+        module.graphdb.parameter_store_cmk_arn :
+    var.parameter_store_default_key)) :
+    var.parameter_store_default_key
+  )
+
+  calculated_ebs_kms_key_arn = (
+    var.create_ebs_kms_key ?
+    (var.ebs_external_kms_key != "" ?
+      var.ebs_external_kms_key :
+      (module.graphdb.ebs_kms_key_arn != "" ?
+        module.graphdb.ebs_kms_key_arn :
+    var.ebs_default_kms_key)) :
+    var.ebs_default_kms_key
+  )
+
+  calculated_s3_kms_key_arn = (
+    var.create_s3_kms_key ?
+    (var.s3_external_kms_key_arn != "" ?
+      var.s3_external_kms_key_arn :
+      (module.backup[0].s3_cmk_arn != "" ?
+        module.backup[0].s3_cmk_arn :
+    var.s3_kms_default_key)) :
+    var.s3_kms_default_key
+  )
+
+  calculated_sns_kms_key_arn = (
+    var.create_sns_kms_key ?
+    (var.sns_external_kms_key != "" ?
+      var.sns_external_kms_key :
+      (module.monitoring[0].sns_cmk_arn != "" ?
+        module.monitoring[0].sns_cmk_arn :
+    var.sns_default_kms_key)) :
+    var.sns_default_kms_key
+  )
+}
+
 module "vpc" {
   source = "./modules/vpc"
 
@@ -30,8 +71,22 @@ module "backup" {
 
   resource_name_prefix       = var.resource_name_prefix
   iam_role_id                = module.graphdb.iam_role_id
+  iam_role_arn               = module.graphdb.iam_role_arn
   s3_enable_access_logs      = var.s3_enable_access_logs
   s3_access_logs_bucket_name = var.deploy_logging_module && var.s3_enable_access_logs ? module.logging[0].graphdb_logging_bucket_name : null
+
+  # S3 Encryption with KMS
+  create_s3_kms_key              = var.create_s3_kms_key
+  s3_default_kms_key             = var.s3_kms_default_key
+  s3_cmk_alias                   = var.s3_cmk_alias
+  s3_kms_key_admin_arn           = var.s3_kms_key_admin_arn
+  s3_cmk_description             = var.s3_cmk_description
+  s3_key_specification           = var.s3_key_specification
+  s3_kms_key_enabled             = var.s3_kms_key_enabled
+  s3_key_rotation_enabled        = var.s3_key_rotation_enabled
+  s3_key_deletion_window_in_days = var.s3_key_deletion_window_in_days
+  s3_external_kms_key            = var.s3_external_kms_key_arn
+  s3_kms_key_arn                 = local.calculated_s3_kms_key_arn
 }
 
 module "logging" {
@@ -126,9 +181,21 @@ module "monitoring" {
   sns_topic_endpoint                     = var.deploy_monitoring ? var.monitoring_sns_topic_endpoint : null
   sns_endpoint_auto_confirms             = var.monitoring_endpoint_auto_confirms
   sns_protocol                           = var.monitoring_sns_protocol
+  sns_cmk_description                    = var.sns_cmk_description
+  sns_key_admin_arn                      = var.sns_key_admin_arn
+  enable_sns_kms_key                     = var.create_sns_kms_key
+  sns_external_kms_key                   = var.sns_external_kms_key
+  rotation_enabled                       = var.sns_rotation_enabled
+  deletion_window_in_days                = var.deletion_window_in_days
+  key_enabled                            = var.sns_key_enabled
+  key_spec                               = var.sns_key_spec
+  sns_default_kms_key                    = var.sns_default_kms_key
+  cmk_key_alias                          = var.sns_cmk_key_alias
+  parameter_store_kms_key_arn            = local.calculated_parameter_store_kms_key_arn
   cloudwatch_log_group_retention_in_days = var.monitoring_log_group_retention_in_days
   route53_availability_request_url       = module.load_balancer.lb_dns_name
   route53_availability_measure_latency   = var.monitoring_route53_measure_latency
+  sns_kms_key_arn                        = local.calculated_sns_kms_key_arn
 }
 
 module "graphdb" {
@@ -181,12 +248,28 @@ module "graphdb" {
 
   # Managed Disks
 
-  device_name           = var.device_name
-  ebs_volume_type       = var.ebs_volume_type
-  ebs_volume_size       = var.ebs_volume_size
-  ebs_volume_iops       = var.ebs_volume_iops
-  ebs_volume_throughput = var.ebs_volume_throughput
-  ebs_kms_key_arn       = var.ebs_kms_key_arn
+  device_name             = var.device_name
+  ebs_volume_type         = var.ebs_volume_type
+  ebs_volume_size         = var.ebs_volume_size
+  ebs_volume_iops         = var.ebs_volume_iops
+  ebs_volume_throughput   = var.ebs_volume_throughput
+  ebs_default_kms_key_arn = var.ebs_default_kms_key
+  ebs_external_kms_key    = var.ebs_external_kms_key
+
+  # EBS Encryption with KMS
+
+  create_ebs_kms_key              = var.create_ebs_kms_key
+  ebs_cmk_description             = var.ebs_cmk_description
+  ebs_key_spec                    = var.ebs_key_spec
+  ebs_key_enabled                 = var.ebs_key_enabled
+  ebs_key_rotation_enabled        = var.ebs_key_rotation_enabled
+  ebs_key_tags                    = var.ebs_key_tags
+  ebs_key_deletion_window_in_days = var.ebs_key_deletion_window_in_days
+  ebs_key_arn                     = local.calculated_ebs_kms_key_arn
+
+  ebs_key_admin_arn   = var.ebs_key_admin_arn
+  ebs_cmk_alias       = var.ebs_cmk_alias
+  ebs_default_kms_key = var.default_ebs_cmk_alias
 
   # DNS
 
@@ -215,4 +298,19 @@ module "graphdb" {
   asg_enable_instance_refresh               = var.asg_enable_instance_refresh
   asg_instance_refresh_checkpoint_delay     = var.asg_instance_refresh_checkpoint_delay
   graphdb_enable_userdata_scripts_on_reboot = var.graphdb_enable_userdata_scripts_on_reboot
+
+  # Parameter store encryption
+
+  create_parameter_store_kms_key              = var.create_parameter_store_kms_key
+  parameter_store_cmk_alias                   = var.parameter_store_cmk_alias
+  parameter_store_key_admin_arn               = var.parameter_store_key_admin_arn
+  parameter_store_cmk_description             = var.parameter_store_cmk_description
+  parameter_store_key_spec                    = var.parameter_store_key_spec
+  parameter_store_key_enabled                 = var.parameter_store_key_enabled
+  parameter_store_key_rotation_enabled        = var.parameter_store_key_rotation_enabled
+  parameter_store_key_tags                    = var.parameter_store_key_tags
+  parameter_store_default_key                 = var.parameter_store_default_key
+  parameter_store_key_deletion_window_in_days = var.parameter_store_key_deletion_window_in_days
+  parameter_store_external_kms_key            = var.parameter_store_external_kms_key
+  parameter_store_key_arn                     = local.calculated_parameter_store_kms_key_arn
 }

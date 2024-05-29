@@ -12,6 +12,7 @@ resource "aws_ssm_parameter" "graphdb_cloudwatch_agent_config" {
   description = "Cloudwatch Agent Configuration"
   type        = var.ssm_parameter_store_ssm_parameter_type
   tier        = var.ssm_parameter_store_ssm_parameter_tier
+  key_id      = var.parameter_store_kms_key_arn
 
   value = templatefile("${path.module}/cloudwatch_agent_config.json.tpl", { name : var.resource_name_prefix })
 
