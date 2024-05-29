@@ -161,6 +161,12 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | asg\_enable\_instance\_refresh | Enables instance refresh for the GraphDB Auto scaling group. A refresh is started when any of the following Auto Scaling Group properties change: launch\_configuration, launch\_template, mixed\_instances\_policy | `bool` | `false` | no |
 | asg\_instance\_refresh\_checkpoint\_delay | Number of seconds to wait after a checkpoint. | `number` | `3600` | no |
 | graphdb\_enable\_userdata\_scripts\_on\_reboot | (Experimental) Modifies cloud-config to always run user data scripts on EC2 boot | `bool` | `false` | no |
+| enable\_cmk | Enable CMK for encryption. If false, use AWS managed key. | `bool` | `false` | no |
+| kms\_master\_key\_id | ARN of the Customer Managed Key (CMK). | `string` | `""` | no |
+| policy | The IAM policy JSON document. | `string` | `""` | no |
+| tags | A map of tags to assign to the resources. | `map(string)` | `{}` | no |
+| cmk\_description | n/a | `string` | `"KMS Key to encrypt SNS"` | no |
+| sns\_key\_admin\_arn | ARN of the role or user who will have administrative access to the SNS KMS key | `string` | `""` | no |
 <!-- END_TF_DOCS -->
 
 ## Usage
