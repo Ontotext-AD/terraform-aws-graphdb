@@ -5,7 +5,9 @@
 resource "aws_sns_topic" "graphdb_route53_sns_topic" {
   provider          = aws.useast1
   name              = "${var.resource_name_prefix}-route53-sns-notifications"
-  kms_master_key_id = "alias/aws/sns"
+  kms_master_key_id = var.enable_cmk ? aws_kms_key.cmk[0].arn : "alias/aws/sns"
+
+
 }
 
 resource "aws_sns_topic_subscription" "graphdb_route53_sns_topic_subscription" {

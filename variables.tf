@@ -469,3 +469,39 @@ variable "graphdb_enable_userdata_scripts_on_reboot" {
   type        = bool
   default     = false
 }
+
+#cmk building in progress
+variable "enable_cmk" {
+  description = "Enable CMK for encryption. If false, use AWS managed key."
+  type        = bool
+  default     = false
+}
+
+variable "kms_master_key_id" {
+  description = "ARN of the Customer Managed Key (CMK)."
+  type        = string
+  default     = ""
+}
+
+variable "policy" {
+  description = "The IAM policy JSON document."
+  type        = string
+  default     = ""
+}
+
+variable "tags" {
+  description = "A map of tags to assign to the resources."
+  type        = map(string)
+  default     = {}
+}
+
+variable "cmk_description" {
+  type    = string
+  default = "KMS Key to encrypt SNS"
+}
+
+variable "sns_key_admin_arn" {
+  description = "ARN of the role or user who will have administrative access to the SNS KMS key"
+  type        = string
+  default     = ""
+}

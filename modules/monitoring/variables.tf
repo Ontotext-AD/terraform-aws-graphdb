@@ -119,3 +119,53 @@ variable "route53_availability_check_region" {
   description = "Define route53 health check region"
   type        = string
 }
+
+
+#KMS CMK VARS:
+
+variable "tags" {
+  description = "A map of tags to assign to the resources."
+  type        = map(string)
+  default     = {}
+}
+
+
+variable "kms_master_key_id" {
+  description = "ARN of the Customer Managed Key (CMK)."
+  type        = string
+  default     = ""
+}
+
+variable "cmk_description" {
+  default = "KMS Key to encrypt SNS"
+}
+
+variable "key_spec" {
+  default = "SYMMETRIC_DEFAULT"
+}
+
+variable "enabled" {
+  default = true
+}
+
+variable "rotation_enabled" {
+  default = true
+}
+
+variable "cmk_key_alias" {
+  description = "The alias for the CMK key."
+  type        = string
+  default     = "graphdb-cmk-key"
+}
+
+variable "enable_cmk" {
+  description = "Enable CMK for encryption. If false, use AWS managed key."
+  type        = bool
+  default     = false
+}
+
+variable "sns_key_admin_arn" {
+  description = "ARN of the role or user who will have administrative access to the SNS KMS key"
+  type        = string
+  default     = ""
+}

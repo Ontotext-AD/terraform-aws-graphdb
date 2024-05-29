@@ -119,13 +119,18 @@ module "monitoring" {
 
   count = var.deploy_monitoring ? 1 : 0
 
-  resource_name_prefix                   = var.resource_name_prefix
-  aws_region                             = var.aws_region
-  route53_availability_check_region      = var.monitoring_route53_health_check_aws_region
-  cloudwatch_alarms_actions_enabled      = var.monitoring_actions_enabled
-  sns_topic_endpoint                     = var.deploy_monitoring ? var.monitoring_sns_topic_endpoint : null
-  sns_endpoint_auto_confirms             = var.monitoring_endpoint_auto_confirms
-  sns_protocol                           = var.monitoring_sns_protocol
+  resource_name_prefix              = var.resource_name_prefix
+  aws_region                        = var.aws_region
+  route53_availability_check_region = var.monitoring_route53_health_check_aws_region
+  cloudwatch_alarms_actions_enabled = var.monitoring_actions_enabled
+  sns_topic_endpoint                = var.deploy_monitoring ? var.monitoring_sns_topic_endpoint : null
+  sns_endpoint_auto_confirms        = var.monitoring_endpoint_auto_confirms
+  sns_protocol                      = var.monitoring_sns_protocol
+  kms_master_key_id                 = var.kms_master_key_id
+  cmk_description                   = var.cmk_description
+  sns_key_admin_arn                 = var.sns_key_admin_arn
+  enable_cmk                        = var.enable_cmk
+
   cloudwatch_log_group_retention_in_days = var.monitoring_log_group_retention_in_days
   route53_availability_request_url       = module.load_balancer.lb_dns_name
   route53_availability_measure_latency   = var.monitoring_route53_measure_latency
