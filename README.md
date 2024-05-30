@@ -163,10 +163,10 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | graphdb\_enable\_userdata\_scripts\_on\_reboot | (Experimental) Modifies cloud-config to always run user data scripts on EC2 boot | `bool` | `false` | no |
 | enable\_cmk | Enable CMK for encryption. If false, use AWS managed key. | `bool` | `false` | no |
 | kms\_master\_key\_id | ARN of the Customer Managed Key (CMK). | `string` | `""` | no |
-| policy | The IAM policy JSON document. | `string` | `""` | no |
+| sns\_cmk\_policy | The IAM policy JSON document. | `string` | `""` | no |
 | tags | A map of tags to assign to the resources. | `map(string)` | `{}` | no |
-| cmk\_description | n/a | `string` | `"KMS Key to encrypt SNS"` | no |
-| sns\_key\_admin\_arn | ARN of the role or user who will have administrative access to the SNS KMS key | `string` | `""` | no |
+| cmk\_description | Description for the key | `string` | `"KMS Key to encrypt SNS"` | no |
+| sns\_key\_admin\_arn | ARN of the role or user granted administrative access to the SNS KMS key | `string` | `""` | no |
 <!-- END_TF_DOCS -->
 
 ## Usage
