@@ -2,16 +2,16 @@
 resource "aws_kms_key" "cmk" {
   count = var.enable_cmk ? 1 : 0
 
-  #description             = var.description
+  description              = var.cmk_description
   customer_master_key_spec = var.key_spec
-  is_enabled               = var.enabled
+  is_enabled               = var.key_enabled
   enable_key_rotation      = var.rotation_enabled
-  #tags                    = var.tags
-  deletion_window_in_days = 30
+  tags                     = var.tags
+  deletion_window_in_days  = 30
 
   policy = jsonencode({
     "Version" : "2012-10-17",
-    "Id" : "key-default-1",
+    "Id" : "kms-key-policy-access-control",
     "Statement" : [
       {
         "Sid" : "Enable IAM User Permissions",
@@ -26,7 +26,7 @@ resource "aws_kms_key" "cmk" {
         "Sid" : "Allow access for Key Administrators",
         "Effect" : "Allow",
         "Principal" : {
-          #Use 'var.sns_key_admin_arn' if available and root if not provided
+          # Use 'var.sns_key_admin_arn' if available and root if not provided
           "AWS" : var.sns_key_admin_arn != "" ? var.sns_key_admin_arn : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
 
         },
@@ -50,7 +50,6 @@ resource "aws_kms_key" "cmk" {
       }
     ]
   })
-
 }
 
 # Add an alias to the key
@@ -60,6 +59,5 @@ resource "aws_kms_alias" "cmk_alias" {
   name          = "alias/${var.cmk_key_alias}"
   target_key_id = aws_kms_key.cmk[0].key_id
 }
-
 
 data "aws_caller_identity" "current" {}

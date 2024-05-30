@@ -120,15 +120,13 @@ variable "route53_availability_check_region" {
   type        = string
 }
 
-
-#KMS CMK VARS:
+# KMS CMK VARS:
 
 variable "tags" {
   description = "A map of tags to assign to the resources."
   type        = map(string)
   default     = {}
 }
-
 
 variable "kms_master_key_id" {
   description = "ARN of the Customer Managed Key (CMK)."
@@ -137,14 +135,17 @@ variable "kms_master_key_id" {
 }
 
 variable "cmk_description" {
+  description = "Description of the Key to be created"
   default = "KMS Key to encrypt SNS"
 }
 
 variable "key_spec" {
+  description = "Specification of the Key"
   default = "SYMMETRIC_DEFAULT"
 }
 
-variable "enabled" {
+variable "key_enabled" {
+  description = "Specifies whether the key is enabled"
   default = true
 }
 
