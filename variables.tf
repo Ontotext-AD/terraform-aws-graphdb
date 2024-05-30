@@ -498,8 +498,8 @@ variable "tags" {
 
 variable "cmk_description" {
   description = "Description for the key"
-  type    = string
-  default = "KMS Key to encrypt SNS"
+  type        = string
+  default     = "KMS Key to encrypt SNS"
 }
 
 variable "sns_key_admin_arn" {

@@ -136,17 +136,17 @@ variable "kms_master_key_id" {
 
 variable "cmk_description" {
   description = "Description of the Key to be created"
-  default = "KMS Key to encrypt SNS"
+  default     = "KMS Key to encrypt SNS"
 }
 
 variable "key_spec" {
   description = "Specification of the Key"
-  default = "SYMMETRIC_DEFAULT"
+  default     = "SYMMETRIC_DEFAULT"
 }
 
 variable "key_enabled" {
   description = "Specifies whether the key is enabled"
-  default = true
+  default     = true
 }
 
 variable "rotation_enabled" {
