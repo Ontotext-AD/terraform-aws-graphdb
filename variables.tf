@@ -511,5 +511,5 @@ variable "sns_key_admin_arn" {
 variable "deletion_window_in_days" {
   description = "The waiting period, specified in number of days for AWS to delete the KMS key(Between 7 and 30)."
   type        = number
-  default     = 30 
+  default     = 30
 } 

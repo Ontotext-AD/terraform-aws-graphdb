@@ -143,8 +143,8 @@ variable "cmk_description" {
 variable "deletion_window_in_days" {
   description = "The waiting period, specified in number of days for AWS to delete the KMS key(Between 7 and 30)."
   type        = number
-  default     = 30 
-} 
+  default     = 30
+}
 
 variable "key_spec" {
   description = "Specification of the Key."
@@ -160,8 +160,8 @@ variable "key_enabled" {
 
 variable "rotation_enabled" {
   description = "Specifies whether key rotation is enabled."
-  type    = bool
-  default = true
+  type        = bool
+  default     = true
 }
 
 variable "cmk_key_alias" {
