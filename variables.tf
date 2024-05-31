@@ -503,7 +503,13 @@ variable "cmk_description" {
 }
 
 variable "sns_key_admin_arn" {
-  description = "ARN of the role or user granted administrative access to the SNS KMS key"
+  description = "ARN of the role or user granted administrative access to the SNS KMS key."
   type        = string
   default     = ""
 }
+
+variable "deletion_window_in_days" {
+  description = "The waiting period, specified in number of days for AWS to delete the KMS key(Between 7 and 30)."
+  type        = number
+  default     = 30 
+} 

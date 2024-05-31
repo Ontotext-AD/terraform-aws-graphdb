@@ -136,20 +136,31 @@ variable "kms_master_key_id" {
 
 variable "cmk_description" {
   description = "Description of the Key to be created"
+  type        = string
   default     = "KMS Key to encrypt SNS"
 }
 
+variable "deletion_window_in_days" {
+  description = "The waiting period, specified in number of days for AWS to delete the KMS key(Between 7 and 30)."
+  type        = number
+  default     = 30 
+} 
+
 variable "key_spec" {
-  description = "Specification of the Key"
+  description = "Specification of the Key."
+  type        = string
   default     = "SYMMETRIC_DEFAULT"
 }
 
 variable "key_enabled" {
-  description = "Specifies whether the key is enabled"
+  description = "Specifies whether the key is enabled."
+  type        = bool
   default     = true
 }
 
 variable "rotation_enabled" {
+  description = "Specifies whether key rotation is enabled."
+  type    = bool
   default = true
 }
 

@@ -7,7 +7,7 @@ resource "aws_kms_key" "cmk" {
   is_enabled               = var.key_enabled
   enable_key_rotation      = var.rotation_enabled
   tags                     = var.tags
-  deletion_window_in_days  = 30
+  deletion_window_in_days  = var.deletion_window_in_days
 
   policy = jsonencode({
     "Version" : "2012-10-17",
