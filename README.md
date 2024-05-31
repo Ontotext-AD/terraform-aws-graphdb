@@ -166,7 +166,8 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | sns\_cmk\_policy | The IAM policy JSON document. | `string` | `""` | no |
 | tags | A map of tags to assign to the resources. | `map(string)` | `{}` | no |
 | cmk\_description | Description for the key | `string` | `"KMS Key to encrypt SNS"` | no |
-| sns\_key\_admin\_arn | ARN of the role or user granted administrative access to the SNS KMS key | `string` | `""` | no |
+| sns\_key\_admin\_arn | ARN of the role or user granted administrative access to the SNS KMS key. | `string` | `""` | no |
+| deletion\_window\_in\_days | The waiting period, specified in number of days for AWS to delete the KMS key(Between 7 and 30). | `number` | `30` | no |
 <!-- END_TF_DOCS -->
 
 ## Usage
