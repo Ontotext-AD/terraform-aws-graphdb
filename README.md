@@ -171,6 +171,8 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | rotation\_enabled | Specifies whether key rotation is enabled. | `bool` | `true` | no |
 | cmk\_key\_alias | The alias for the CMK key. | `string` | `"sns-cmk-key"` | no |
 | sns\_default\_kms\_key | ARN of the default KMS key that will be used for encryption of SNS topics | `string` | `"alias/aws/sns"` | no |
+| enable\_s3\_kms\_key | Enable creation of KMS key for S3 bucket encryption | `bool` | `false` | no |
+| s3\_key\_admin\_arn | ARN of the role or user granted administrative access to the SNS KMS key. | `string` | `""` | no |
 <!-- END_TF_DOCS -->
 
 ## Usage
