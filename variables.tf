@@ -470,6 +470,17 @@ variable "graphdb_enable_userdata_scripts_on_reboot" {
   default     = false
 }
 
+variable "enable_s3_kms_key" {
+  description = "Enable creation of KMS key for S3 bucket encryption"
+  type        = bool
+  default     = false
+}
+
+variable "s3_key_admin_arn" {
+  description = "ARN of the role or user granted administrative access to the SNS KMS key."
+  type        = string
+  default     = ""
+}
 # SNS Encryption
 
 variable "enable_sns_kms_key" {

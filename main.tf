@@ -32,6 +32,8 @@ module "backup" {
   iam_role_id                = module.graphdb.iam_role_id
   s3_enable_access_logs      = var.s3_enable_access_logs
   s3_access_logs_bucket_name = var.deploy_logging_module && var.s3_enable_access_logs ? module.logging[0].graphdb_logging_bucket_name : null
+  enable_s3_kms_key          = var.enable_s3_kms_key
+  s3_key_admin_arn           = var.s3_key_admin_arn
 }
 
 module "logging" {
