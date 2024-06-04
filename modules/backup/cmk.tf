@@ -1,13 +1,12 @@
 resource "aws_kms_key" "s3_cmk" {
   count = var.enable_s3_kms_key ? 1 : 0
 
-  description              = "KMS key for S3 bucket encryption"
+  description              = var.s3_cmk_description
   customer_master_key_spec = var.s3_key_spec
   is_enabled               = var.s3_key_enabled
   enable_key_rotation      = var.s3_key_rotation_enabled
   tags                     = var.s3_key_tags
   deletion_window_in_days  = var.s3_key_deletion_window_in_days
-
 
   policy = jsonencode({
     "Version" : "2012-10-17",

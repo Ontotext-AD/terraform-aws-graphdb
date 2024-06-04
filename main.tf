@@ -32,8 +32,17 @@ module "backup" {
   iam_role_id                = module.graphdb.iam_role_id
   s3_enable_access_logs      = var.s3_enable_access_logs
   s3_access_logs_bucket_name = var.deploy_logging_module && var.s3_enable_access_logs ? module.logging[0].graphdb_logging_bucket_name : null
-  enable_s3_kms_key          = var.enable_s3_kms_key
-  s3_key_admin_arn           = var.s3_key_admin_arn
+
+  # S3 Encryption with KMS
+  enable_s3_kms_key              = var.enable_s3_kms_key
+  s3_cmk_alias                   = var.s3_cmk_alias
+  s3_key_admin_arn               = var.s3_key_admin_arn
+  s3_cmk_description             = var.s3_cmk_description
+  s3_key_spec                    = var.s3_key_spec
+  s3_key_enabled                 = var.s3_key_enabled
+  s3_key_rotation_enabled        = var.s3_key_rotation_enabled
+  s3_key_tags                    = var.s3_key_tags
+  s3_key_deletion_window_in_days = var.s3_key_deletion_window_in_days
 }
 
 module "logging" {
