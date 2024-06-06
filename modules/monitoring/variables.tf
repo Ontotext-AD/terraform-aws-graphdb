@@ -112,7 +112,7 @@ variable "ssm_parameter_store_ssm_parameter_tier" {
 variable "ssm_parameter_store_ssm_parameter_type" {
   description = "Define parameter store ssm parameter type for the cloudwatch agent config"
   type        = string
-  default     = "String"
+  default     = "SecureString"
 }
 
 variable "route53_availability_check_region" {

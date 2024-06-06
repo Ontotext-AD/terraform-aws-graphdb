@@ -46,3 +46,15 @@ output "route53_zone_id" {
   description = "ID of the private hosted zone for GraphDB DNS resolving"
   value       = aws_route53_zone.graphdb_zone.zone_id
 }
+
+# Parameter store encryption
+
+output "graphdb_parameter_store_cmk_arn" {
+  value       = var.enable_graphdb_parameter_store_kms_key ? aws_kms_key.graphdb_parameter_store_cmk[0].arn : ""
+  description = "ARN of the KMS key for Parameter Store encryption"
+}
+
+output "graphdb_parameter_store_cmk_alias_arn" {
+  value       = var.enable_graphdb_parameter_store_kms_key ? aws_kms_alias.graphdb_parameter_store_cmk_alias[0].arn : ""
+  description = "ARN of the KMS key alias for Parameter Store encryption"
+}

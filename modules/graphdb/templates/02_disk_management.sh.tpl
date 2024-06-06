@@ -29,16 +29,57 @@ AVAILABLE_VOLUMES=()
 # Function to create a volume
 create_volume() {
   log_with_timestamp "Creating new volume"
+
+# Fetch the output from Terraform
+
+  # Determine the KMS key ARN to use
+  if [ -n "${ebs_external_kms_key}" ]; then
+    kms_key_arn="${ebs_external_kms_key}"
+  elif [ "${ebs_cmk_enabled}" == "true" ]; then
+    kms_key_arn="${graphdb_ebs_cmk_arn}"
+  else
+    kms_key_arn="${ebs_kms_key_arn}"
+  fi
+
+  # Debug output
+  log_with_timestamp "ebs_cmk_enabled: ${ebs_cmk_enabled}"
+  log_with_timestamp "ebs_external_kms_key: ${ebs_external_kms_key}"
+  log_with_timestamp "kms_key_arn: "$kms_key_arn""
+
   VOLUME_ID=$(aws ec2 create-volume \
     --availability-zone "$AVAILABILITY_ZONE" \
     --encrypted \
-    --kms-key-id "${ebs_kms_key_arn}" \
+    --kms-key-id "$kms_key_arn" \
     --volume-type "${ebs_volume_type}" \
     --size "${ebs_volume_size}" \
     --iops "${ebs_volume_iops}" \
     --throughput "${ebs_volume_throughput}" \
     --tag-specifications "ResourceType=volume,Tags=[{Key=Name,Value=${name}-graphdb-data}]" \
     --query "VolumeId" --output text)
+
+  # # Determine the KMS key ARN to use
+  # if [ "$ebs_cmk_enabled" == "true" ]; then
+  # VOLUME_ID=$(aws ec2 create-volume \
+  #   --availability-zone "$AVAILABILITY_ZONE" \
+  #   --encrypted \
+  #   --kms-key-id "${ebs_external_kms_key}" \
+  #   --volume-type "${ebs_volume_type}" \
+  #   --size "${ebs_volume_size}" \
+  #   --iops "${ebs_volume_iops}" \
+  #   --throughput "${ebs_volume_throughput}" \
+  #   --tag-specifications "ResourceType=volume,Tags=[{Key=Name,Value=${name}-graphdb-data}]" \
+  #   --query "VolumeId" --output text)
+  # else
+  #     VOLUME_ID=$(aws ec2 create-volume \
+  #   --availability-zone "$AVAILABILITY_ZONE" \
+  #   --encrypted \
+  #   --kms-key-id "${ebs_kms_key_arn}" \
+  #   --volume-type "${ebs_volume_type}" \
+  #   --size "${ebs_volume_size}" \
+  #   --iops "${ebs_volume_iops}" \
+  #   --throughput "${ebs_volume_throughput}" \
+  #   --tag-specifications "ResourceType=volume,Tags=[{Key=Name,Value=${name}-graphdb-data}]" \
+  #   --query "VolumeId" --output text)
 
   AVAILABLE_VOLUMES+=("$VOLUME_ID")
 

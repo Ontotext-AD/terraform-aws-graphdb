@@ -151,6 +151,19 @@ module "monitoring" {
   cloudwatch_log_group_retention_in_days = var.monitoring_log_group_retention_in_days
   route53_availability_request_url       = module.load_balancer.lb_dns_name
   route53_availability_measure_latency   = var.monitoring_route53_measure_latency
+
+  # Parameter Store Encryption with KMS
+  enable_parameter_store_kms_key              = var.enable_parameter_store_kms_key
+  parameter_store_cmk_alias                   = var.parameter_store_cmk_alias
+  parameter_store_key_admin_arn               = var.parameter_store_key_admin_arn
+  parameter_store_cmk_description             = var.parameter_store_cmk_description
+  parameter_store_key_spec                    = var.parameter_store_key_spec
+  parameter_store_key_enabled                 = var.parameter_store_key_enabled
+  parameter_store_key_rotation_enabled        = var.parameter_store_key_rotation_enabled
+  parameter_store_key_tags                    = var.parameter_store_key_tags
+  parameter_store_key_deletion_window_in_days = var.parameter_store_key_deletion_window_in_days
+  parameter_store_external_kms_key            = var.parameter_store_external_kms_key
+
 }
 
 module "graphdb" {
@@ -209,7 +222,7 @@ module "graphdb" {
   ebs_volume_iops       = var.ebs_volume_iops
   ebs_volume_throughput = var.ebs_volume_throughput
   ebs_kms_key_arn       = var.ebs_kms_key_arn
-
+  ebs_external_kms_key  = var.ebs_external_kms_key
   # DNS
 
   route53_zone_dns_name = var.route53_zone_dns_name
@@ -237,4 +250,17 @@ module "graphdb" {
   asg_enable_instance_refresh               = var.asg_enable_instance_refresh
   asg_instance_refresh_checkpoint_delay     = var.asg_instance_refresh_checkpoint_delay
   graphdb_enable_userdata_scripts_on_reboot = var.graphdb_enable_userdata_scripts_on_reboot
+
+  # Parameter store encryption
+
+  enable_graphdb_parameter_store_kms_key              = var.enable_graphdb_parameter_store_kms_key
+  graphdb_parameter_store_cmk_alias                   = var.graphdb_parameter_store_cmk_alias
+  graphdb_parameter_store_key_admin_arn               = var.graphdb_parameter_store_key_admin_arn
+  graphdb_parameter_store_cmk_description             = var.graphdb_parameter_store_cmk_description
+  graphdb_parameter_store_key_spec                    = var.graphdb_parameter_store_key_spec
+  graphdb_parameter_store_key_enabled                 = var.graphdb_parameter_store_key_enabled
+  graphdb_parameter_store_key_rotation_enabled        = var.graphdb_parameter_store_key_rotation_enabled
+  graphdb_parameter_store_key_tags                    = var.graphdb_parameter_store_key_tags
+  graphdb_parameter_store_key_deletion_window_in_days = var.graphdb_parameter_store_key_deletion_window_in_days
+  parameter_store_external_kms_key                    = var.parameter_store_external_kms_key
 }

@@ -43,6 +43,9 @@ data "cloudinit_config" "graphdb_user_data" {
       ebs_volume_throughput : var.ebs_volume_throughput
       ebs_kms_key_arn : var.ebs_kms_key_arn
       device_name : var.device_name
+      ebs_cmk_enabled : var.ebs_cmk_enabled                                   # Add this line
+      parameter_store_external_kms_key : var.parameter_store_external_kms_key # Add this line if not already present
+      ebs_external_kms_key : var.ebs_external_kms_key
     })
   }
 
