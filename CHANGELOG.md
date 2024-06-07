@@ -1,5 +1,9 @@
 # GraphDB AWS Terraform Module Changelog
 
+## 1.0.1
+
+* Updated GraphDB version to [10.6.4](https://graphdb.ontotext.com/documentation/10.6/release-notes.html#graphdb-10-6-4)
+
 ## 1.0.0
 Updated the user data scripts to allow setup of multi node cluster based on the `node_count` variable.
 Added ability for a node to rejoin the cluster if raft folder is empty or missing.
