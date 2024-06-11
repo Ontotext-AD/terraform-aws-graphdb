@@ -180,6 +180,7 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | s3\_key\_spec | Specification of the Key. | `string` | `"SYMMETRIC_DEFAULT"` | no |
 | s3\_key\_deletion\_window\_in\_days | The waiting period, specified in number of days for AWS to delete the KMS key(Between 7 and 30). | `number` | `30` | no |
 | s3\_cmk\_description | Description for the KMS Key | `string` | `"KMS key for S3 bucket encryption."` | no |
+| s3\_external\_kms\_key | Externally provided KMS CMK | `string` | `""` | no |
 | enable\_parameter\_store\_kms\_key | Enable creation of KMS key for Parameter Store encryption | `bool` | `false` | no |
 | parameter\_store\_key\_admin\_arn | ARN of the key administrator role for Parameter Store | `string` | `""` | no |
 | parameter\_store\_key\_tags | A map of tags to assign to the resources. | `map(string)` | `{}` | no |
@@ -198,8 +199,18 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | graphdb\_parameter\_store\_key\_deletion\_window\_in\_days | The waiting period, specified in number of days for AWS to delete the KMS key(Between 7 and 30). | `number` | `30` | no |
 | graphdb\_parameter\_store\_cmk\_description | Description for the KMS Key | `string` | `"KMS key for Parameter Store bucket encryption."` | no |
 | enable\_graphdb\_parameter\_store\_kms\_key | Enable creation of KMS key for Parameter Store encryption | `bool` | `false` | no |
-| parameter\_store\_external\_kms\_key | Externally provided KMS CMK | `string` | `"arn:aws:kms:us-east-1:590184002875:key/88617de9-2585-4124-98c1-49eef06b3ef6"` | no |
-| ebs\_external\_kms\_key | Externally provided KMS CMK | `string` | `"arn:aws:kms:us-east-1:590184002875:key/88617de9-2585-4124-98c1-49eef06b3ef6"` | no |
+| parameter\_store\_external\_kms\_key | Externally provided KMS CMK | `string` | `""` | no |
+| graphdb\_ebs\_key\_admin\_arn | ARN of the key administrator role for Parameter Store | `string` | `""` | no |
+| graphdb\_ebs\_key\_tags | A map of tags to assign to the resources. | `map(string)` | `{}` | no |
+| graphdb\_ebs\_key\_rotation\_enabled | Specifies whether key rotation is enabled. | `bool` | `true` | no |
+| graphdb\_ebs\_cmk\_alias | The alias for the CMK key. | `string` | `"graphdb-cmk-key"` | no |
+| graphdb\_ebs\_key\_enabled | Specifies whether the key is enabled. | `bool` | `false` | no |
+| graphdb\_ebs\_key\_spec | Specification of the Key. | `string` | `"SYMMETRIC_DEFAULT"` | no |
+| graphdb\_ebs\_key\_deletion\_window\_in\_days | The waiting period, specified in number of days for AWS to delete the KMS key(Between 7 and 30). | `number` | `30` | no |
+| graphdb\_ebs\_cmk\_description | Description for the KMS Key | `string` | `"KMS key for Parameter Store bucket encryption."` | no |
+| enable\_graphdb\_ebs\_kms\_key | Enable creation of KMS key for Parameter Store encryption | `bool` | `false` | no |
+| ebs\_external\_kms\_key | Externally provided KMS CMK | `string` | `""` | no |
+| ebs\_cmk\_enabled | Enable or disable toggle for ebs volume encryption. | `bool` | `false` | no |
 <!-- END_TF_DOCS -->
 
 ## Usage
