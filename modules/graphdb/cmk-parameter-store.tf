@@ -17,7 +17,26 @@ resource "aws_kms_key" "graphdb_parameter_store_cmk" {
         "Principal" : {
           "AWS" : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
         },
-        "Action" : "kms:*",
+        "Action" : [
+          "kms:CreateAlias",
+          "kms:CreateKey",
+          "kms:Encrypt",
+          "kms:Decrypt",
+          "kms:DeleteAlias",
+          "kms:ListResourceTags",
+          "kms:DescribeKey",
+          "kms:GetKeyPolicy",
+          "kms:GetKeyRotationStatus",
+          "kms:ListAliases",
+          "kms:ListGrants",
+          "kms:ListKeyPolicies",
+          "kms:ListKeys",
+          "kms:PutKeyPolicy",
+          "kms:UpdateAlias",
+          "kms:EnableKeyRotation",
+          "kms:ScheduleKeyDeletion",
+          "kms:DisableKeyRotation"
+        ],
         "Resource" : "*"
       },
       {
@@ -42,7 +61,22 @@ resource "aws_kms_key" "graphdb_parameter_store_cmk" {
           "AWS" : var.graphdb_parameter_store_key_admin_arn != "" ? var.graphdb_parameter_store_key_admin_arn : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
 
         },
-        "Action" : "kms:*",
+        "Action" : [
+          "kms:CreateAlias",
+          "kms:DeleteAlias",
+          "kms:DescribeKey",
+          "kms:GetKeyPolicy",
+          "kms:GetKeyRotationStatus",
+          "kms:ListResourceTags",
+          "kms:ListAliases",
+          "kms:ListGrants",
+          "kms:ListKeyPolicies",
+          "kms:ListKeys",
+          "kms:PutKeyPolicy",
+          "kms:UpdateAlias",
+          "kms:EnableKeyRotation",
+          "kms:DisableKeyRotation"
+        ],
         "Resource" : "*"
       }
     ]

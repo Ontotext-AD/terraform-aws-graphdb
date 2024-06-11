@@ -154,7 +154,6 @@ variable "ebs_kms_key_arn" {
 variable "ebs_cmk_enabled" {
   description = "Enable or disable toggle for ebs volume encryption."
   type        = bool
-  default     = true
 }
 
 
@@ -271,13 +270,12 @@ variable "backup_enable_replication" {
   type        = bool
 }
 
-# KMS encryption
+# KMS encryption parameters
 
 variable "graphdb_parameter_store_key_admin_arn" {
   description = "ARN of the key administrator role for Parameter Store"
   type        = string
 }
-
 
 variable "graphdb_parameter_store_key_tags" {
   description = "A map of tags to assign to the resources."
@@ -322,11 +320,58 @@ variable "enable_graphdb_parameter_store_kms_key" {
 variable "parameter_store_external_kms_key" {
   description = "Externally provided KMS CMK"
   type        = string
-  default     = "arn:aws:kms:us-east-1:590184002875:key/88617de9-2585-4124-98c1-49eef06b3ef6"
+  default     = ""
+}
+
+# EBS outputs (KMS)
+
+variable "graphdb_ebs_key_admin_arn" {
+  description = "ARN of the key administrator role for Parameter Store"
+  type        = string
+}
+
+variable "graphdb_ebs_key_tags" {
+  description = "A map of tags to assign to the resources."
+  type        = map(string)
+}
+
+variable "graphdb_ebs_key_rotation_enabled" {
+  description = "Specifies whether key rotation is enabled."
+  type        = bool
+}
+
+variable "graphdb_ebs_cmk_alias" {
+  description = "The alias for the CMK key."
+  type        = string
+}
+
+variable "graphdb_ebs_key_enabled" {
+  description = "Specifies whether the key is enabled."
+  type        = bool
+}
+
+variable "graphdb_ebs_key_spec" {
+  description = "Specification of the Key."
+  type        = string
+}
+
+variable "graphdb_ebs_key_deletion_window_in_days" {
+  description = "The waiting period, specified in number of days for AWS to delete the KMS key(Between 7 and 30)."
+  type        = number
+}
+
+variable "graphdb_ebs_cmk_description" {
+  description = "Description for the KMS Key"
+  type        = string
+}
+
+variable "enable_graphdb_ebs_kms_key" {
+  description = "Enable creation of KMS key for Parameter Store encryption"
+  type        = bool
 }
 
 variable "ebs_external_kms_key" {
   description = "Externally provided KMS CMK"
   type        = string
-  default     = "arn:aws:kms:us-east-1:590184002875:key/88617de9-2585-4124-98c1-49eef06b3ef6"
+  default     = ""
 }

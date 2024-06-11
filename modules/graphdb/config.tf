@@ -37,7 +37,6 @@ resource "aws_ssm_parameter" "graphdb_license" {
   type        = "SecureString"
   value       = filebase64(var.graphdb_license_path)
   key_id      = var.parameter_store_external_kms_key != "" ? var.parameter_store_external_kms_key : (var.enable_graphdb_parameter_store_kms_key ? aws_kms_key.graphdb_parameter_store_cmk[0].arn : null)
-  #key_id      = var.enable_graphdb_parameter_store_kms_key ? aws_kms_key.graphdb_parameter_store_cmk[0].arn : null
 }
 
 resource "aws_ssm_parameter" "graphdb_lb_dns_name" {
@@ -45,7 +44,6 @@ resource "aws_ssm_parameter" "graphdb_lb_dns_name" {
   description = "The DNS name of the load balancer for the GraphDB nodes."
   type        = "String"
   value       = var.graphdb_lb_dns_name
-  #key_id      = var.parameter_store_external_kms_key != "" ? var.parameter_store_external_kms_key : (var.enable_graphdb_parameter_store_kms_key ? aws_kms_key.graphdb_parameter_store_cmk[0].arn : null)
 }
 
 resource "aws_ssm_parameter" "graphdb_properties" {
@@ -63,7 +61,7 @@ resource "aws_ssm_parameter" "graphdb_java_options" {
 
   name        = "/${var.resource_name_prefix}/graphdb/graphdb_java_options"
   description = "GraphDB options to pass to GraphDB with GRAPHDB_JAVA_OPTS environment variable."
-  type        = "String"
+  type        = "SecureString"
   value       = var.graphdb_java_options
-  #key_id      = var.parameter_store_external_kms_key != "" ? var.parameter_store_external_kms_key : (var.enable_graphdb_parameter_store_kms_key ? aws_kms_key.graphdb_parameter_store_cmk[0].arn : null)
+  key_id      = var.parameter_store_external_kms_key != "" ? var.parameter_store_external_kms_key : (var.enable_graphdb_parameter_store_kms_key ? aws_kms_key.graphdb_parameter_store_cmk[0].arn : null)
 }

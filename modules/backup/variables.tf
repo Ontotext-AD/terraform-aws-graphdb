@@ -70,3 +70,9 @@ variable "s3_cmk_description" {
   description = "Description for the KMS Key"
   type        = string
 }
+
+variable "s3_external_kms_key" {
+  description = "Externally provided KMS CMK"
+  type        = string
+  default     = ""
+}

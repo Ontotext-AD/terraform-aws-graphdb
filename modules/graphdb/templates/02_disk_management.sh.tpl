@@ -57,6 +57,7 @@ create_volume() {
     --tag-specifications "ResourceType=volume,Tags=[{Key=Name,Value=${name}-graphdb-data}]" \
     --query "VolumeId" --output text)
 
+  # TESTING - testing different methods. Will delete later
   # # Determine the KMS key ARN to use
   # if [ "$ebs_cmk_enabled" == "true" ]; then
   # VOLUME_ID=$(aws ec2 create-volume \

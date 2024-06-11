@@ -23,6 +23,40 @@ resource "aws_iam_role" "graphdb_iam_role" {
   assume_role_policy = data.aws_iam_policy_document.graphdb_instance_role.json
 }
 
+data "aws_iam_policy_document" "kms_allow" {
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "kms:CreateAlias",
+      "kms:CreateKey",
+      "kms:Encrypt",
+      "kms:Decrypt",
+      "kms:DeleteAlias",
+      "kms:ListResourceTags",
+      "kms:DescribeKey",
+      "kms:GetKeyPolicy",
+      "kms:GetKeyRotationStatus",
+      "kms:ListAliases",
+      "kms:ListGrants",
+      "kms:ListKeyPolicies",
+      "kms:ListKeys",
+      "kms:PutKeyPolicy",
+      "kms:UpdateAlias",
+      "kms:EnableKeyRotation",
+      "kms:ScheduleKeyDeletion",
+      "kms:DisableKeyRotation"
+    ]
+
+    resources = ["*"]
+  }
+}
+resource "aws_iam_role_policy" "kms_allow" {
+  name   = "${var.resource_name_prefix}-kms_allow"
+  role   = aws_iam_role.graphdb_iam_role.id
+  policy = data.aws_iam_policy_document.kms_allow.json
+}
+
 data "aws_iam_policy_document" "graphdb_instance_role" {
   statement {
     effect = "Allow"

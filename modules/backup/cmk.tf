@@ -24,7 +24,7 @@ resource "aws_kms_key" "s3_cmk" {
         "Sid" : "Allow S3 Use of the Key",
         "Effect" : "Allow",
         "Principal" : {
-          "Service" : "s3.amazonaws.com"
+          "AWS" : var.s3_key_admin_arn != "" ? var.s3_key_admin_arn : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
         },
         "Action" : [
           "kms:Encrypt",

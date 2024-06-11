@@ -43,6 +43,7 @@ module "backup" {
   s3_key_rotation_enabled        = var.s3_key_rotation_enabled
   s3_key_tags                    = var.s3_key_tags
   s3_key_deletion_window_in_days = var.s3_key_deletion_window_in_days
+  s3_external_kms_key            = var.s3_external_kms_key
 }
 
 module "logging" {
@@ -223,6 +224,20 @@ module "graphdb" {
   ebs_volume_throughput = var.ebs_volume_throughput
   ebs_kms_key_arn       = var.ebs_kms_key_arn
   ebs_external_kms_key  = var.ebs_external_kms_key
+
+  # EBS Encryption with KMS
+
+  graphdb_ebs_cmk_description             = var.graphdb_ebs_cmk_description
+  graphdb_ebs_key_spec                    = var.graphdb_ebs_key_spec
+  graphdb_ebs_key_enabled                 = var.graphdb_ebs_key_enabled
+  graphdb_ebs_key_rotation_enabled        = var.graphdb_ebs_key_rotation_enabled
+  graphdb_ebs_key_tags                    = var.graphdb_ebs_key_tags
+  graphdb_ebs_key_deletion_window_in_days = var.graphdb_ebs_key_deletion_window_in_days
+  enable_graphdb_ebs_kms_key              = var.enable_graphdb_ebs_kms_key
+  graphdb_ebs_key_admin_arn               = var.graphdb_ebs_key_admin_arn
+  graphdb_ebs_cmk_alias                   = var.graphdb_ebs_cmk_alias
+  ebs_cmk_enabled                         = var.ebs_cmk_enabled
+
   # DNS
 
   route53_zone_dns_name = var.route53_zone_dns_name
