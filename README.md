@@ -358,6 +358,78 @@ deploy_logging_module = true
 vpc_enable_flow_logs = true
 vpc_flow_logs_lifecycle_rule_status = "Enabled"
 ```
+#### KMS Encryption using Customer Master Keys
+
+**Parameter Store encryption**
+
+You can encrypt parameters stored in AWS Systems Manager Parameter Store using KMS CMKs. This ensures that sensitive data, such as configuration secrets, are securely encrypted at rest.
+
+##### Keys: 
+
+To use CMK you need to have **enable_graphdb_parameter_store_kms_key = true**. When enabled, a new KMS Key will be created. 
+
+If **enable_graphdb_parameter_store_kms_key = false** no encryption will be used.
+
+You can provide your own key by using the parameter **parameter_store_external_kms_key**
+
+```hcl
+ebs_external_kms_key             = "arn:aws:kms:us-east-1:123456789012:key/your-external-key-arn"
+parameter_store_external_kms_key = true
+```
+
+##### Key Admin:
+You can specify Key admin by using **graphdb_parameter_store_key_admin_arn** or use the current AWS account by leaving the parameter empty. 
+
+```hcl
+graphdb_parameter_store_key_admin_arn = "arn:aws:iam::123456789012:role/KeyAdminRole"
+```
+
+**EBS encryption**
+
+You can encrypt EBS volumes using KMS CMKs to ensure that data at rest is secure. This provides an additional layer of security for data stored on EBS volumes attached to EC2 instances.
+
+##### Keys: 
+
+To use CMK you need to have **ebs_cmk_enabled = true**. When enabled, a new KMS Key will be created. 
+
+If **ebs_cmk_enabled = false** the default AWS key encryption will be used.
+
+You can provide your own key by using the parameter **ebs_external_kms_key**.
+
+```hcl
+ebs_cmk_enabled = true
+ebs_external_kms_key = "arn:aws:kms:us-east-1:123456789012:key/your-external-key-arn"
+```
+
+##### Key Admin:
+You can specify Key admin by using **graphdb_ebs_key_admin_arn** or use the current AWS account by leaving the parameter empty.
+
+```hcl
+graphdb_ebs_key_admin_arn = "arn:aws:iam::123456789012:role/KeyAdminRole"
+```
+
+**S3 encryption**
+
+You can encrypt S3 bucket objects using KMS CMKs to ensure that data at rest is secure. This protects the integrity and confidentiality of data stored in S3 buckets.
+
+##### Keys
+To use CMK you need to have **enable_s3_kms_key = true**. When enabled, a new KMS Key will be created.
+
+If **enable_s3_kms_key = false**, the default AWS key (**alias/aws/s3**) will be used.
+
+You can provide your own key by using the parameter **s3_external_kms_key**.
+
+```hcl
+enable_s3_kms_key = true
+s3_external_kms_key = "arn:aws:kms:us-east-1:123456789012:key/your-external-key-arn"
+```
+
+##### Key Admin:
+You can specify Key admin by using **s3_key_admin_arn** or use the current AWS account by leaving the parameter empty.
+
+```hcl
+s3_key_admin_arn = "arn:aws:iam::123456789012:role/KeyAdminRole"
+```
 
 #### Replication
 
