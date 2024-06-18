@@ -301,3 +301,48 @@ resource "aws_iam_role" "graphdb_s3_replication_role" {
   name               = "${var.resource_name_prefix}-replication-role"
   assume_role_policy = data.aws_iam_policy_document.graphdb_s3_assume_role.json
 }
+
+data "aws_iam_policy_document" "graphdb_ebs_key_admin_role" {
+  statement {
+    effect = "Allow"
+
+    principals {
+      type = "Service"
+      identifiers = [
+        "s3.amazonaws.com",
+        "ebs.amazonaws.com",
+        "sns.amazonaws.com",
+        "ssm.amazonaws.com"
+      ]
+    }
+
+    actions = ["sts:AssumeRole"]
+  }
+}
+
+resource "aws_iam_role" "graphdb_ebs_key_admin_role" {
+  name               = "${var.resource_name_prefix}-ebs-key-admins"
+  assume_role_policy = data.aws_iam_policy_document.graphdb_ebs_key_admin_role.json
+}
+
+data "aws_iam_policy_document" "graphdb_param_store_key_admin_role" {
+  statement {
+    effect = "Allow"
+
+    principals {
+      type = "Service"
+      identifiers = [
+        "ssm.amazonaws.com"
+      ]
+    }
+
+    actions = [
+      "sts:AssumeRole"
+    ]
+  }
+}
+
+resource "aws_iam_role" "graphdb_param_store_key_admin_role" {
+  name               = "${var.resource_name_prefix}-param-store-key-admins"
+  assume_role_policy = data.aws_iam_policy_document.graphdb_param_store_key_admin_role.json
+}

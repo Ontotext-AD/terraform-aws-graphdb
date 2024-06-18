@@ -22,3 +22,12 @@ output "s3_cmk_alias_arn" {
   value       = var.enable_s3_kms_key ? aws_kms_alias.s3_cmk_alias[0].arn : ""
   description = "ARN of the KMS key alias for S3 bucket encryption"
 }
+
+output "key_admins_iam_role_arn" {
+  description = "IAM Role to use for replication"
+  value       = aws_iam_role.graphdb_s3_key_admin_role.arn
+}
+
+output "key_admins_iam_role_name" {
+  value = aws_iam_role.graphdb_s3_key_admin_role.name
+}

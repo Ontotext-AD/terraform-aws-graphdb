@@ -1,3 +1,5 @@
+data "aws_region" "current" {}
+
 resource "aws_kms_key" "graphdb_ebs_cmk" {
   count = var.enable_graphdb_ebs_kms_key ? 1 : 0
 
@@ -8,6 +10,11 @@ resource "aws_kms_key" "graphdb_ebs_cmk" {
   tags                     = var.graphdb_ebs_key_tags
   deletion_window_in_days  = var.graphdb_ebs_key_deletion_window_in_days
 
+}
+
+resource "aws_kms_key_policy" "graphdb_ebs_cmk_policy" {
+  key_id = aws_kms_key.graphdb_ebs_cmk[0].id
+
   policy = jsonencode({
     "Version" : "2012-10-17",
     "Id" : "ebs-key-policy",
@@ -16,7 +23,8 @@ resource "aws_kms_key" "graphdb_ebs_cmk" {
         "Sid" : "Enable IAM User Permissions",
         "Effect" : "Allow",
         "Principal" : {
-          "AWS" : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+          #"AWS" : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+          "AWS" : var.ebs_external_kms_key != "" ? var.ebs_external_kms_key : "${aws_iam_role.graphdb_ebs_key_admin_role.arn}"
         },
         "Action" : [
           "kms:CreateAlias",
@@ -38,13 +46,14 @@ resource "aws_kms_key" "graphdb_ebs_cmk" {
           "kms:ScheduleKeyDeletion",
           "kms:DisableKeyRotation"
         ],
-        "Resource" : "*"
+        "Resource" : "arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:key/${aws_kms_key.graphdb_ebs_cmk[0].id}"
       },
       {
         "Sid" : "Allow access for Key Administrators",
         "Effect" : "Allow",
         "Principal" : {
-          "AWS" : var.graphdb_ebs_key_admin_arn != "" ? var.graphdb_ebs_key_admin_arn : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+          #"AWS" : var.graphdb_ebs_key_admin_arn != "" ? var.graphdb_ebs_key_admin_arn : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/AWSKeyManagementServicePowerUser"
+          "AWS" : var.graphdb_ebs_key_admin_arn != "" ? var.graphdb_ebs_key_admin_arn : "arn:aws:iam::590184002875:role/TEST2-SNS"
         },
         "Action" : [
           "kms:Create*",
@@ -61,13 +70,14 @@ resource "aws_kms_key" "graphdb_ebs_cmk" {
           "kms:ScheduleKeyDeletion",
           "kms:CancelKeyDeletion"
         ],
-        "Resource" : "*"
+        "Resource" : "arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:key/${aws_kms_key.graphdb_ebs_cmk[0].id}"
       },
       {
         "Sid" : "Allow use of the key for EBS encryption",
         "Effect" : "Allow",
         "Principal" : {
-          "AWS" : var.graphdb_ebs_key_admin_arn != "" ? var.graphdb_ebs_key_admin_arn : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+          #"AWS" : var.graphdb_ebs_key_admin_arn != "" ? var.graphdb_ebs_key_admin_arn : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+          "AWS" : var.graphdb_ebs_key_admin_arn != "" ? var.graphdb_ebs_key_admin_arn : "arn:aws:iam::590184002875:role/TEST2-SNS"
         },
         "Action" : [
           "kms:Encrypt",
@@ -76,7 +86,7 @@ resource "aws_kms_key" "graphdb_ebs_cmk" {
           "kms:GenerateDataKey*",
           "kms:DescribeKey"
         ],
-        "Resource" : "*"
+        "Resource" : "arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:key/${aws_kms_key.graphdb_ebs_cmk[0].id}"
       },
       {
         "Sid" : "Allow use of the key for EBS by EC2",
@@ -87,7 +97,8 @@ resource "aws_kms_key" "graphdb_ebs_cmk" {
         "Action" : [
           "kms:GenerateDataKeyWithoutPlaintext",
           "kms:DescribeKey"
-        ]
+        ],
+        "Resource" : "arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:key/${aws_kms_key.graphdb_ebs_cmk[0].id}"
       }
     ]
   })

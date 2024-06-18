@@ -164,7 +164,6 @@ module "monitoring" {
   parameter_store_key_tags                    = var.parameter_store_key_tags
   parameter_store_key_deletion_window_in_days = var.parameter_store_key_deletion_window_in_days
   parameter_store_external_kms_key            = var.parameter_store_external_kms_key
-
 }
 
 module "graphdb" {

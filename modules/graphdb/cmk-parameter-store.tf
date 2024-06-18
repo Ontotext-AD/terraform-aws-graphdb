@@ -7,15 +7,20 @@ resource "aws_kms_key" "graphdb_parameter_store_cmk" {
   enable_key_rotation      = var.graphdb_parameter_store_key_rotation_enabled
   tags                     = var.graphdb_parameter_store_key_tags
   deletion_window_in_days  = var.graphdb_parameter_store_key_deletion_window_in_days
+}
+
+resource "aws_kms_key_policy" "parameter_store_cmk_policy" {
+  key_id = aws_kms_key.graphdb_parameter_store_cmk[0].id
 
   policy = jsonencode({
     "Version" : "2012-10-17",
+    "Id" : "parameter-store-key-policy",
     "Statement" : [
       {
         "Sid" : "Enable IAM User Permissions",
         "Effect" : "Allow",
         "Principal" : {
-          "AWS" : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+          "AWS" : var.graphdb_parameter_store_key_admin_arn != "" ? var.graphdb_parameter_store_key_admin_arn : "${aws_iam_role.graphdb_param_store_key_admin_role.arn}"
         },
         "Action" : [
           "kms:CreateAlias",
@@ -23,7 +28,6 @@ resource "aws_kms_key" "graphdb_parameter_store_cmk" {
           "kms:Encrypt",
           "kms:Decrypt",
           "kms:DeleteAlias",
-          "kms:ListResourceTags",
           "kms:DescribeKey",
           "kms:GetKeyPolicy",
           "kms:GetKeyRotationStatus",
@@ -34,16 +38,40 @@ resource "aws_kms_key" "graphdb_parameter_store_cmk" {
           "kms:PutKeyPolicy",
           "kms:UpdateAlias",
           "kms:EnableKeyRotation",
+          "kms:ListResourceTags",
           "kms:ScheduleKeyDeletion",
           "kms:DisableKeyRotation"
         ],
-        "Resource" : "*"
+        "Resource" : "arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:key/${aws_kms_key.graphdb_parameter_store_cmk[0].id}"
       },
       {
-        "Sid" : "Allow Parameter Store Use of the Key",
+        "Sid" : "Allow access for Key Administrators",
         "Effect" : "Allow",
         "Principal" : {
-          "Service" : "ssm.amazonaws.com"
+          "AWS" : var.graphdb_parameter_store_key_admin_arn != "" ? var.graphdb_parameter_store_key_admin_arn : "${aws_iam_role.graphdb_param_store_key_admin_role.arn}"
+        },
+        "Action" : [
+          "kms:Create*",
+          "kms:Describe*",
+          "kms:Enable*",
+          "kms:List*",
+          "kms:Put*",
+          "kms:Update*",
+          "kms:Revoke*",
+          "kms:Disable*",
+          "kms:Get*",
+          "kms:Delete*",
+          "kms:ListResourceTags",
+          "kms:ScheduleKeyDeletion",
+          "kms:CancelKeyDeletion"
+        ],
+        "Resource" : "arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:key/${aws_kms_key.graphdb_parameter_store_cmk[0].id}"
+      },
+      {
+        "Sid" : "Allow use of the key for Parameter Store encryption",
+        "Effect" : "Allow",
+        "Principal" : {
+          "AWS" : var.graphdb_parameter_store_key_admin_arn != "" ? var.graphdb_parameter_store_key_admin_arn : "${aws_iam_role.graphdb_param_store_key_admin_role.arn}"
         },
         "Action" : [
           "kms:Encrypt",
@@ -52,36 +80,24 @@ resource "aws_kms_key" "graphdb_parameter_store_cmk" {
           "kms:GenerateDataKey*",
           "kms:DescribeKey"
         ],
-        "Resource" : "*"
+        "Resource" : "arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:key/${aws_kms_key.graphdb_parameter_store_cmk[0].id}"
       },
       {
-        "Sid" : "Allow Key Administrators",
+        "Sid" : "Allow use of the key for Parameter Store",
         "Effect" : "Allow",
         "Principal" : {
-          "AWS" : var.graphdb_parameter_store_key_admin_arn != "" ? var.graphdb_parameter_store_key_admin_arn : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
-
+          "Service" : "ssm.amazonaws.com"
         },
         "Action" : [
-          "kms:CreateAlias",
-          "kms:DeleteAlias",
-          "kms:DescribeKey",
-          "kms:GetKeyPolicy",
-          "kms:GetKeyRotationStatus",
-          "kms:ListResourceTags",
-          "kms:ListAliases",
-          "kms:ListGrants",
-          "kms:ListKeyPolicies",
-          "kms:ListKeys",
-          "kms:PutKeyPolicy",
-          "kms:UpdateAlias",
-          "kms:EnableKeyRotation",
-          "kms:DisableKeyRotation"
+          "kms:GenerateDataKeyWithoutPlaintext",
+          "kms:DescribeKey"
         ],
-        "Resource" : "*"
+        "Resource" : "arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:key/${aws_kms_key.graphdb_parameter_store_cmk[0].id}"
       }
     ]
   })
 }
+
 
 resource "aws_kms_alias" "graphdb_parameter_store_cmk_alias" {
   count = var.enable_graphdb_parameter_store_kms_key ? 1 : 0
