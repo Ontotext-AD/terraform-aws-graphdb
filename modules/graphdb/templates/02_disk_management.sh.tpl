@@ -41,10 +41,6 @@ create_volume() {
     kms_key_arn="${ebs_kms_key_arn}"
   fi
 
-  # Debug output
-  log_with_timestamp "ebs_cmk_enabled: ${ebs_cmk_enabled}"
-  log_with_timestamp "ebs_external_kms_key: ${ebs_external_kms_key}"
-  log_with_timestamp "kms_key_arn: "$kms_key_arn""
 
   VOLUME_ID=$(aws ec2 create-volume \
     --availability-zone "$AVAILABILITY_ZONE" \

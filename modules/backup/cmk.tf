@@ -20,16 +20,35 @@ resource "aws_kms_key_policy" "s3_cmk_policy" {
         "Sid" : "Enable IAM User Permissions",
         "Effect" : "Allow",
         "Principal" : {
-          "AWS" : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+          "AWS" : var.s3_key_admin_arn != "" ? var.s3_key_admin_arn : "${aws_iam_role.graphdb_s3_key_admin_role.arn}"
         },
-        "Action" : "kms:*",
+        "Action" : [
+          "kms:CreateAlias",
+          "kms:CreateKey",
+          "kms:Encrypt",
+          "kms:Decrypt",
+          "kms:DeleteAlias",
+          "kms:DescribeKey",
+          "kms:GetKeyPolicy",
+          "kms:GetKeyRotationStatus",
+          "kms:ListAliases",
+          "kms:ListGrants",
+          "kms:ListKeyPolicies",
+          "kms:ListKeys",
+          "kms:PutKeyPolicy",
+          "kms:UpdateAlias",
+          "kms:EnableKeyRotation",
+          "kms:ListResourceTags",
+          "kms:ScheduleKeyDeletion",
+          "kms:DisableKeyRotation"
+        ],
         "Resource" : "arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:key/${aws_kms_key.s3_cmk[0].id}"
       },
       {
         "Sid" : "Allow S3 Use of the Key",
         "Effect" : "Allow",
         "Principal" : {
-          "AWS" : var.s3_key_admin_arn != "" ? var.s3_key_admin_arn : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+          "AWS" : var.s3_key_admin_arn != "" ? var.s3_key_admin_arn : "${aws_iam_role.graphdb_s3_key_admin_role.arn}"
         },
         "Action" : [
           "kms:Encrypt",
@@ -41,14 +60,66 @@ resource "aws_kms_key_policy" "s3_cmk_policy" {
         "Resource" : "arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:key/${aws_kms_key.s3_cmk[0].id}"
       },
       {
+        "Sid" : "Allow root user to manage key",
+        "Effect" : "Allow",
+        "Principal" : {
+          "AWS" : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+        },
+        "Action" : [
+          "kms:CreateAlias",
+          "kms:CreateKey",
+          "kms:Encrypt",
+          "kms:Decrypt",
+          "kms:DeleteAlias",
+          "kms:DescribeKey",
+          "kms:GetKeyPolicy",
+          "kms:GetKeyRotationStatus",
+          "kms:ListAliases",
+          "kms:ListGrants",
+          "kms:ListKeyPolicies",
+          "kms:ListKeys",
+          "kms:PutKeyPolicy",
+          "kms:UpdateAlias",
+          "kms:EnableKeyRotation",
+          "kms:ListResourceTags",
+          "kms:ScheduleKeyDeletion",
+          "kms:DisableKeyRotation"
+        ],
+        "Resource" : "arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:key/${aws_kms_key.s3_cmk[0].id}"
+      },
+      {
+        "Sid" : "Allow use of the key for S3",
+        "Effect" : "Allow",
+        "Principal" : {
+          "Service" : "s3.amazonaws.com"
+        },
+        "Action" : [
+          "kms:GenerateDataKeyWithoutPlaintext",
+          "kms:DescribeKey"
+        ],
+        "Resource" : "arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:key/${aws_kms_key.s3_cmk[0].id}"
+      },
+      {
         "Sid" : "Allow Key Administrators",
         "Effect" : "Allow",
         "Principal" : {
-          #"AWS" : var.s3_key_admin_arn != "" ? var.s3_key_admin_arn : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
           "AWS" : var.s3_key_admin_arn != "" ? var.s3_key_admin_arn : "${aws_iam_role.graphdb_s3_key_admin_role.arn}"
-
         },
-        "Action" : "kms:*",
+        "Action" : [
+          "kms:Create*",
+          "kms:Describe*",
+          "kms:Enable*",
+          "kms:List*",
+          "kms:Put*",
+          "kms:Update*",
+          "kms:Revoke*",
+          "kms:Disable*",
+          "kms:Get*",
+          "kms:Delete*",
+          "kms:ListResourceTags",
+          "kms:ScheduleKeyDeletion",
+          "kms:CancelKeyDeletion"
+        ],
         "Resource" : "arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:key/${aws_kms_key.s3_cmk[0].id}"
       }
     ]

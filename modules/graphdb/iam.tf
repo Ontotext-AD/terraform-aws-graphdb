@@ -141,13 +141,42 @@ data "aws_iam_policy_document" "graphdb_instance_volume" {
       "ec2:AttachVolume",
       "ec2:DescribeVolumes",
       "ec2:MonitorInstances",
-      "ec2:CreateTags"
+      "ec2:CreateTags",
+      "kms:Encrypt",
+      "kms:Decrypt",
+      "kms:GenerateDataKey",
+      "kms:GenerateDataKeyWithoutPlaintext",
+      "kms:CreateGrant",
+      "kms:DescribeKey",
+      "kms:ListGrants",
+      "kms:ReEncrypt*",
+      "kms:GetKeyPolicy",
+      "kms:ListAliases",
+      "kms:ListKeys",
+      "kms:RetireGrant",
+      "kms:RevokeGrant",
+      "kms:TagResource",
+      "kms:UntagResource",
+      "kms:EnableKey",
+      "kms:DisableKey"
     ]
 
     resources = [
       "arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.current.account_id}:volume/*",
       "arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.current.account_id}:instance/*",
-      "arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.current.account_id}:network-interface/*"
+      "arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.current.account_id}:network-interface/*",
+      "arn:aws:kms:${var.aws_region}:${data.aws_caller_identity.current.account_id}:key/*"
+    ]
+  }
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "kms:DescribeKey"
+    ]
+
+    resources = [
+      "arn:aws:kms:${var.aws_region}:${data.aws_caller_identity.current.account_id}:key/*"
     ]
   }
 }
@@ -312,6 +341,7 @@ data "aws_iam_policy_document" "graphdb_ebs_key_admin_role" {
         "s3.amazonaws.com",
         "ebs.amazonaws.com",
         "sns.amazonaws.com",
+        "ec2.amazonaws.com",
         "ssm.amazonaws.com"
       ]
     }
@@ -332,6 +362,9 @@ data "aws_iam_policy_document" "graphdb_param_store_key_admin_role" {
     principals {
       type = "Service"
       identifiers = [
+        "s3.amazonaws.com",
+        "ebs.amazonaws.com",
+        "sns.amazonaws.com",
         "ssm.amazonaws.com"
       ]
     }

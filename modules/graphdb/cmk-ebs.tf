@@ -1,7 +1,7 @@
 data "aws_region" "current" {}
 
 resource "aws_kms_key" "graphdb_ebs_cmk" {
-  count = var.enable_graphdb_ebs_kms_key ? 1 : 0
+  count = var.ebs_cmk_enabled ? 1 : 0
 
   description              = var.graphdb_ebs_cmk_description
   customer_master_key_spec = var.graphdb_ebs_key_spec
@@ -13,6 +13,7 @@ resource "aws_kms_key" "graphdb_ebs_cmk" {
 }
 
 resource "aws_kms_key_policy" "graphdb_ebs_cmk_policy" {
+  count  = var.ebs_cmk_enabled ? 1 : 0
   key_id = aws_kms_key.graphdb_ebs_cmk[0].id
 
   policy = jsonencode({
@@ -23,8 +24,7 @@ resource "aws_kms_key_policy" "graphdb_ebs_cmk_policy" {
         "Sid" : "Enable IAM User Permissions",
         "Effect" : "Allow",
         "Principal" : {
-          #"AWS" : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
-          "AWS" : var.ebs_external_kms_key != "" ? var.ebs_external_kms_key : "${aws_iam_role.graphdb_ebs_key_admin_role.arn}"
+          "AWS" : var.graphdb_ebs_key_admin_arn != "" ? var.graphdb_ebs_key_admin_arn : "${aws_iam_role.graphdb_ebs_key_admin_role.arn}"
         },
         "Action" : [
           "kms:CreateAlias",
@@ -52,8 +52,7 @@ resource "aws_kms_key_policy" "graphdb_ebs_cmk_policy" {
         "Sid" : "Allow access for Key Administrators",
         "Effect" : "Allow",
         "Principal" : {
-          #"AWS" : var.graphdb_ebs_key_admin_arn != "" ? var.graphdb_ebs_key_admin_arn : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/AWSKeyManagementServicePowerUser"
-          "AWS" : var.graphdb_ebs_key_admin_arn != "" ? var.graphdb_ebs_key_admin_arn : "arn:aws:iam::590184002875:role/TEST2-SNS"
+          "AWS" : var.graphdb_ebs_key_admin_arn != "" ? var.graphdb_ebs_key_admin_arn : "${aws_iam_role.graphdb_ebs_key_admin_role.arn}"
         },
         "Action" : [
           "kms:Create*",
@@ -76,8 +75,7 @@ resource "aws_kms_key_policy" "graphdb_ebs_cmk_policy" {
         "Sid" : "Allow use of the key for EBS encryption",
         "Effect" : "Allow",
         "Principal" : {
-          #"AWS" : var.graphdb_ebs_key_admin_arn != "" ? var.graphdb_ebs_key_admin_arn : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
-          "AWS" : var.graphdb_ebs_key_admin_arn != "" ? var.graphdb_ebs_key_admin_arn : "arn:aws:iam::590184002875:role/TEST2-SNS"
+          "AWS" : var.graphdb_ebs_key_admin_arn != "" ? var.graphdb_ebs_key_admin_arn : "${aws_iam_role.graphdb_ebs_key_admin_role.arn}"
         },
         "Action" : [
           "kms:Encrypt",
@@ -92,12 +90,27 @@ resource "aws_kms_key_policy" "graphdb_ebs_cmk_policy" {
         "Sid" : "Allow use of the key for EBS by EC2",
         "Effect" : "Allow",
         "Principal" : {
-          "Service" : "ec2.amazonaws.com"
+          "Service" : [
+            "s3.amazonaws.com",
+            "ebs.amazonaws.com",
+            "sns.amazonaws.com",
+            "ec2.amazonaws.com",
+            "ssm.amazonaws.com"
+          ]
         },
         "Action" : [
           "kms:GenerateDataKeyWithoutPlaintext",
           "kms:DescribeKey"
         ],
+        "Resource" : "arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:key/${aws_kms_key.graphdb_ebs_cmk[0].id}"
+      },
+      {
+        "Sid" : "Allow root user to manage key",
+        "Effect" : "Allow",
+        "Principal" : {
+          "AWS" : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+        },
+        "Action" : "kms:*",
         "Resource" : "arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:key/${aws_kms_key.graphdb_ebs_cmk[0].id}"
       }
     ]
@@ -105,7 +118,7 @@ resource "aws_kms_key_policy" "graphdb_ebs_cmk_policy" {
 }
 
 resource "aws_kms_alias" "graphdb_ebs_cmk_alias" {
-  count = var.enable_graphdb_ebs_kms_key ? 1 : 0
+  count = var.ebs_cmk_enabled ? 1 : 0
 
   name          = "alias/graphdb-ebs-cmk"
   target_key_id = aws_kms_key.graphdb_ebs_cmk[0].key_id

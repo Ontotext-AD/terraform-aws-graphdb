@@ -67,6 +67,7 @@ data "aws_iam_policy_document" "graphdb_sns_key_admin_role_permissions" {
   }
 }
 
+
 resource "aws_iam_role_policy" "graphdb_sns_key_admin_role_permissions" {
   name   = "KMSPermissionsPolicy-SNS"
   role   = aws_iam_role.graphdb_sns_key_admin_role.name

@@ -9,7 +9,8 @@ resource "aws_kms_key" "graphdb_parameter_store_cmk" {
   deletion_window_in_days  = var.graphdb_parameter_store_key_deletion_window_in_days
 }
 
-resource "aws_kms_key_policy" "parameter_store_cmk_policy" {
+resource "aws_kms_key_policy" "graphdb_parameter_store_cmk_policy" {
+  count  = var.enable_graphdb_parameter_store_kms_key ? 1 : 0
   key_id = aws_kms_key.graphdb_parameter_store_cmk[0].id
 
   policy = jsonencode({
@@ -86,11 +87,42 @@ resource "aws_kms_key_policy" "parameter_store_cmk_policy" {
         "Sid" : "Allow use of the key for Parameter Store",
         "Effect" : "Allow",
         "Principal" : {
-          "Service" : "ssm.amazonaws.com"
+          "Service" : [
+            "ssm.amazonaws.com",
+            "ec2.amazonaws.com"
+          ]
         },
         "Action" : [
           "kms:GenerateDataKeyWithoutPlaintext",
           "kms:DescribeKey"
+        ],
+        "Resource" : "arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:key/${aws_kms_key.graphdb_parameter_store_cmk[0].id}"
+      },
+      {
+        "Sid" : "Allow root user to manage key",
+        "Effect" : "Allow",
+        "Principal" : {
+          "AWS" : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+        },
+        "Action" : [
+          "kms:CreateAlias",
+          "kms:CreateKey",
+          "kms:Encrypt",
+          "kms:Decrypt",
+          "kms:DeleteAlias",
+          "kms:DescribeKey",
+          "kms:GetKeyPolicy",
+          "kms:GetKeyRotationStatus",
+          "kms:ListAliases",
+          "kms:ListGrants",
+          "kms:ListKeyPolicies",
+          "kms:ListKeys",
+          "kms:PutKeyPolicy",
+          "kms:UpdateAlias",
+          "kms:EnableKeyRotation",
+          "kms:ListResourceTags",
+          "kms:ScheduleKeyDeletion",
+          "kms:DisableKeyRotation"
         ],
         "Resource" : "arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:key/${aws_kms_key.graphdb_parameter_store_cmk[0].id}"
       }

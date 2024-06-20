@@ -681,7 +681,7 @@ variable "graphdb_ebs_cmk_alias" {
 variable "graphdb_ebs_key_enabled" {
   description = "Specifies whether the key is enabled."
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "graphdb_ebs_key_spec" {
