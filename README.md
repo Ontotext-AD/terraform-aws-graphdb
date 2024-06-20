@@ -204,7 +204,7 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | graphdb\_ebs\_key\_tags | A map of tags to assign to the resources. | `map(string)` | `{}` | no |
 | graphdb\_ebs\_key\_rotation\_enabled | Specifies whether key rotation is enabled. | `bool` | `true` | no |
 | graphdb\_ebs\_cmk\_alias | The alias for the CMK key. | `string` | `"graphdb-cmk-key"` | no |
-| graphdb\_ebs\_key\_enabled | Specifies whether the key is enabled. | `bool` | `false` | no |
+| graphdb\_ebs\_key\_enabled | Specifies whether the key is enabled. | `bool` | `true` | no |
 | graphdb\_ebs\_key\_spec | Specification of the Key. | `string` | `"SYMMETRIC_DEFAULT"` | no |
 | graphdb\_ebs\_key\_deletion\_window\_in\_days | The waiting period, specified in number of days for AWS to delete the KMS key(Between 7 and 30). | `number` | `30` | no |
 | graphdb\_ebs\_cmk\_description | Description for the KMS Key | `string` | `"KMS key for Parameter Store bucket encryption."` | no |
