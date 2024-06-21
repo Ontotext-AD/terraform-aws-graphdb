@@ -126,10 +126,16 @@ module "monitoring" {
   sns_topic_endpoint                = var.deploy_monitoring ? var.monitoring_sns_topic_endpoint : null
   sns_endpoint_auto_confirms        = var.monitoring_endpoint_auto_confirms
   sns_protocol                      = var.monitoring_sns_protocol
-  kms_master_key_id                 = var.kms_master_key_id
-  cmk_description                   = var.cmk_description
+  sns_cmk_description               = var.sns_cmk_description
   sns_key_admin_arn                 = var.sns_key_admin_arn
-  enable_cmk                        = var.enable_cmk
+  enable_sns_kms_key                = var.enable_sns_kms_key
+  sns_external_kms_key              = var.sns_external_kms_key
+  rotation_enabled                  = var.rotation_enabled
+  deletion_window_in_days           = var.deletion_window_in_days
+  key_enabled                       = var.key_enabled
+  key_spec                          = var.key_spec
+  sns_default_kms_key               = var.sns_default_kms_key
+  cmk_key_alias                     = var.cmk_key_alias
 
   cloudwatch_log_group_retention_in_days = var.monitoring_log_group_retention_in_days
   route53_availability_request_url       = module.load_balancer.lb_dns_name

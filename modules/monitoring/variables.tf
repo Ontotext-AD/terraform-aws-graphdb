@@ -120,64 +120,56 @@ variable "route53_availability_check_region" {
   type        = string
 }
 
-# KMS CMK VARS:
+# KMS Encryption for SNS topics:
 
-variable "tags" {
-  description = "A map of tags to assign to the resources."
-  type        = map(string)
-  default     = {}
-}
-
-variable "kms_master_key_id" {
-  description = "ARN of the Customer Managed Key (CMK)."
-  type        = string
-  default     = ""
-}
-
-variable "cmk_description" {
+variable "sns_cmk_description" {
   description = "Description of the Key to be created"
   type        = string
-  default     = "KMS Key to encrypt SNS"
 }
 
 variable "deletion_window_in_days" {
   description = "The waiting period, specified in number of days for AWS to delete the KMS key(Between 7 and 30)."
   type        = number
-  default     = 30
 }
 
 variable "key_spec" {
   description = "Specification of the Key."
   type        = string
-  default     = "SYMMETRIC_DEFAULT"
 }
 
 variable "key_enabled" {
   description = "Specifies whether the key is enabled."
   type        = bool
-  default     = true
 }
 
 variable "rotation_enabled" {
   description = "Specifies whether key rotation is enabled."
   type        = bool
-  default     = true
 }
 
 variable "cmk_key_alias" {
   description = "The alias for the CMK key."
   type        = string
-  default     = "graphdb-cmk-key"
 }
 
-variable "enable_cmk" {
+variable "enable_sns_kms_key" {
   description = "Enable CMK for encryption. If false, use AWS managed key."
   type        = bool
-  default     = false
 }
 
 variable "sns_key_admin_arn" {
   description = "ARN of the role or user who will have administrative access to the SNS KMS key"
   type        = string
   default     = ""
+}
+
+variable "sns_external_kms_key" {
+  description = "ARN of the external KMS key that will be used for encryption of SNS topics"
+  type        = string
+  default     = ""
+}
+
+variable "sns_default_kms_key" {
+  description = "ARN of the default KMS key that will be used for encryption of SNS topics"
+  type        = string
 }
