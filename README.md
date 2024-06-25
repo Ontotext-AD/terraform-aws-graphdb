@@ -174,6 +174,8 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | enable\_s3\_kms\_key | Enable creation of KMS key for S3 bucket encryption | `bool` | `false` | no |
 | s3\_key\_admin\_arn | ARN of the role or user granted administrative access to the SNS KMS key. | `string` | `""` | no |
 | s3\_key\_tags | A map of tags to assign to the resources. | `map(string)` | `{}` | no |
+| create\_s3\_kms\_key | Enable creation of KMS key for S3 bucket encryption | `bool` | `false` | no |
+| s3\_kms\_key\_admin\_arn | ARN of the role or user granted administrative access to the SNS KMS key. | `string` | `""` | no |
 | s3\_key\_rotation\_enabled | Specifies whether key rotation is enabled. | `bool` | `true` | no |
 | s3\_cmk\_alias | The alias for the CMK key. | `string` | `"graphdb-cmk-key"` | no |
 | s3\_key\_enabled | Specifies whether the key is enabled. | `bool` | `true` | no |
@@ -207,10 +209,9 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | graphdb\_ebs\_key\_enabled | Specifies whether the key is enabled. | `bool` | `true` | no |
 | graphdb\_ebs\_key\_spec | Specification of the Key. | `string` | `"SYMMETRIC_DEFAULT"` | no |
 | graphdb\_ebs\_key\_deletion\_window\_in\_days | The waiting period, specified in number of days for AWS to delete the KMS key(Between 7 and 30). | `number` | `30` | no |
-| graphdb\_ebs\_cmk\_description | Description for the KMS Key | `string` | `"KMS key for Parameter Store bucket encryption."` | no |
-| enable\_graphdb\_ebs\_kms\_key | Enable creation of KMS key for Parameter Store encryption | `bool` | `false` | no |
+| graphdb\_ebs\_cmk\_description | Description for the KMS Key | `string` | `"KMS key for S3 bucket encryption."` | no |
 | ebs\_external\_kms\_key | Externally provided KMS CMK | `string` | `""` | no |
-| ebs\_cmk\_enabled | Enable or disable toggle for ebs volume encryption. | `bool` | `false` | no |
+| create\_graphdb\_ebs\_kms\_key | Enable or disable toggle for ebs volume encryption. | `bool` | `false` | no |
 <!-- END_TF_DOCS -->
 
 ## Usage
@@ -364,7 +365,7 @@ vpc_flow_logs_lifecycle_rule_status = "Enabled"
 
 You can encrypt parameters stored in AWS Systems Manager Parameter Store using KMS CMKs. This ensures that sensitive data, such as configuration secrets, are securely encrypted at rest.
 
-##### Keys: 
+##### Keys:
 
 To utilize CMK, ensure that **enable_graphdb_parameter_store_kms_key = true** is set. This will generate a new KMS Key.
 
@@ -388,7 +389,7 @@ graphdb_parameter_store_key_admin_arn = "arn:aws:iam::123456789012:role/KeyAdmin
 
 You can secure EBS volumes using KMS CMKs to encrypt data at rest. This adds an extra layer of protection for data stored on EBS volumes attached to EC2 instances.
 
-##### Keys: 
+##### Keys:
 
 To use CMK, set **create_graphdb_ebs_kms_key = true**. This will create a new KMS Key.
 
