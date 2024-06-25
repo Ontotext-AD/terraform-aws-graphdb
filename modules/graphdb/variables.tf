@@ -145,13 +145,13 @@ variable "ebs_volume_iops" {
   type        = number
 }
 
-variable "ebs_kms_key_arn" {
+variable "ebs_default_kms_key_arn" {
   description = "KMS key used for ebs volume encryption."
   type        = string
   default     = "alias/aws/ebs"
 }
 
-variable "ebs_cmk_enabled" {
+variable "create_graphdb_ebs_kms_key" {
   description = "Enable or disable toggle for ebs volume encryption."
   type        = bool
 }
@@ -320,7 +320,6 @@ variable "enable_graphdb_parameter_store_kms_key" {
 variable "parameter_store_external_kms_key" {
   description = "Externally provided KMS CMK"
   type        = string
-  default     = ""
 }
 
 # EBS outputs (KMS)
@@ -365,13 +364,7 @@ variable "graphdb_ebs_cmk_description" {
   type        = string
 }
 
-variable "enable_graphdb_ebs_kms_key" {
-  description = "Enable creation of KMS key for Parameter Store encryption"
-  type        = bool
-}
-
 variable "ebs_external_kms_key" {
   description = "Externally provided KMS CMK"
   type        = string
-  default     = ""
 }

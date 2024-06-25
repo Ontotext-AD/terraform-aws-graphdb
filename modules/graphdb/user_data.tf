@@ -41,10 +41,9 @@ data "cloudinit_config" "graphdb_user_data" {
       ebs_volume_size : var.ebs_volume_size
       ebs_volume_iops : var.ebs_volume_iops
       ebs_volume_throughput : var.ebs_volume_throughput
-      ebs_kms_key_arn : var.ebs_kms_key_arn
+      ebs_default_kms_key_arn : var.ebs_default_kms_key_arn
       device_name : var.device_name
-      enable_graphdb_ebs_kms_key : var.enable_graphdb_ebs_kms_key
-      ebs_cmk_enabled : var.ebs_cmk_enabled
+      create_graphdb_ebs_kms_key : var.create_graphdb_ebs_kms_key
       parameter_store_external_kms_key : var.parameter_store_external_kms_key
       ebs_external_kms_key : var.ebs_external_kms_key
       graphdb_ebs_cmk_arn : length(aws_kms_key.graphdb_ebs_cmk) > 0 ? aws_kms_key.graphdb_ebs_cmk[0].arn : ""

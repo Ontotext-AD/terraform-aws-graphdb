@@ -34,14 +34,13 @@ module "backup" {
   s3_access_logs_bucket_name = var.deploy_logging_module && var.s3_enable_access_logs ? module.logging[0].graphdb_logging_bucket_name : null
 
   # S3 Encryption with KMS
-  enable_s3_kms_key              = var.enable_s3_kms_key
+  create_s3_kms_key              = var.create_s3_kms_key
   s3_cmk_alias                   = var.s3_cmk_alias
-  s3_key_admin_arn               = var.s3_key_admin_arn
+  s3_kms_key_admin_arn           = var.s3_kms_key_admin_arn
   s3_cmk_description             = var.s3_cmk_description
-  s3_key_spec                    = var.s3_key_spec
-  s3_key_enabled                 = var.s3_key_enabled
+  s3_key_specification           = var.s3_key_specification
+  s3_kms_key_enabled             = var.s3_kms_key_enabled
   s3_key_rotation_enabled        = var.s3_key_rotation_enabled
-  s3_key_tags                    = var.s3_key_tags
   s3_key_deletion_window_in_days = var.s3_key_deletion_window_in_days
   s3_external_kms_key            = var.s3_external_kms_key
 }
@@ -216,26 +215,26 @@ module "graphdb" {
 
   # Managed Disks
 
-  device_name           = var.device_name
-  ebs_volume_type       = var.ebs_volume_type
-  ebs_volume_size       = var.ebs_volume_size
-  ebs_volume_iops       = var.ebs_volume_iops
-  ebs_volume_throughput = var.ebs_volume_throughput
-  ebs_kms_key_arn       = var.ebs_kms_key_arn
-  ebs_external_kms_key  = var.ebs_external_kms_key
+  device_name             = var.device_name
+  ebs_volume_type         = var.ebs_volume_type
+  ebs_volume_size         = var.ebs_volume_size
+  ebs_volume_iops         = var.ebs_volume_iops
+  ebs_volume_throughput   = var.ebs_volume_throughput
+  ebs_default_kms_key_arn = var.ebs_default_kms_key_arn
+  ebs_external_kms_key    = var.ebs_external_kms_key
 
   # EBS Encryption with KMS
 
+  create_graphdb_ebs_kms_key              = var.create_graphdb_ebs_kms_key
   graphdb_ebs_cmk_description             = var.graphdb_ebs_cmk_description
   graphdb_ebs_key_spec                    = var.graphdb_ebs_key_spec
   graphdb_ebs_key_enabled                 = var.graphdb_ebs_key_enabled
   graphdb_ebs_key_rotation_enabled        = var.graphdb_ebs_key_rotation_enabled
   graphdb_ebs_key_tags                    = var.graphdb_ebs_key_tags
   graphdb_ebs_key_deletion_window_in_days = var.graphdb_ebs_key_deletion_window_in_days
-  enable_graphdb_ebs_kms_key              = var.enable_graphdb_ebs_kms_key
-  graphdb_ebs_key_admin_arn               = var.graphdb_ebs_key_admin_arn
-  graphdb_ebs_cmk_alias                   = var.graphdb_ebs_cmk_alias
-  ebs_cmk_enabled                         = var.ebs_cmk_enabled
+
+  graphdb_ebs_key_admin_arn = var.graphdb_ebs_key_admin_arn
+  graphdb_ebs_cmk_alias     = var.graphdb_ebs_cmk_alias
 
   # DNS
 

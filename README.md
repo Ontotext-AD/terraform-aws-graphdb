@@ -366,11 +366,11 @@ You can encrypt parameters stored in AWS Systems Manager Parameter Store using K
 
 ##### Keys: 
 
-To use CMK you need to have **enable_graphdb_parameter_store_kms_key = true**. When enabled, a new KMS Key will be created. 
+To utilize CMK, ensure that **enable_graphdb_parameter_store_kms_key = true** is set. This will generate a new KMS Key.
 
-If **enable_graphdb_parameter_store_kms_key = false** no encryption will be used.
+If **enable_graphdb_parameter_store_kms_key = false**, encryption will be disabled.
 
-You can provide your own key by using the parameter **parameter_store_external_kms_key**
+You can also supply your own key using the parameter_store_external_kms_key parameter: **parameter_store_external_kms_key**
 
 ```hcl
 ebs_external_kms_key             = "arn:aws:kms:us-east-1:123456789012:key/your-external-key-arn"
@@ -378,7 +378,7 @@ parameter_store_external_kms_key = true
 ```
 
 ##### Key Admin:
-You can specify Key admin by using **graphdb_parameter_store_key_admin_arn** or use the current AWS account by leaving the parameter empty. 
+You can designate a Key admin by setting the **graphdb_parameter_store_key_admin_arn** parameter, or you can use the current AWS account by leaving this parameter empty.
 
 ```hcl
 graphdb_parameter_store_key_admin_arn = "arn:aws:iam::123456789012:role/KeyAdminRole"
@@ -386,23 +386,23 @@ graphdb_parameter_store_key_admin_arn = "arn:aws:iam::123456789012:role/KeyAdmin
 
 **EBS encryption**
 
-You can encrypt EBS volumes using KMS CMKs to ensure that data at rest is secure. This provides an additional layer of security for data stored on EBS volumes attached to EC2 instances.
+You can secure EBS volumes using KMS CMKs to encrypt data at rest. This adds an extra layer of protection for data stored on EBS volumes attached to EC2 instances.
 
 ##### Keys: 
 
-To use CMK you need to have **ebs_cmk_enabled = true**. When enabled, a new KMS Key will be created. 
+To use CMK, set **create_graphdb_ebs_kms_key = true**. This will create a new KMS Key.
 
-If **ebs_cmk_enabled = false** the default AWS key encryption will be used.
+If **create_graphdb_ebs_kms_key = false** the default AWS key encryption will be used.
 
 You can provide your own key by using the parameter **ebs_external_kms_key**.
 
 ```hcl
-ebs_cmk_enabled = true
+create_graphdb_ebs_kms_key = true
 ebs_external_kms_key = "arn:aws:kms:us-east-1:123456789012:key/your-external-key-arn"
 ```
 
 ##### Key Admin:
-You can specify Key admin by using **graphdb_ebs_key_admin_arn** or use the current AWS account by leaving the parameter empty.
+You can specify a Key admin by setting the **graphdb_ebs_key_admin_arn** parameter, or you can use the current AWS account by leaving this parameter empty.
 
 ```hcl
 graphdb_ebs_key_admin_arn = "arn:aws:iam::123456789012:role/KeyAdminRole"
@@ -413,22 +413,22 @@ graphdb_ebs_key_admin_arn = "arn:aws:iam::123456789012:role/KeyAdminRole"
 You can encrypt S3 bucket objects using KMS CMKs to ensure that data at rest is secure. This protects the integrity and confidentiality of data stored in S3 buckets.
 
 ##### Keys
-To use CMK you need to have **enable_s3_kms_key = true**. When enabled, a new KMS Key will be created.
+To use CMK, set **create_s3_kms_key = true**. This will create a new KMS Key.
 
-If **enable_s3_kms_key = false**, the default AWS key (**alias/aws/s3**) will be used.
+If **create_s3_kms_key = false**, the default AWS key (**alias/aws/s3**) will be used.
 
-You can provide your own key by using the parameter **s3_external_kms_key**.
+You can also provide your own key by setting the **s3_external_kms_key** parameter.
 
 ```hcl
-enable_s3_kms_key = true
+create_s3_kms_key = true
 s3_external_kms_key = "arn:aws:kms:us-east-1:123456789012:key/your-external-key-arn"
 ```
 
 ##### Key Admin:
-You can specify Key admin by using **s3_key_admin_arn** or use the current AWS account by leaving the parameter empty.
+You can specify a Key admin by setting the **s3_kms_key_admin_arn** parameter, or you can use the current AWS account by leaving this parameter empty.
 
 ```hcl
-s3_key_admin_arn = "arn:aws:iam::123456789012:role/KeyAdminRole"
+s3_kms_key_admin_arn = "arn:aws:iam::123456789012:role/KeyAdminRole"
 ```
 
 #### Replication

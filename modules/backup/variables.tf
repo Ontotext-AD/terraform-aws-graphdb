@@ -26,14 +26,9 @@ variable "s3_access_logs_bucket_name" {
 
 # KMS CMK
 
-variable "enable_s3_kms_key" {
+variable "create_s3_kms_key" {
   description = "Enable creation of KMS key for S3 bucket encryption"
   type        = bool
-}
-
-variable "s3_key_tags" {
-  description = "A map of tags to assign to the resources."
-  type        = map(string)
 }
 
 variable "s3_key_rotation_enabled" {
@@ -46,12 +41,12 @@ variable "s3_cmk_alias" {
   type        = string
 }
 
-variable "s3_key_enabled" {
+variable "s3_kms_key_enabled" {
   description = "Specifies whether the key is enabled."
   type        = bool
 }
 
-variable "s3_key_spec" {
+variable "s3_key_specification" {
   description = "Specification of the Key."
   type        = string
 }
@@ -61,7 +56,7 @@ variable "s3_key_deletion_window_in_days" {
   type        = number
 }
 
-variable "s3_key_admin_arn" {
+variable "s3_kms_key_admin_arn" {
   description = "ARN of the role or user granted administrative access to the SNS KMS key."
   type        = string
 }
@@ -74,5 +69,4 @@ variable "s3_cmk_description" {
 variable "s3_external_kms_key" {
   description = "Externally provided KMS CMK"
   type        = string
-  default     = ""
 }

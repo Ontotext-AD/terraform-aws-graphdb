@@ -24,7 +24,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "backup" {
 
     apply_server_side_encryption_by_default {
       sse_algorithm     = "aws:kms"
-      kms_master_key_id = var.s3_external_kms_key != "" ? var.s3_external_kms_key : (var.enable_s3_kms_key ? aws_kms_key.s3_cmk[0].arn : var.s3_kms_key_arn)
+      kms_master_key_id = var.s3_external_kms_key != "" ? var.s3_external_kms_key : (var.create_s3_kms_key ? aws_kms_key.s3_cmk[0].arn : var.s3_kms_key_arn)
     }
   }
 }

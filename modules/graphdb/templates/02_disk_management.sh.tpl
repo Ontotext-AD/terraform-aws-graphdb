@@ -35,10 +35,10 @@ create_volume() {
   # Determine the KMS key ARN to use
   if [ -n "${ebs_external_kms_key}" ]; then
     kms_key_arn="${ebs_external_kms_key}"
-  elif [ "${ebs_cmk_enabled}" == "true" ]; then
+  elif [ "${create_graphdb_ebs_kms_key}" == "true" ]; then
     kms_key_arn="${graphdb_ebs_cmk_arn}"
   else
-    kms_key_arn="${ebs_kms_key_arn}"
+    kms_key_arn="${ebs_default_kms_key_arn}"
   fi
 
 

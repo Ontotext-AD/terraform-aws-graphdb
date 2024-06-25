@@ -15,7 +15,7 @@ resource "aws_kms_key_policy" "graphdb_parameter_store_cmk_policy" {
 
   policy = jsonencode({
     "Version" : "2012-10-17",
-    "Id" : "parameter-store-key-policy",
+    "Id" : "graphdb-parameter-store-key-policy",
     "Statement" : [
       {
         "Sid" : "Enable IAM User Permissions",
@@ -129,7 +129,6 @@ resource "aws_kms_key_policy" "graphdb_parameter_store_cmk_policy" {
     ]
   })
 }
-
 
 resource "aws_kms_alias" "graphdb_parameter_store_cmk_alias" {
   count = var.enable_graphdb_parameter_store_kms_key ? 1 : 0

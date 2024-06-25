@@ -1,7 +1,7 @@
 data "aws_region" "current" {}
 
 resource "aws_kms_key" "graphdb_ebs_cmk" {
-  count = var.ebs_cmk_enabled ? 1 : 0
+  count = var.create_graphdb_ebs_kms_key ? 1 : 0
 
   description              = var.graphdb_ebs_cmk_description
   customer_master_key_spec = var.graphdb_ebs_key_spec
@@ -13,12 +13,13 @@ resource "aws_kms_key" "graphdb_ebs_cmk" {
 }
 
 resource "aws_kms_key_policy" "graphdb_ebs_cmk_policy" {
-  count  = var.ebs_cmk_enabled ? 1 : 0
+  count = var.create_graphdb_ebs_kms_key ? 1 : 0
+
   key_id = aws_kms_key.graphdb_ebs_cmk[0].id
 
   policy = jsonencode({
     "Version" : "2012-10-17",
-    "Id" : "ebs-key-policy",
+    "Id" : "graphdb-ebs-key-policy",
     "Statement" : [
       {
         "Sid" : "Enable IAM User Permissions",
@@ -118,7 +119,7 @@ resource "aws_kms_key_policy" "graphdb_ebs_cmk_policy" {
 }
 
 resource "aws_kms_alias" "graphdb_ebs_cmk_alias" {
-  count = var.ebs_cmk_enabled ? 1 : 0
+  count = var.create_graphdb_ebs_kms_key ? 1 : 0
 
   name          = "alias/graphdb-ebs-cmk"
   target_key_id = aws_kms_key.graphdb_ebs_cmk[0].key_id

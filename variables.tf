@@ -251,7 +251,7 @@ variable "ebs_volume_iops" {
   default     = 8000
 }
 
-variable "ebs_kms_key_arn" {
+variable "ebs_default_kms_key_arn" {
   description = "KMS key used for ebs volume encryption."
   type        = string
   default     = "alias/aws/ebs"
@@ -472,22 +472,16 @@ variable "graphdb_enable_userdata_scripts_on_reboot" {
 
 # S3 bucket encryption
 
-variable "enable_s3_kms_key" {
+variable "create_s3_kms_key" {
   description = "Enable creation of KMS key for S3 bucket encryption"
   type        = bool
   default     = false
 }
 
-variable "s3_key_admin_arn" {
+variable "s3_kms_key_admin_arn" {
   description = "ARN of the role or user granted administrative access to the SNS KMS key."
   type        = string
   default     = ""
-}
-
-variable "s3_key_tags" {
-  description = "A map of tags to assign to the resources."
-  type        = map(string)
-  default     = {}
 }
 
 variable "s3_key_rotation_enabled" {
@@ -502,13 +496,13 @@ variable "s3_cmk_alias" {
   default     = "graphdb-cmk-key"
 }
 
-variable "s3_key_enabled" {
+variable "s3_kms_key_enabled" {
   description = "Specifies whether the key is enabled."
   type        = bool
   default     = true
 }
 
-variable "s3_key_spec" {
+variable "s3_key_specification" {
   description = "Specification of the Key."
   type        = string
   default     = "SYMMETRIC_DEFAULT"
@@ -545,7 +539,6 @@ variable "parameter_store_key_admin_arn" {
   type        = string
   default     = ""
 }
-
 
 variable "parameter_store_key_tags" {
   description = "A map of tags to assign to the resources."
@@ -596,7 +589,6 @@ variable "graphdb_parameter_store_key_admin_arn" {
   type        = string
   default     = ""
 }
-
 
 variable "graphdb_parameter_store_key_tags" {
   description = "A map of tags to assign to the resources."
@@ -699,13 +691,7 @@ variable "graphdb_ebs_key_deletion_window_in_days" {
 variable "graphdb_ebs_cmk_description" {
   description = "Description for the KMS Key"
   type        = string
-  default     = "KMS key for Parameter Store bucket encryption."
-}
-
-variable "enable_graphdb_ebs_kms_key" {
-  description = "Enable creation of KMS key for Parameter Store encryption"
-  type        = bool
-  default     = false
+  default     = "KMS key for S3 bucket encryption."
 }
 
 variable "ebs_external_kms_key" {
@@ -714,6 +700,7 @@ variable "ebs_external_kms_key" {
   default     = ""
 }
 
+variable "create_graphdb_ebs_kms_key" {
 # SNS Encryption
 
 variable "enable_sns_kms_key" {

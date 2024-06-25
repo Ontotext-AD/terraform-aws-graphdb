@@ -23,7 +23,7 @@ resource "aws_iam_role" "graphdb_iam_role" {
   assume_role_policy = data.aws_iam_policy_document.graphdb_instance_role.json
 }
 
-data "aws_iam_policy_document" "kms_allow" {
+data "aws_iam_policy_document" "kms_management_policy" {
   statement {
     effect = "Allow"
 
@@ -48,13 +48,16 @@ data "aws_iam_policy_document" "kms_allow" {
       "kms:DisableKeyRotation"
     ]
 
-    resources = ["*"]
+    resources = [
+      "arn:aws:kms:${var.aws_region}:${data.aws_caller_identity.current.account_id}:key/*"
+    ]
   }
 }
-resource "aws_iam_role_policy" "kms_allow" {
-  name   = "${var.resource_name_prefix}-kms_allow"
+
+resource "aws_iam_role_policy" "kms_management_policy" {
+  name   = "${var.resource_name_prefix}-kms_management_policy"
   role   = aws_iam_role.graphdb_iam_role.id
-  policy = data.aws_iam_policy_document.kms_allow.json
+  policy = data.aws_iam_policy_document.kms_management_policy.json
 }
 
 data "aws_iam_policy_document" "graphdb_instance_role" {
@@ -351,7 +354,7 @@ data "aws_iam_policy_document" "graphdb_ebs_key_admin_role" {
 }
 
 resource "aws_iam_role" "graphdb_ebs_key_admin_role" {
-  name               = "${var.resource_name_prefix}-ebs-key-admins"
+  name               = "${var.resource_name_prefix}-ebs-key-admin"
   assume_role_policy = data.aws_iam_policy_document.graphdb_ebs_key_admin_role.json
 }
 
@@ -376,6 +379,6 @@ data "aws_iam_policy_document" "graphdb_param_store_key_admin_role" {
 }
 
 resource "aws_iam_role" "graphdb_param_store_key_admin_role" {
-  name               = "${var.resource_name_prefix}-param-store-key-admins"
+  name               = "${var.resource_name_prefix}-param-store-key-admin"
   assume_role_policy = data.aws_iam_policy_document.graphdb_param_store_key_admin_role.json
 }
