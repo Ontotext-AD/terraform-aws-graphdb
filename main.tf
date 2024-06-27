@@ -5,7 +5,7 @@ data "aws_caller_identity" "current" {}
 module "vpc" {
   source = "./modules/vpc"
 
-  count = var.create_vpc ? 1 : 0
+  count = var.vpc_id == "" ? 1 : 0
 
   resource_name_prefix                            = var.resource_name_prefix
   vpc_dns_hostnames                               = var.vpc_dns_hostnames
@@ -92,8 +92,8 @@ module "load_balancer" {
   source = "./modules/load_balancer"
 
   resource_name_prefix          = var.resource_name_prefix
-  vpc_id                        = module.vpc[0].vpc_id
-  lb_subnets                    = var.lb_internal ? module.vpc[0].private_subnet_ids : module.vpc[0].public_subnet_ids
+  vpc_id                        = var.vpc_id != "" ? var.vpc_id : module.vpc[0].vpc_id
+  lb_subnets                    = var.vpc_id == "" ? (var.lb_internal ? module.vpc[0].private_subnet_ids : module.vpc[0].public_subnet_ids) : (var.lb_internal ? var.vpc_private_subnet_ids : var.vpc_public_subnet_ids)
   lb_internal                   = var.lb_internal
   lb_deregistration_delay       = var.lb_deregistration_delay
   lb_health_check_path          = var.lb_health_check_path
@@ -142,13 +142,13 @@ module "graphdb" {
 
   allowed_inbound_cidrs     = var.allowed_inbound_cidrs_lb
   allowed_inbound_cidrs_ssh = var.allowed_inbound_cidrs_ssh
-  graphdb_subnets           = module.vpc[0].private_subnet_ids
+  graphdb_subnets           = var.vpc_id != "" ? var.vpc_private_subnet_ids : module.vpc[0].private_subnet_ids
   graphdb_target_group_arns = local.graphdb_target_group_arns
-  vpc_id                    = module.vpc[0].vpc_id
+  vpc_id                    = var.vpc_id != "" ? var.vpc_id : module.vpc[0].vpc_id
 
   # Network Load Balancer
   lb_enable_private_access = var.lb_internal ? var.lb_enable_private_access : false
-  lb_subnets               = var.lb_internal ? module.vpc[0].private_subnet_ids : module.vpc[0].public_subnet_ids
+  lb_subnets               = var.vpc_id == "" ? (var.lb_internal ? module.vpc[0].private_subnet_ids : module.vpc[0].public_subnet_ids) : (var.lb_internal ? var.vpc_private_subnet_ids : var.vpc_public_subnet_ids)
   graphdb_lb_dns_name      = module.load_balancer.lb_dns_name
 
   # GraphDB Configurations

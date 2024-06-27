@@ -122,10 +122,22 @@ variable "vpc_dns_hostnames" {
   default     = true
 }
 
-variable "create_vpc" {
-  description = "Enable or disable the creation of the VPC"
-  type        = bool
-  default     = true
+variable "vpc_id" {
+  description = "Specify the VPC ID if you want to use existing VPC. If left empty it will create a new VPC"
+  type        = string
+  default     = ""
+}
+
+variable "vpc_public_subnet_ids" {
+  description = "Define the Subnet IDs for the public subnets that are deployed within the specified VPC in the vpc_id variable"
+  type        = list(string)
+  default     = []
+}
+
+variable "vpc_private_subnet_ids" {
+  description = "Define the Subnet IDs for the private subnets that are deployed within the specified VPC in the vpc_id variable"
+  type        = list(string)
+  default     = []
 }
 
 variable "vpc_private_subnet_cidrs" {

@@ -107,7 +107,9 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | ec2\_key\_name | (Optional) key pair to use for SSH access to instance | `string` | `null` | no |
 | graphdb\_node\_count | Number of GraphDB nodes to deploy in ASG | `number` | `3` | no |
 | vpc\_dns\_hostnames | Enable or disable DNS hostnames support for the VPC | `bool` | `true` | no |
-| create\_vpc | Enable or disable the creation of the VPC | `bool` | `true` | no |
+| vpc\_id | Specify the VPC ID if you want to use existing VPC. If left empty it will create a new VPC | `string` | `""` | no |
+| vpc\_public\_subnet\_ids | Define the Subnet IDs for the public subnets that are deployed within the specified VPC in the vpc\_id variable | `list(string)` | `[]` | no |
+| vpc\_private\_subnet\_ids | Define the Subnet IDs for the private subnets that are deployed within the specified VPC in the vpc\_id variable | `list(string)` | `[]` | no |
 | vpc\_private\_subnet\_cidrs | CIDR blocks for private subnets | `list(string)` | ```[ "10.0.0.0/19", "10.0.32.0/19", "10.0.64.0/19" ]``` | no |
 | vpc\_public\_subnet\_cidrs | CIDR blocks for public subnets | `list(string)` | ```[ "10.0.128.0/20", "10.0.144.0/20", "10.0.160.0/20" ]``` | no |
 | vpc\_cidr\_block | CIDR block for VPC | `string` | `"10.0.0.0/16"` | no |
@@ -318,6 +320,17 @@ To do so you should switch the following variables to true:
 ```hcl
 logging_enable_bucket_replication = true
 s3_enable_replication_rule = "Enabled"
+```
+
+#### Deploying in existing VPC
+
+If you have existing VPC created in your account, you can use that VPC to deploy the GraphDB cluster.
+
+What you need to do is to specify values for the following variables
+```hcl
+vpc_id = "vpc-12345678"
+vpc_public_subnet_ids = ["public-subnet-1","public-subnet2","public-subnet-3"]
+vpc_private_subnet_ids = ["private-subnet-1","private-subnet-2","private-subnet-3"]
 ```
 
 ## Updating configurations on an active deployment
