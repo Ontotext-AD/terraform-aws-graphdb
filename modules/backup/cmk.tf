@@ -62,10 +62,10 @@ resource "aws_kms_key_policy" "s3_cmk_policy" {
         "Resource" : "arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:key/${aws_kms_key.s3_cmk[0].id}"
       },
       {
-        "Sid" : "Allow root user to manage key",
+        "Sid" : "Allow the current user to manage key",
         "Effect" : "Allow",
         "Principal" : {
-          "AWS" : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+          "AWS" : "${data.aws_caller_identity.current.arn}"
         },
         "Action" : [
           "kms:CreateAlias",
