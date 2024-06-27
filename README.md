@@ -320,6 +320,17 @@ logging_enable_bucket_replication = true
 s3_enable_replication_rule = "Enabled"
 ```
 
+#### Deploying in existing VPC
+
+If you have existing VPC created in your account, you can use that VPC to deploy the GraphDB cluster.
+
+What you need to do is to specify values for the following variables
+```hcl
+vpc_id = "vpc-12345678"
+vpc_public_subnet_ids = ["public-subnet-1","public-subnet2","public-subnet-3"]
+vpc_private_subnet_ids = ["private-subnet-1","private-subnet-2","private-subnet-3"]
+```
+
 ## Updating configurations on an active deployment
 
 ### Updating Configurations
