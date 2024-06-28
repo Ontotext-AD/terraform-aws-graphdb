@@ -1,3 +1,7 @@
+locals {
+  calculated_graphdb_port = var.graphdb_node_count == 1 ? 7201 : 7200
+}
+
 resource "aws_security_group" "graphdb_security_group" {
   name        = var.resource_name_prefix
   description = "Security group for GraphDB components"
@@ -8,13 +12,15 @@ resource "aws_security_group_rule" "graphdb_internal_http" {
   description       = "Allow GraphDB proxies and nodes to communicate (HTTP)."
   security_group_id = aws_security_group.graphdb_security_group.id
   type              = "ingress"
-  from_port         = 7200
+  from_port         = local.calculated_graphdb_port
   to_port           = 7201
   protocol          = "tcp"
   cidr_blocks       = local.subnet_cidr_blocks
 }
 
 resource "aws_security_group_rule" "graphdb_internal_raft" {
+  count = var.graphdb_node_count != 1 ? 1 : 0
+
   description       = "Allow GraphDB proxies and nodes to communicate (Raft)."
   security_group_id = aws_security_group.graphdb_security_group.id
   type              = "ingress"
@@ -25,7 +31,8 @@ resource "aws_security_group_rule" "graphdb_internal_raft" {
 }
 
 resource "aws_security_group_rule" "graphdb_ssh_inbound" {
-  count             = var.allowed_inbound_cidrs_ssh != null ? 1 : 0
+  count = var.allowed_inbound_cidrs_ssh != null ? 1 : 0
+
   description       = "Allow specified CIDRs SSH access to the GraphDB instances."
   security_group_id = aws_security_group.graphdb_security_group.id
   type              = "ingress"
@@ -51,8 +58,8 @@ resource "aws_security_group_rule" "graphdb_network_lb_ingress" {
   description       = "CIRDs allowed to access GraphDB."
   security_group_id = aws_security_group.graphdb_security_group.id
   type              = "ingress"
-  from_port         = 7200
-  to_port           = 7200
+  from_port         = local.calculated_graphdb_port
+  to_port           = local.calculated_graphdb_port
   protocol          = "tcp"
   cidr_blocks       = var.allowed_inbound_cidrs
 }
@@ -64,7 +71,7 @@ resource "aws_security_group_rule" "graphdb_lb_healthchecks" {
   description       = "Allow the load balancer to healthcheck the GraphDB nodes and access the proxies."
   security_group_id = aws_security_group.graphdb_security_group.id
   type              = "ingress"
-  from_port         = 7200
+  from_port         = local.calculated_graphdb_port
   to_port           = 7201
   protocol          = "tcp"
   cidr_blocks       = local.lb_subnet_cidr_blocks

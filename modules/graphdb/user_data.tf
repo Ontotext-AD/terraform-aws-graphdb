@@ -91,24 +91,49 @@ data "cloudinit_config" "graphdb_user_data" {
     })
   }
 
-  part {
-    content_type = "text/x-shellscript"
-    content = templatefile("${path.module}/templates/08_cluster_setup.sh.tpl", {
-      name : var.resource_name_prefix
-      region : var.aws_region
-      zone_id : aws_route53_zone.graphdb_zone.id
-    })
+  dynamic "part" {
+    for_each = var.graphdb_node_count > 1 ? [1] : []
+
+    content {
+      content_type = "text/x-shellscript"
+      content = templatefile("${path.module}/templates/08_cluster_setup.sh.tpl", {
+        name : var.resource_name_prefix
+        region : var.aws_region
+        zone_id : aws_route53_zone.graphdb_zone.id
+        route53_zone_dns_name : var.route53_zone_dns_name
+      })
+    }
   }
 
-  part {
-    content_type = "text/x-shellscript"
-    content = templatefile("${path.module}/templates/09_node_join.sh.tpl", {
-      region : var.aws_region
-      name : var.resource_name_prefix
-      zone_id : aws_route53_zone.graphdb_zone.id
-    })
+  dynamic "part" {
+    for_each = var.graphdb_node_count > 1 ? [1] : []
+
+    content {
+      content_type = "text/x-shellscript"
+      content = templatefile("${path.module}/templates/09_node_join.sh.tpl", {
+        region : var.aws_region
+        name : var.resource_name_prefix
+        zone_id : aws_route53_zone.graphdb_zone.id
+        route53_zone_dns_name : var.route53_zone_dns_name
+      })
+    }
   }
 
+  # 10 Start GDB services - Single node
+  dynamic "part" {
+    for_each = var.graphdb_node_count == 1 ? [1] : []
+    content {
+      content_type = "text/x-shellscript"
+      content = templatefile("${path.module}/templates/10_start_single_graphdb_services.sh.tpl", {
+        name : var.resource_name_prefix
+        region : var.aws_region
+        zone_id : aws_route53_zone.graphdb_zone.id
+        route53_zone_dns_name : var.route53_zone_dns_name
+      })
+    }
+  }
+
+  # 11 Execute additional scripts
   dynamic "part" {
     for_each = var.graphdb_enable_userdata_scripts_on_reboot ? [1] : []
     content {

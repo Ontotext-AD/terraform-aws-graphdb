@@ -25,24 +25,13 @@ CURRENT_NODE_NAME=$(hostname)
 LEADER_NODE=""
 RAFT_DIR="/var/opt/graphdb/node/data/raft"
 
-# Get existing DNS records from Route53 which contain .graphdb.cluster in their name
-EXISTING_RECORDS=$(aws route53 list-resource-record-sets --hosted-zone-id "${zone_id}" --query "ResourceRecordSets[?contains(Name, '.graphdb.cluster') == \`true\`].Name")
+# Get existing DNS records from Route53 which contain .${route53_zone_dns_name} in their name
+EXISTING_RECORDS=$(aws route53 list-resource-record-sets --hosted-zone-id "${zone_id}" --query "ResourceRecordSets[?contains(Name, '.${route53_zone_dns_name}') == \`true\`].Name")
 # Use jq to process the JSON output, remove the last dot from each element, and convert it to an array
 EXISTING_RECORDS=$(echo "$EXISTING_RECORDS" | jq -r '.[] | rtrimstr(".")')
 # Convert the output into an array
 readarray -t EXISTING_RECORDS_ARRAY <<<"$EXISTING_RECORDS"
 
-# Function to check if GraphDB is running
-check_gdb() {
-  local gdb_address="$1:7201/rest/monitor/infrastructure"
-  if curl -s --head -u "admin:$${GRAPHDB_ADMIN_PASSWORD}" --fail "$gdb_address" >/dev/null; then
-    log_with_timestamp "Success, GraphDB node $gdb_address is available"
-    return 0
-  else
-    log_with_timestamp "GraphDB node $gdb_address is not available yet"
-    return 1
-  fi
-}
 
 # This function should be used only after the Leader node is found
 get_cluster_state() {

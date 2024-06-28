@@ -20,18 +20,16 @@ if [ ${deploy_backup} == "true" ]; then
   cat <<-EOF >/usr/bin/graphdb_backup
 #!/bin/bash
 
-set -euxo pipefail
+set -euo pipefail
 
 GRAPHDB_ADMIN_PASSWORD="\$(aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/admin_password" --with-decryption | jq -r .Parameter.Value | base64 -d)"
-NODE_STATE="\$(curl --silent --fail --user "admin:\$GRAPHDB_ADMIN_PASSWORD" localhost:7201/rest/cluster/node/status | jq -r .nodeState)"
-
-if [ "\$NODE_STATE" != "LEADER" ]; then
-  echo "current node is not a leader, but \$NODE_STATE"
-  exit 0
-fi
+NODE_STATE="\$(curl --silent -u "admin:\$GRAPHDB_ADMIN_PASSWORD" http://localhost:7201/rest/cluster/node/status | jq -r .nodeState)"
 
 function trigger_backup {
   local backup_name="\$(date +'%Y-%m-%d_%H-%M-%S').tar"
+  current_time=$(date +"%T %Y-%m-%d")
+  start_time=$(date +%s)
+  echo "Creating backup $backup_name at $start_time"
 
   curl \
     -vvv --fail \
@@ -59,9 +57,23 @@ function rotate_backups {
   done
 }
 
-if ! trigger_backup; then
-  echo "failed to create backup"
-  exit 1
+# Checks if GraphDB is running in cluster
+IS_CLUSTER=\$(
+  curl -s -o /dev/null \
+    -u "admin:\$GRAPHDB_ADMIN_PASSWORD" \
+    -w "%%{http_code}" \
+    http://localhost:7200/rest/monitor/cluster
+)
+
+if [ "\$IS_CLUSTER" == 200 ]; then
+  # Checks if the current GraphDB instance is Leader, otherwise exits.
+  if [ "\$NODE_STATE" != "LEADER" ]; then
+    echo "current node is not a leader, but \$NODE_STATE"
+    exit 0
+  fi
+  (trigger_backup && echo "") | tee -a /var/opt/graphdb/node/graphdb_backup.log
+elif [ "\$IS_CLUSTER" == 503 ]; then
+  (trigger_backup && echo "") | tee -a /var/opt/graphdb/node/graphdb_backup.log
 fi
 
 rotate_backups
