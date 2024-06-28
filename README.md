@@ -162,14 +162,14 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | asg\_instance\_refresh\_checkpoint\_delay | Number of seconds to wait after a checkpoint. | `number` | `3600` | no |
 | graphdb\_enable\_userdata\_scripts\_on\_reboot | (Experimental) Modifies cloud-config to always run user data scripts on EC2 boot | `bool` | `false` | no |
 | enable\_sns\_kms\_key | Enable Customer managed keys for encryption. If set to false it will use AWS managed key. | `bool` | `false` | no |
-| sns\_cmk\_description | Description for the KMS key for the encryption of SNS | `string` | `"KMS Key to encrypt SNS"` | no |
+| sns\_cmk\_description | Description for the KMS key for the encryption of SNS | `string` | `"KMS CMK Key to encrypt SNS topics"` | no |
 | sns\_key\_admin\_arn | ARN of the role or user granted administrative access to the SNS KMS key. | `string` | `""` | no |
 | deletion\_window\_in\_days | The waiting period, specified in number of days for AWS to delete the KMS key(Between 7 and 30). | `number` | `30` | no |
 | sns\_external\_kms\_key | ARN of the external KMS key that will be used for encryption of SNS topics | `string` | `""` | no |
 | key\_spec | Specification of the Key. | `string` | `"SYMMETRIC_DEFAULT"` | no |
 | key\_enabled | Specifies whether the key is enabled. | `bool` | `true` | no |
 | rotation\_enabled | Specifies whether key rotation is enabled. | `bool` | `true` | no |
-| cmk\_key\_alias | The alias for the CMK key. | `string` | `"graphdb-cmk-key"` | no |
+| cmk\_key\_alias | The alias for the CMK key. | `string` | `"sns-cmk-key"` | no |
 | sns\_default\_kms\_key | ARN of the default KMS key that will be used for encryption of SNS topics | `string` | `"alias/aws/sns"` | no |
 <!-- END_TF_DOCS -->
 
