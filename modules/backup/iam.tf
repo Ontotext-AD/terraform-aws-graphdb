@@ -54,20 +54,7 @@ data "aws_iam_policy_document" "graphdb_s3_key_admin_role_permissions" {
       "kms:EnableKeyRotation",
       "kms:ListResourceTags",
       "kms:ScheduleKeyDeletion",
-      "kms:DisableKeyRotation"
-    ]
-
-    resources = [
-      "arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:key/*",
-      "arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:alias/*"
-    ]
-  }
-
-  statement {
-    effect = "Allow"
-
-    actions = [
-      "kms:ListAliases",
+      "kms:DisableKeyRotation",
       "tag:GetResources"
     ]
 
