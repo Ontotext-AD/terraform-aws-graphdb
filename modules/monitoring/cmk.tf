@@ -25,16 +25,35 @@ resource "aws_kms_key_policy" "sns_cmk_policy" {
         "Sid" : "Enable IAM User Permissions",
         "Effect" : "Allow",
         "Principal" : {
-          "AWS" : var.sns_key_admin_arn != "" ? var.sns_key_admin_arn : aws_iam_role.sns_topic_role.arn
+          "AWS" : var.sns_key_admin_arn != "" ? var.sns_key_admin_arn : aws_iam_role.graphdb_sns_key_admin_role.arn
         },
-        "Action" : "kms:*",
+        "Action" : [
+          "kms:CreateAlias",
+          "kms:CreateKey",
+          "kms:Encrypt",
+          "kms:Decrypt",
+          "kms:DeleteAlias",
+          "kms:DescribeKey",
+          "kms:GetKeyPolicy",
+          "kms:GetKeyRotationStatus",
+          "kms:ListAliases",
+          "kms:ListGrants",
+          "kms:ListKeyPolicies",
+          "kms:ListKeys",
+          "kms:PutKeyPolicy",
+          "kms:UpdateAlias",
+          "kms:EnableKeyRotation",
+          "kms:ListResourceTags",
+          "kms:ScheduleKeyDeletion",
+          "kms:DisableKeyRotation"
+        ],
         "Resource" : "arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:key/${aws_kms_key.sns_cmk[0].id}"
       },
       {
         "Sid" : "Allow access for Key Administrators",
         "Effect" : "Allow",
         "Principal" : {
-          "AWS" : var.sns_key_admin_arn != "" ? var.sns_key_admin_arn : aws_iam_role.sns_topic_role.arn
+          "AWS" : var.sns_key_admin_arn != "" ? var.sns_key_admin_arn : aws_iam_role.graphdb_sns_key_admin_role.arn
         },
         "Action" : [
           "kms:CreateAlias",
@@ -62,7 +81,7 @@ resource "aws_kms_key_policy" "sns_cmk_policy" {
         "Sid" : "Allow use of the key",
         "Effect" : "Allow",
         "Principal" : {
-          "AWS" : var.sns_key_admin_arn != "" ? var.sns_key_admin_arn : aws_iam_role.sns_topic_role.arn
+          "AWS" : var.sns_key_admin_arn != "" ? var.sns_key_admin_arn : aws_iam_role.graphdb_sns_key_admin_role.arn
         },
         "Action" : [
           "kms:Encrypt",
@@ -89,7 +108,7 @@ resource "aws_kms_key_policy" "sns_cmk_policy" {
         "Resource" : "arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:key/${aws_kms_key.sns_cmk[0].id}"
       },
       {
-        "Sid" : "Allow root user to manage key",
+        "Sid" : "Allow the current user to manage key",
         "Effect" : "Allow",
         "Principal" : {
           "AWS" : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"

@@ -481,7 +481,7 @@ variable "enable_sns_kms_key" {
 variable "sns_cmk_description" {
   description = "Description for the KMS key for the encryption of SNS"
   type        = string
-  default     = "KMS Key to encrypt SNS"
+  default     = "KMS CMK Key to encrypt SNS topics"
 }
 
 variable "sns_key_admin_arn" {
@@ -523,7 +523,7 @@ variable "rotation_enabled" {
 variable "cmk_key_alias" {
   description = "The alias for the CMK key."
   type        = string
-  default     = "graphdb-cmk-key"
+  default     = "sns-cmk-key"
 }
 
 variable "sns_default_kms_key" {
