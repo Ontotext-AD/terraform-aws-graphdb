@@ -84,3 +84,8 @@ variable "lb_access_logs_bucket_name" {
   description = "Define name for the bucket where the access logs will be hosted"
   type        = string
 }
+
+variable "graphdb_node_count" {
+  description = "Number of GraphDB nodes to deploy in ASG"
+  type        = number
+}

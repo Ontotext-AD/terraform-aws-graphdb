@@ -2,6 +2,8 @@
 
 # Attempting to recover metric filter
 resource "aws_cloudwatch_log_metric_filter" "graphdb_attempting_to_recover_metric_filter" {
+  count = var.graphdb_node_count != 1 ? 1 : 0
+
   name           = "mf-${var.resource_name_prefix}-attempting-to-recover"
   pattern        = "successfully replicated registration will not retry"
   log_group_name = aws_cloudwatch_log_group.graphdb_log_group.name
@@ -19,18 +21,20 @@ resource "aws_cloudwatch_log_metric_filter" "graphdb_attempting_to_recover_metri
 # Attempting to recover alarm based on metric filter
 
 resource "aws_cloudwatch_metric_alarm" "graphdb_attempting_to_recover_alarm" {
+  count = var.graphdb_node_count != 1 ? 1 : 0
+
   alarm_name          = "al-${var.resource_name_prefix}-attempting-recover"
   alarm_description   = "Attempting to recover through snapshot replication"
   comparison_operator = "GreaterThanThreshold"
-  metric_name         = aws_cloudwatch_log_metric_filter.graphdb_attempting_to_recover_metric_filter.metric_transformation[0].name
-  namespace           = aws_cloudwatch_log_metric_filter.graphdb_attempting_to_recover_metric_filter.metric_transformation[0].namespace
+  metric_name         = aws_cloudwatch_log_metric_filter.graphdb_attempting_to_recover_metric_filter[0].metric_transformation[0].name
+  namespace           = aws_cloudwatch_log_metric_filter.graphdb_attempting_to_recover_metric_filter[0].metric_transformation[0].namespace
   period              = var.cloudwatch_period
   statistic           = "SampleCount"
   evaluation_periods  = var.cloudwatch_evaluation_periods
   threshold           = "0"
   alarm_actions       = [aws_sns_topic.graphdb_sns_topic.arn]
 
-  depends_on = [aws_cloudwatch_log_metric_filter.graphdb_attempting_to_recover_metric_filter]
+  depends_on = [aws_cloudwatch_log_metric_filter.graphdb_attempting_to_recover_metric_filter[0]]
 }
 
 # Log filter for low disk space messages in the logs
@@ -111,6 +115,8 @@ resource "aws_cloudwatch_metric_alarm" "graphdb_cpu_utilization" {
 
 # Alarm for nodes disconnected
 resource "aws_cloudwatch_metric_alarm" "graphdb_nodes_disconnected" {
+  count = var.graphdb_node_count != 1 ? 1 : 0
+
   alarm_name          = "al-${var.resource_name_prefix}-nodes-disconnected"
   alarm_description   = "Alarm will trigger if a node has been disconnected"
   actions_enabled     = true

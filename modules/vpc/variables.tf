@@ -6,13 +6,11 @@ variable "resource_name_prefix" {
 variable "vpc_private_subnet_cidrs" {
   description = "CIDR blocks for private subnets"
   type        = list(string)
-  default     = []
 }
 
 variable "vpc_public_subnet_cidrs" {
   description = "CIDR blocks for public subnets"
   type        = list(string)
-  default     = []
 }
 
 variable "vpc_cidr_block" {
@@ -69,4 +67,9 @@ variable "vpc_flow_log_bucket_arn" {
   description = "Define the ARN of the bucket for the VPC flow logs"
   type        = string
   default     = null
+}
+
+variable "graphdb_node_count" {
+  description = "Number of GraphDB nodes to deploy in ASG"
+  type        = number
 }
