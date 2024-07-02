@@ -32,6 +32,17 @@ module "backup" {
   iam_role_id                = module.graphdb.iam_role_id
   s3_enable_access_logs      = var.s3_enable_access_logs
   s3_access_logs_bucket_name = var.deploy_logging_module && var.s3_enable_access_logs ? module.logging[0].graphdb_logging_bucket_name : null
+
+  # S3 Encryption with KMS
+  create_s3_kms_key              = var.create_s3_kms_key
+  s3_cmk_alias                   = var.s3_cmk_alias
+  s3_kms_key_admin_arn           = var.s3_kms_key_admin_arn
+  s3_cmk_description             = var.s3_cmk_description
+  s3_key_specification           = var.s3_key_specification
+  s3_kms_key_enabled             = var.s3_kms_key_enabled
+  s3_key_rotation_enabled        = var.s3_key_rotation_enabled
+  s3_key_deletion_window_in_days = var.s3_key_deletion_window_in_days
+  s3_external_kms_key            = var.s3_external_kms_key
 }
 
 module "logging" {
@@ -119,16 +130,39 @@ module "monitoring" {
 
   count = var.deploy_monitoring ? 1 : 0
 
-  resource_name_prefix                   = var.resource_name_prefix
-  aws_region                             = var.aws_region
-  route53_availability_check_region      = var.monitoring_route53_health_check_aws_region
-  cloudwatch_alarms_actions_enabled      = var.monitoring_actions_enabled
-  sns_topic_endpoint                     = var.deploy_monitoring ? var.monitoring_sns_topic_endpoint : null
-  sns_endpoint_auto_confirms             = var.monitoring_endpoint_auto_confirms
-  sns_protocol                           = var.monitoring_sns_protocol
+  resource_name_prefix              = var.resource_name_prefix
+  aws_region                        = var.aws_region
+  route53_availability_check_region = var.monitoring_route53_health_check_aws_region
+  cloudwatch_alarms_actions_enabled = var.monitoring_actions_enabled
+  sns_topic_endpoint                = var.deploy_monitoring ? var.monitoring_sns_topic_endpoint : null
+  sns_endpoint_auto_confirms        = var.monitoring_endpoint_auto_confirms
+  sns_protocol                      = var.monitoring_sns_protocol
+  sns_cmk_description               = var.sns_cmk_description
+  sns_key_admin_arn                 = var.sns_key_admin_arn
+  enable_sns_kms_key                = var.enable_sns_kms_key
+  sns_external_kms_key              = var.sns_external_kms_key
+  rotation_enabled                  = var.rotation_enabled
+  deletion_window_in_days           = var.deletion_window_in_days
+  key_enabled                       = var.key_enabled
+  key_spec                          = var.key_spec
+  sns_default_kms_key               = var.sns_default_kms_key
+  cmk_key_alias                     = var.cmk_key_alias
+
   cloudwatch_log_group_retention_in_days = var.monitoring_log_group_retention_in_days
   route53_availability_request_url       = module.load_balancer.lb_dns_name
   route53_availability_measure_latency   = var.monitoring_route53_measure_latency
+
+  # Parameter Store Encryption with KMS
+  enable_parameter_store_kms_key              = var.enable_parameter_store_kms_key
+  parameter_store_cmk_alias                   = var.parameter_store_cmk_alias
+  parameter_store_key_admin_arn               = var.parameter_store_key_admin_arn
+  parameter_store_cmk_description             = var.parameter_store_cmk_description
+  parameter_store_key_spec                    = var.parameter_store_key_spec
+  parameter_store_key_enabled                 = var.parameter_store_key_enabled
+  parameter_store_key_rotation_enabled        = var.parameter_store_key_rotation_enabled
+  parameter_store_key_tags                    = var.parameter_store_key_tags
+  parameter_store_key_deletion_window_in_days = var.parameter_store_key_deletion_window_in_days
+  parameter_store_external_kms_key            = var.parameter_store_external_kms_key
 }
 
 module "graphdb" {
@@ -181,12 +215,26 @@ module "graphdb" {
 
   # Managed Disks
 
-  device_name           = var.device_name
-  ebs_volume_type       = var.ebs_volume_type
-  ebs_volume_size       = var.ebs_volume_size
-  ebs_volume_iops       = var.ebs_volume_iops
-  ebs_volume_throughput = var.ebs_volume_throughput
-  ebs_kms_key_arn       = var.ebs_kms_key_arn
+  device_name             = var.device_name
+  ebs_volume_type         = var.ebs_volume_type
+  ebs_volume_size         = var.ebs_volume_size
+  ebs_volume_iops         = var.ebs_volume_iops
+  ebs_volume_throughput   = var.ebs_volume_throughput
+  ebs_default_kms_key_arn = var.ebs_default_kms_key_arn
+  ebs_external_kms_key    = var.ebs_external_kms_key
+
+  # EBS Encryption with KMS
+
+  create_graphdb_ebs_kms_key              = var.create_graphdb_ebs_kms_key
+  graphdb_ebs_cmk_description             = var.graphdb_ebs_cmk_description
+  graphdb_ebs_key_spec                    = var.graphdb_ebs_key_spec
+  graphdb_ebs_key_enabled                 = var.graphdb_ebs_key_enabled
+  graphdb_ebs_key_rotation_enabled        = var.graphdb_ebs_key_rotation_enabled
+  graphdb_ebs_key_tags                    = var.graphdb_ebs_key_tags
+  graphdb_ebs_key_deletion_window_in_days = var.graphdb_ebs_key_deletion_window_in_days
+
+  graphdb_ebs_key_admin_arn = var.graphdb_ebs_key_admin_arn
+  graphdb_ebs_cmk_alias     = var.graphdb_ebs_cmk_alias
 
   # DNS
 
@@ -215,4 +263,17 @@ module "graphdb" {
   asg_enable_instance_refresh               = var.asg_enable_instance_refresh
   asg_instance_refresh_checkpoint_delay     = var.asg_instance_refresh_checkpoint_delay
   graphdb_enable_userdata_scripts_on_reboot = var.graphdb_enable_userdata_scripts_on_reboot
+
+  # Parameter store encryption
+
+  enable_graphdb_parameter_store_kms_key              = var.enable_graphdb_parameter_store_kms_key
+  graphdb_parameter_store_cmk_alias                   = var.graphdb_parameter_store_cmk_alias
+  graphdb_parameter_store_key_admin_arn               = var.graphdb_parameter_store_key_admin_arn
+  graphdb_parameter_store_cmk_description             = var.graphdb_parameter_store_cmk_description
+  graphdb_parameter_store_key_spec                    = var.graphdb_parameter_store_key_spec
+  graphdb_parameter_store_key_enabled                 = var.graphdb_parameter_store_key_enabled
+  graphdb_parameter_store_key_rotation_enabled        = var.graphdb_parameter_store_key_rotation_enabled
+  graphdb_parameter_store_key_tags                    = var.graphdb_parameter_store_key_tags
+  graphdb_parameter_store_key_deletion_window_in_days = var.graphdb_parameter_store_key_deletion_window_in_days
+  parameter_store_external_kms_key                    = var.parameter_store_external_kms_key
 }
