@@ -333,6 +333,15 @@ vpc_public_subnet_ids = ["public-subnet-1","public-subnet2","public-subnet-3"]
 vpc_private_subnet_ids = ["private-subnet-1","private-subnet-2","private-subnet-3"]
 ```
 
+## Single Node Deployment
+
+This Terraform module has the ability to deploy a single instance of GraphDB.
+To deploy a single instance you just need to set `graphdb_node_count` to 1, everything else happens automatically.
+
+**Important:** While scaling from a single node deployment to a cluster (e.g., from 1 node to 3 nodes) is possible,
+it is not recommended. Synchronizing the repository across all nodes can be time-consuming,
+potentially causing scripts to time out.
+
 ## Updating configurations on an active deployment
 
 ### Updating Configurations

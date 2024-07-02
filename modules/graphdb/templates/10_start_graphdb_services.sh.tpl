@@ -24,20 +24,9 @@ echo "###########################"
 echo "#    Starting GraphDB     #"
 echo "###########################"
 
-# Don't attempt to form a cluster if the node count is 1
-if [ "$${NODE_COUNT}" == 1 ]; then
-  log_with_timestamp "Starting Graphdb"
-  systemctl daemon-reload
-  systemctl start graphdb
-  log_with_timestamp "Single node deployment, skipping cluster setup."
-  exit 0
-else
-  # The proxy service is set up in the AMI but not enabled, so we enable and start it
-  systemctl daemon-reload
-  systemctl start graphdb
-  systemctl enable graphdb-cluster-proxy.service
-  systemctl start graphdb-cluster-proxy.service
-fi
+log_with_timestamp "Starting Graphdb"
+systemctl daemon-reload
+systemctl start graphdb
 
 #####################
 #   Cluster setup   #
@@ -156,8 +145,7 @@ create_cluster() {
     elif [ "$is_cluster" == 503 ]; then
       # Create the GraphDB cluster configuration if it does not exist.
       local cluster_create=$(
-      # TODO update to use node-1
-        curl -X POST -s "http://node-1.${route53_zone_dns_name}:7201/rest/cluster/config" \
+        curl -X POST -s http://localhost:7201/rest/cluster/config \
           -o "/dev/null" \
           -w "%%{http_code}" \
           -H 'Content-type: application/json' \
@@ -234,28 +222,8 @@ check_security_status() {
   fi
 }
 
-# Function to check if the GraphDB license has been applied
-check_license() {
-  # Define the URL to check
-  local URL="http://localhost:7201/rest/graphdb-settings/license"
+check_security_status
 
-  # Send an HTTP GET request and store the response in a variable
-  local response=$(curl -s "$URL")
-
-  # Check if the response contains the word "free"
-  if [[ "$response" == *"free"* ]]; then
-    log_with_timestamp "Free license detected, EE license required, exiting!"
-    exit 1
-  fi
-}
-
-check_license
-
-#  Only the instance with the lowest ID would attempt to create the cluster
-if [ $NODE_DNS_RECORD == $LOWEST_INSTANCE_ID ]; then
-  create_cluster
-  find_leader_node
-  check_security_status
-else
-  log_with_timestamp "Node $NODE_DNS_RECORD is not the lowest instance, skipping cluster creation."
-fi
+echo "###########################"
+echo "#    Script completed     #"
+echo "###########################"
