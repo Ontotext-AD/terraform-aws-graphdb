@@ -2,7 +2,7 @@
 
 resource "aws_sns_topic" "graphdb_sns_topic" {
   name              = "${var.resource_name_prefix}-graphdb-notifications"
-  kms_master_key_id = "alias/aws/sns"
+  kms_master_key_id = var.sns_kms_key_arn
 }
 
 # SNS Topic subscription

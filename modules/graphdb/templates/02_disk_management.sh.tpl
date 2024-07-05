@@ -39,7 +39,6 @@ create_volume() {
     --throughput "${ebs_volume_throughput}" \
     --tag-specifications "ResourceType=volume,Tags=[{Key=Name,Value=${name}-graphdb-data}]" \
     --query "VolumeId" --output text)
-
   AVAILABLE_VOLUMES+=("$VOLUME_ID")
 
   # Wait for the volume to be available

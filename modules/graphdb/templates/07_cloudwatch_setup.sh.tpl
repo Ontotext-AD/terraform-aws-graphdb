@@ -19,7 +19,7 @@ echo "#################################"
 if [ ${deploy_monitoring} == "true" ]; then
   GRAPHDB_ADMIN_PASSWORD=$(aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/admin_password" --with-decryption --query "Parameter.Value" --output text | base64 -d)
   # Parse the CW Agent Config from SSM Parameter store and put it in file
-  CWAGENT_CONFIG=$(aws ssm get-parameter --name "/${name}/graphdb/CWAgent/Config" --query "Parameter.Value" --output text)
+  CWAGENT_CONFIG=$(aws ssm get-parameter --name "/${name}/graphdb/CWAgent/Config" --query "Parameter.Value" --with-decryption --output text)
   echo "$CWAGENT_CONFIG" >/etc/graphdb/cloudwatch-agent-config.json
 
   tmp=$(mktemp)

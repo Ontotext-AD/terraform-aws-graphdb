@@ -129,7 +129,7 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | ebs\_volume\_size | The size of the EBS volumes, used by the GraphDB nodes. | `number` | `500` | no |
 | ebs\_volume\_throughput | Throughput for the EBS volumes, used by the GraphDB nodes. | `number` | `250` | no |
 | ebs\_volume\_iops | IOPS for the EBS volumes, used by the GraphDB nodes. | `number` | `8000` | no |
-| ebs\_kms\_key\_arn | KMS key used for ebs volume encryption. | `string` | `"alias/aws/ebs"` | no |
+| ebs\_default\_kms\_key | KMS key used for ebs volume encryption. | `string` | `"alias/aws/ebs"` | no |
 | prevent\_resource\_deletion | Defines if applicable resources should be protected from deletion or not | `bool` | `true` | no |
 | graphdb\_license\_path | Local path to a file, containing a GraphDB Enterprise license. | `string` | `null` | no |
 | graphdb\_admin\_password | Password for the 'admin' user in GraphDB. | `string` | `null` | no |
@@ -163,6 +163,48 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | asg\_enable\_instance\_refresh | Enables instance refresh for the GraphDB Auto scaling group. A refresh is started when any of the following Auto Scaling Group properties change: launch\_configuration, launch\_template, mixed\_instances\_policy | `bool` | `false` | no |
 | asg\_instance\_refresh\_checkpoint\_delay | Number of seconds to wait after a checkpoint. | `number` | `3600` | no |
 | graphdb\_enable\_userdata\_scripts\_on\_reboot | (Experimental) Modifies cloud-config to always run user data scripts on EC2 boot | `bool` | `false` | no |
+| create\_s3\_kms\_key | Enable creation of KMS key for S3 bucket encryption | `bool` | `false` | no |
+| s3\_kms\_key\_admin\_arn | ARN of the role or user granted administrative access to the S3 KMS key. | `string` | `""` | no |
+| s3\_key\_rotation\_enabled | Specifies whether key rotation is enabled. | `bool` | `true` | no |
+| s3\_kms\_default\_key | Define default S3 KMS key | `string` | `"alias/aws/s3"` | no |
+| s3\_cmk\_alias | The alias for the CMK key. | `string` | `"alias/graphdb-s3-cmk-key"` | no |
+| s3\_kms\_key\_enabled | Specifies whether the key is enabled. | `bool` | `true` | no |
+| s3\_key\_specification | Specification of the Key. | `string` | `"SYMMETRIC_DEFAULT"` | no |
+| s3\_key\_deletion\_window\_in\_days | The waiting period, specified in number of days for AWS to delete the KMS key(Between 7 and 30). | `number` | `30` | no |
+| s3\_cmk\_description | Description for the KMS Key | `string` | `"KMS key for S3 bucket encryption."` | no |
+| s3\_external\_kms\_key\_arn | Externally provided KMS CMK | `string` | `""` | no |
+| parameter\_store\_cmk\_alias | The alias for the CMK key. | `string` | `"alias/graphdb-param-cmk-key"` | no |
+| parameter\_store\_key\_admin\_arn | ARN of the key administrator role for Parameter Store | `string` | `""` | no |
+| parameter\_store\_key\_tags | A map of tags to assign to the resources. | `map(string)` | `{}` | no |
+| parameter\_store\_key\_rotation\_enabled | Specifies whether key rotation is enabled. | `bool` | `true` | no |
+| parameter\_store\_default\_key | Define default key for parameter store if no KMS key is used | `string` | `"alias/aws/ssm"` | no |
+| parameter\_store\_key\_enabled | Specifies whether the key is enabled. | `bool` | `true` | no |
+| parameter\_store\_key\_spec | Specification of the Key. | `string` | `"SYMMETRIC_DEFAULT"` | no |
+| parameter\_store\_key\_deletion\_window\_in\_days | The waiting period, specified in number of days for AWS to delete the KMS key(Between 7 and 30). | `number` | `30` | no |
+| parameter\_store\_cmk\_description | Description for the KMS Key | `string` | `"KMS key for Parameter Store bucket encryption."` | no |
+| create\_parameter\_store\_kms\_key | Enable creation of KMS key for Parameter Store encryption | `bool` | `false` | no |
+| parameter\_store\_external\_kms\_key | Externally provided KMS CMK | `string` | `""` | no |
+| ebs\_key\_admin\_arn | ARN of the key administrator role for Parameter Store | `string` | `""` | no |
+| ebs\_key\_tags | A map of tags to assign to the resources. | `map(string)` | `{}` | no |
+| ebs\_key\_rotation\_enabled | Specifies whether key rotation is enabled. | `bool` | `true` | no |
+| default\_ebs\_cmk\_alias | The alias for the default Managed key. | `string` | `"alias/aws/ebs"` | no |
+| ebs\_cmk\_alias | Define custom alias for the CMK Key | `string` | `"alias/graphdb-cmk-ebs-key"` | no |
+| ebs\_key\_spec | Specification of the Key. | `string` | `"SYMMETRIC_DEFAULT"` | no |
+| ebs\_key\_deletion\_window\_in\_days | The waiting period, specified in number of days for AWS to delete the KMS key(Between 7 and 30). | `number` | `30` | no |
+| ebs\_cmk\_description | Description for the KMS Key | `string` | `"KMS key for S3 bucket encryption."` | no |
+| ebs\_external\_kms\_key | Externally provided KMS CMK | `string` | `""` | no |
+| ebs\_key\_enabled | Enable or disable toggle for ebs volume encryption. | `bool` | `true` | no |
+| create\_ebs\_kms\_key | Creates KMS key for the EBS volumes | `bool` | `false` | no |
+| create\_sns\_kms\_key | Enable Customer managed keys for encryption. If set to false it will use AWS managed key. | `bool` | `false` | no |
+| sns\_cmk\_description | Description for the KMS key for the encryption of SNS | `string` | `"KMS CMK Key to encrypt SNS topics"` | no |
+| sns\_key\_admin\_arn | ARN of the role or user granted administrative access to the SNS KMS key. | `string` | `""` | no |
+| deletion\_window\_in\_days | The waiting period, specified in number of days for AWS to delete the KMS key(Between 7 and 30). | `number` | `30` | no |
+| sns\_external\_kms\_key | ARN of the external KMS key that will be used for encryption of SNS topics | `string` | `""` | no |
+| sns\_cmk\_key\_alias | The alias for the SNS CMK key. | `string` | `"alias/graphdb-sns-cmk-key-alias"` | no |
+| sns\_default\_kms\_key | ARN of the default KMS key that will be used for encryption of SNS topics | `string` | `"alias/aws/sns"` | no |
+| sns\_key\_spec | Specification of the Key. | `string` | `"SYMMETRIC_DEFAULT"` | no |
+| sns\_key\_enabled | Specifies whether the key is enabled. | `bool` | `true` | no |
+| sns\_rotation\_enabled | Specifies whether key rotation is enabled. | `bool` | `true` | no |
 <!-- END_TF_DOCS -->
 
 ## Usage
@@ -309,6 +351,82 @@ To enable the VPC Flow logs you should switch the following variables to `true`:
 deploy_logging_module = true
 vpc_enable_flow_logs = true
 vpc_flow_logs_lifecycle_rule_status = "Enabled"
+```
+#### KMS Encryption using Customer Master Keys
+
+**Parameter Store encryption**
+
+You can encrypt parameters stored in AWS Systems Manager Parameter Store using KMS CMKs. This ensures that sensitive data, such as configuration secrets, are securely encrypted at rest.
+
+##### Keys
+
+To utilize CMK, ensure that **enable_graphdb_parameter_store_kms_key = true** is set. This will generate a new KMS Key.
+
+If **enable_graphdb_parameter_store_kms_key = false**, encryption will be disabled.
+
+You can also supply your own key using the parameter_store_external_kms_key parameter: **parameter_store_external_kms_key**
+
+```hcl
+ebs_external_kms_key             = "arn:aws:kms:us-east-1:123456789012:key/your-external-key-arn"
+parameter_store_external_kms_key = "arn:aws:kms:us-east-1:123456789012:key/your-external-key-arn"
+```
+
+##### Key Admin
+
+You can designate a Key admin by setting the **graphdb_parameter_store_key_admin_arn** parameter, or you can use the current AWS account by leaving this parameter empty.
+
+```hcl
+graphdb_parameter_store_key_admin_arn = "arn:aws:iam::123456789012:role/KeyAdminRole"
+```
+
+**EBS encryption**
+
+You can secure EBS volumes using KMS CMKs to encrypt data at rest. This adds an extra layer of protection for data stored on EBS volumes attached to EC2 instances.
+
+##### Keys
+
+To use CMK, set **create_graphdb_ebs_kms_key = true**. This will create a new KMS Key.
+
+If **create_graphdb_ebs_kms_key = false** the default AWS key encryption will be used.
+
+You can provide your own key by using the parameter **ebs_external_kms_key**.
+
+```hcl
+create_graphdb_ebs_kms_key = true
+ebs_external_kms_key = "arn:aws:kms:us-east-1:123456789012:key/your-external-key-arn"
+```
+
+##### Key Admin
+
+You can specify a Key admin by setting the **graphdb_ebs_key_admin_arn** parameter, or you can use the current AWS account by leaving this parameter empty.
+
+```hcl
+graphdb_ebs_key_admin_arn = "arn:aws:iam::123456789012:role/KeyAdminRole"
+```
+
+**S3 encryption**
+
+You can encrypt S3 bucket objects using KMS CMKs to ensure that data at rest is secure. This protects the integrity and confidentiality of data stored in S3 buckets.
+
+##### Keys
+
+To use CMK, set **create_s3_kms_key = true**. This will create a new KMS Key.
+
+If **create_s3_kms_key = false**, the default AWS key (**alias/aws/s3**) will be used.
+
+You can also provide your own key by setting the **s3_external_kms_key_arn** parameter.
+
+```hcl
+create_s3_kms_key = true
+s3_external_kms_key = "arn:aws:kms:us-east-1:123456789012:key/your-external-key-arn"
+```
+
+##### Key Admin
+
+You can specify a Key admin by setting the **s3_kms_key_admin_arn** parameter, or you can use the current AWS account by leaving this parameter empty.
+
+```hcl
+s3_kms_key_admin_arn = "arn:aws:iam::123456789012:role/KeyAdminRole"
 ```
 
 #### Replication

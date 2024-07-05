@@ -20,6 +20,7 @@ resource "aws_ssm_parameter" "graphdb_admin_password" {
   description = "Password for the 'admin' user in GraphDB."
   type        = "SecureString"
   value       = base64encode(local.graphdb_admin_password)
+  key_id      = var.parameter_store_key_arn
 }
 
 resource "aws_ssm_parameter" "graphdb_cluster_token" {
@@ -27,6 +28,7 @@ resource "aws_ssm_parameter" "graphdb_cluster_token" {
   description = "Cluster token used for authenticating the communication between the nodes."
   type        = "SecureString"
   value       = base64encode(local.graphdb_cluster_token)
+  key_id      = var.parameter_store_key_arn
 }
 
 resource "aws_ssm_parameter" "graphdb_license" {
@@ -34,6 +36,7 @@ resource "aws_ssm_parameter" "graphdb_license" {
   description = "GraphDB Enterprise license."
   type        = "SecureString"
   value       = filebase64(var.graphdb_license_path)
+  key_id      = var.parameter_store_key_arn
 }
 
 resource "aws_ssm_parameter" "graphdb_lb_dns_name" {
@@ -50,6 +53,7 @@ resource "aws_ssm_parameter" "graphdb_properties" {
   description = "Additional properties to append to graphdb.properties file."
   type        = "SecureString"
   value       = filebase64(var.graphdb_properties_path)
+  key_id      = var.parameter_store_key_arn
 }
 
 resource "aws_ssm_parameter" "graphdb_java_options" {
@@ -57,6 +61,7 @@ resource "aws_ssm_parameter" "graphdb_java_options" {
 
   name        = "/${var.resource_name_prefix}/graphdb/graphdb_java_options"
   description = "GraphDB options to pass to GraphDB with GRAPHDB_JAVA_OPTS environment variable."
-  type        = "String"
+  type        = "SecureString"
   value       = var.graphdb_java_options
+  key_id      = var.parameter_store_key_arn
 }

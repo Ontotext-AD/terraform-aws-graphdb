@@ -263,7 +263,7 @@ variable "ebs_volume_iops" {
   default     = 8000
 }
 
-variable "ebs_kms_key_arn" {
+variable "ebs_default_kms_key" {
   description = "KMS key used for ebs volume encryption."
   type        = string
   default     = "alias/aws/ebs"
@@ -480,4 +480,263 @@ variable "graphdb_enable_userdata_scripts_on_reboot" {
   description = "(Experimental) Modifies cloud-config to always run user data scripts on EC2 boot"
   type        = bool
   default     = false
+}
+
+# S3 bucket encryption
+
+variable "create_s3_kms_key" {
+  description = "Enable creation of KMS key for S3 bucket encryption"
+  type        = bool
+  default     = false
+}
+
+variable "s3_kms_key_admin_arn" {
+  description = "ARN of the role or user granted administrative access to the S3 KMS key."
+  type        = string
+  default     = ""
+}
+
+variable "s3_key_rotation_enabled" {
+  description = "Specifies whether key rotation is enabled."
+  type        = bool
+  default     = true
+}
+
+variable "s3_kms_default_key" {
+  description = "Define default S3 KMS key"
+  type        = string
+  default     = "alias/aws/s3"
+}
+
+variable "s3_cmk_alias" {
+  description = "The alias for the CMK key."
+  type        = string
+  default     = "alias/graphdb-s3-cmk-key"
+}
+
+variable "s3_kms_key_enabled" {
+  description = "Specifies whether the key is enabled."
+  type        = bool
+  default     = true
+}
+
+variable "s3_key_specification" {
+  description = "Specification of the Key."
+  type        = string
+  default     = "SYMMETRIC_DEFAULT"
+}
+
+variable "s3_key_deletion_window_in_days" {
+  description = "The waiting period, specified in number of days for AWS to delete the KMS key(Between 7 and 30)."
+  type        = number
+  default     = 30
+}
+
+variable "s3_cmk_description" {
+  description = "Description for the KMS Key"
+  type        = string
+  default     = "KMS key for S3 bucket encryption."
+}
+
+variable "s3_external_kms_key_arn" {
+  description = "Externally provided KMS CMK"
+  type        = string
+  default     = ""
+}
+
+# Parameter store KMS encryption
+
+variable "parameter_store_cmk_alias" {
+  description = "The alias for the CMK key."
+  type        = string
+  default     = "alias/graphdb-param-cmk-key"
+}
+
+variable "parameter_store_key_admin_arn" {
+  description = "ARN of the key administrator role for Parameter Store"
+  type        = string
+  default     = ""
+}
+
+variable "parameter_store_key_tags" {
+  description = "A map of tags to assign to the resources."
+  type        = map(string)
+  default     = {}
+}
+
+variable "parameter_store_key_rotation_enabled" {
+  description = "Specifies whether key rotation is enabled."
+  type        = bool
+  default     = true
+}
+
+variable "parameter_store_default_key" {
+  description = "Define default key for parameter store if no KMS key is used"
+  type        = string
+  default     = "alias/aws/ssm"
+}
+
+variable "parameter_store_key_enabled" {
+  description = "Specifies whether the key is enabled."
+  type        = bool
+  default     = true
+}
+
+variable "parameter_store_key_spec" {
+  description = "Specification of the Key."
+  type        = string
+  default     = "SYMMETRIC_DEFAULT"
+}
+
+variable "parameter_store_key_deletion_window_in_days" {
+  description = "The waiting period, specified in number of days for AWS to delete the KMS key(Between 7 and 30)."
+  type        = number
+  default     = 30
+}
+
+variable "parameter_store_cmk_description" {
+  description = "Description for the KMS Key"
+  type        = string
+  default     = "KMS key for Parameter Store bucket encryption."
+}
+
+variable "create_parameter_store_kms_key" {
+  description = "Enable creation of KMS key for Parameter Store encryption"
+  type        = bool
+  default     = false
+}
+
+variable "parameter_store_external_kms_key" {
+  description = "Externally provided KMS CMK"
+  type        = string
+  default     = ""
+}
+
+# GraphDB EBS KMS encryption
+
+variable "ebs_key_admin_arn" {
+  description = "ARN of the key administrator role for Parameter Store"
+  type        = string
+  default     = ""
+}
+
+variable "ebs_key_tags" {
+  description = "A map of tags to assign to the resources."
+  type        = map(string)
+  default     = {}
+}
+
+variable "ebs_key_rotation_enabled" {
+  description = "Specifies whether key rotation is enabled."
+  type        = bool
+  default     = true
+}
+
+variable "default_ebs_cmk_alias" {
+  description = "The alias for the default Managed key."
+  type        = string
+  default     = "alias/aws/ebs"
+}
+
+variable "ebs_cmk_alias" {
+  description = "Define custom alias for the CMK Key"
+  type        = string
+  default     = "alias/graphdb-cmk-ebs-key"
+}
+
+variable "ebs_key_spec" {
+  description = "Specification of the Key."
+  type        = string
+  default     = "SYMMETRIC_DEFAULT"
+}
+
+variable "ebs_key_deletion_window_in_days" {
+  description = "The waiting period, specified in number of days for AWS to delete the KMS key(Between 7 and 30)."
+  type        = number
+  default     = 30
+}
+
+variable "ebs_cmk_description" {
+  description = "Description for the KMS Key"
+  type        = string
+  default     = "KMS key for S3 bucket encryption."
+}
+
+variable "ebs_external_kms_key" {
+  description = "Externally provided KMS CMK"
+  type        = string
+  default     = ""
+}
+
+variable "ebs_key_enabled" {
+  description = "Enable or disable toggle for ebs volume encryption."
+  type        = bool
+  default     = true
+}
+
+variable "create_ebs_kms_key" {
+  description = "Creates KMS key for the EBS volumes"
+  type        = bool
+  default     = false
+}
+# SNS Encryption
+
+variable "create_sns_kms_key" {
+  description = "Enable Customer managed keys for encryption. If set to false it will use AWS managed key."
+  type        = bool
+  default     = false
+}
+
+variable "sns_cmk_description" {
+  description = "Description for the KMS key for the encryption of SNS"
+  type        = string
+  default     = "KMS CMK Key to encrypt SNS topics"
+}
+
+variable "sns_key_admin_arn" {
+  description = "ARN of the role or user granted administrative access to the SNS KMS key."
+  type        = string
+  default     = ""
+}
+
+variable "deletion_window_in_days" {
+  description = "The waiting period, specified in number of days for AWS to delete the KMS key(Between 7 and 30)."
+  type        = number
+  default     = 30
+}
+
+variable "sns_external_kms_key" {
+  description = "ARN of the external KMS key that will be used for encryption of SNS topics"
+  type        = string
+  default     = ""
+}
+
+variable "sns_cmk_key_alias" {
+  description = "The alias for the SNS CMK key."
+  type        = string
+  default     = "alias/graphdb-sns-cmk-key-alias"
+}
+
+variable "sns_default_kms_key" {
+  description = "ARN of the default KMS key that will be used for encryption of SNS topics"
+  type        = string
+  default     = "alias/aws/sns"
+}
+
+variable "sns_key_spec" {
+  description = "Specification of the Key."
+  type        = string
+  default     = "SYMMETRIC_DEFAULT"
+}
+
+variable "sns_key_enabled" {
+  description = "Specifies whether the key is enabled."
+  type        = bool
+  default     = true
+}
+
+variable "sns_rotation_enabled" {
+  description = "Specifies whether key rotation is enabled."
+  type        = bool
+  default     = true
 }
