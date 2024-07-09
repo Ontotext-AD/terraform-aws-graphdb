@@ -43,6 +43,27 @@ locals {
   )
 }
 
+locals {
+  # Reduce to one subnet if node_count is 1
+  effective_private_subnet_cidrs = var.graphdb_node_count == 1 ? [var.vpc_private_subnet_cidrs[0]] : var.vpc_private_subnet_cidrs
+  effective_public_subnet_cidrs  = var.graphdb_node_count == 1 ? [var.vpc_public_subnet_cidrs[0]] : var.vpc_public_subnet_cidrs
+  # Determine the appropriate subnets based on node_count
+  lb_subnets = (var.graphdb_node_count == 1 ?
+    (var.vpc_id == "" ?
+      (var.lb_internal ? [module.vpc[0].private_subnet_ids[0]] : [module.vpc[0].public_subnet_ids[0]]) :
+      (var.lb_internal ? [var.vpc_private_subnet_ids[0]] : [var.vpc_public_subnet_ids[0]])
+    ) :
+    (var.vpc_id == "" ?
+      (var.lb_internal ? module.vpc[0].private_subnet_ids : module.vpc[0].public_subnet_ids) :
+      (var.lb_internal ? var.vpc_private_subnet_ids : var.vpc_public_subnet_ids)
+  ))
+  # Check if node_count is 1 and select only one subnet if true
+  graphdb_subnets = (var.graphdb_node_count == 1 ?
+    [(var.vpc_id != "" ? var.vpc_private_subnet_ids : module.vpc[0].private_subnet_ids)[0]] :
+    (var.vpc_id != "" ? var.vpc_private_subnet_ids : module.vpc[0].private_subnet_ids)
+  )
+}
+
 module "vpc" {
   source = "./modules/vpc"
 
@@ -51,8 +72,8 @@ module "vpc" {
   resource_name_prefix                            = var.resource_name_prefix
   vpc_dns_hostnames                               = var.vpc_dns_hostnames
   vpc_dns_support                                 = var.vpc_dns_support
-  vpc_private_subnet_cidrs                        = var.vpc_private_subnet_cidrs
-  vpc_public_subnet_cidrs                         = var.vpc_public_subnet_cidrs
+  vpc_private_subnet_cidrs                        = local.effective_private_subnet_cidrs
+  vpc_public_subnet_cidrs                         = local.effective_public_subnet_cidrs
   vpc_cidr_block                                  = var.vpc_cidr_block
   single_nat_gateway                              = var.single_nat_gateway
   enable_nat_gateway                              = var.enable_nat_gateway
@@ -62,6 +83,7 @@ module "vpc" {
   vpc_endpoint_service_accept_connection_requests = var.vpc_endpoint_service_accept_connection_requests
   vpc_enable_flow_logs                            = var.vpc_enable_flow_logs
   vpc_flow_log_bucket_arn                         = var.vpc_enable_flow_logs && var.deploy_logging_module ? module.logging[0].graphdb_logging_bucket_arn : null
+  graphdb_node_count                              = var.graphdb_node_count
 }
 
 module "backup" {
@@ -148,7 +170,7 @@ module "load_balancer" {
 
   resource_name_prefix          = var.resource_name_prefix
   vpc_id                        = var.vpc_id != "" ? var.vpc_id : module.vpc[0].vpc_id
-  lb_subnets                    = var.vpc_id == "" ? (var.lb_internal ? module.vpc[0].private_subnet_ids : module.vpc[0].public_subnet_ids) : (var.lb_internal ? var.vpc_private_subnet_ids : var.vpc_public_subnet_ids)
+  lb_subnets                    = local.lb_subnets
   lb_internal                   = var.lb_internal
   lb_deregistration_delay       = var.lb_deregistration_delay
   lb_health_check_path          = var.lb_health_check_path
@@ -158,12 +180,18 @@ module "load_balancer" {
   lb_tls_policy                 = var.lb_tls_policy
   lb_access_logs_bucket_name    = var.lb_enable_access_logs && var.deploy_logging_module ? module.logging[0].graphdb_logging_bucket_name : null
   lb_enable_access_logs         = var.lb_enable_access_logs
+  graphdb_node_count            = var.graphdb_node_count
 }
 
 locals {
   graphdb_target_group_arns = concat(
     [module.load_balancer.lb_target_group_arn]
   )
+}
+
+locals {
+  lb_tls_enabled              = var.lb_tls_certificate_arn != null ? true : false
+  calculated_http_string_type = local.lb_tls_enabled == true ? "HTTPS" : "HTTP"
 }
 
 module "monitoring" {
@@ -196,6 +224,9 @@ module "monitoring" {
   route53_availability_request_url       = module.load_balancer.lb_dns_name
   route53_availability_measure_latency   = var.monitoring_route53_measure_latency
   sns_kms_key_arn                        = local.calculated_sns_kms_key_arn
+  graphdb_node_count                     = var.graphdb_node_count
+  route53_availability_http_string_type  = local.calculated_http_string_type
+
 }
 
 module "graphdb" {
@@ -209,13 +240,13 @@ module "graphdb" {
 
   allowed_inbound_cidrs     = var.allowed_inbound_cidrs_lb
   allowed_inbound_cidrs_ssh = var.allowed_inbound_cidrs_ssh
-  graphdb_subnets           = var.vpc_id != "" ? var.vpc_private_subnet_ids : module.vpc[0].private_subnet_ids
+  graphdb_subnets           = local.graphdb_subnets
   graphdb_target_group_arns = local.graphdb_target_group_arns
   vpc_id                    = var.vpc_id != "" ? var.vpc_id : module.vpc[0].vpc_id
 
   # Network Load Balancer
   lb_enable_private_access = var.lb_internal ? var.lb_enable_private_access : false
-  lb_subnets               = var.vpc_id == "" ? (var.lb_internal ? module.vpc[0].private_subnet_ids : module.vpc[0].public_subnet_ids) : (var.lb_internal ? var.vpc_private_subnet_ids : var.vpc_public_subnet_ids)
+  lb_subnets               = local.lb_subnets
   graphdb_lb_dns_name      = module.load_balancer.lb_dns_name
 
   # GraphDB Configurations

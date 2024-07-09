@@ -1,6 +1,17 @@
+# This creates a random suffix for the target group name
+# it will only be regenerated if the graphdb_node_count changes.
+# Required when recreating the target group when scaling from 1 to 3 or more nodes.
+resource "random_id" "tg_name_suffix" {
+  keepers = {
+    node_count = var.graphdb_node_count
+  }
+  byte_length = 4
+}
+
 locals {
-  lb_name        = var.resource_name_prefix
-  lb_tls_enabled = var.lb_tls_certificate_arn != null ? true : false
+  lb_name           = var.resource_name_prefix
+  target_group_name = "${var.resource_name_prefix}-tg-${random_id.tg_name_suffix.hex}"
+  lb_tls_enabled    = var.lb_tls_certificate_arn != null ? true : false
 }
 
 resource "aws_lb" "graphdb_lb" {
@@ -21,11 +32,15 @@ resource "aws_lb" "graphdb_lb" {
 }
 
 resource "aws_lb_target_group" "graphdb_lb_target_group" {
-  name   = local.lb_name
+  name   = local.target_group_name
   vpc_id = var.vpc_id
 
+  lifecycle {
+    create_before_destroy = true
+  }
+
   target_type          = "instance"
-  port                 = 7200
+  port                 = var.graphdb_node_count > 1 ? 7200 : 7201
   protocol             = "TCP"
   deregistration_delay = var.lb_deregistration_delay
 
@@ -34,7 +49,7 @@ resource "aws_lb_target_group" "graphdb_lb_target_group" {
     unhealthy_threshold = var.lb_unhealthy_threshold
     protocol            = "HTTP"
     port                = 7201
-    path                = var.lb_health_check_path
+    path                = var.graphdb_node_count != 1 ? var.lb_health_check_path : "/protocol"
     interval            = var.lb_health_check_interval
   }
 }

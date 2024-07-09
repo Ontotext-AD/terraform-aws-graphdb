@@ -24,18 +24,6 @@ variable "cloudwatch_alarms_actions_enabled" {
   type        = bool
 }
 
-variable "route53_availability_path" {
-  description = "Path for the web test to be used"
-  type        = string
-  default     = "/rest/cluster/node/status"
-}
-
-variable "route53_availability_content_match" {
-  description = "HTTP Content match for web test availability"
-  type        = string
-  default     = "\"nodeState\":\"LEADER\""
-}
-
 variable "route53_availability_frequency" {
   description = "Interval in seconds between tests. Valid options are 5-30. Default is 30."
   type        = number
@@ -100,7 +88,6 @@ variable "route53_availability_port" {
 variable "route53_availability_http_string_type" {
   description = "HTTP string type: Valid values are HTTP, HTTPS, HTTP_STR_MATCH, HTTPS_STR_MATCH, TCP, CALCULATED, CLOUDWATCH_METRIC and RECOVERY_CONTROL"
   type        = string
-  default     = "HTTP_STR_MATCH"
 }
 
 variable "ssm_parameter_store_ssm_parameter_tier" {
@@ -182,4 +169,9 @@ variable "sns_kms_key_arn" {
 variable "parameter_store_kms_key_arn" {
   description = "ARN of the parameter store KMS Key"
   type        = string
+}
+
+variable "graphdb_node_count" {
+  description = "Number of GraphDB nodes to deploy in ASG"
+  type        = number
 }

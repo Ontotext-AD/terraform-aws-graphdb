@@ -2,7 +2,7 @@
 data "aws_availability_zones" "available" {}
 
 locals {
-  azs                = slice(data.aws_availability_zones.available.names, 0, 3)
+  azs                = var.graphdb_node_count == 1 ? slice(data.aws_availability_zones.available.names, 0, 1) : slice(data.aws_availability_zones.available.names, 0, 3)
   len_public_subnets = max(length(var.vpc_private_subnet_cidrs))
 
   max_subnet_length = max(

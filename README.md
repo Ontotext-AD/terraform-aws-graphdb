@@ -447,9 +447,18 @@ If you have existing VPC created in your account, you can use that VPC to deploy
 What you need to do is to specify values for the following variables
 ```hcl
 vpc_id = "vpc-12345678"
-vpc_public_subnet_ids = ["public-subnet-1","public-subnet2","public-subnet-3"]
-vpc_private_subnet_ids = ["private-subnet-1","private-subnet-2","private-subnet-3"]
+vpc_public_subnet_ids = ["subnet-123456","subnet-234567","subnet-345678"]
+vpc_private_subnet_ids = ["subnet-456789","subnet-567891","subnet-678912"]
 ```
+
+## Single Node Deployment
+
+This Terraform module has the ability to deploy a single instance of GraphDB.
+To deploy a single instance you just need to set `graphdb_node_count` to 1, everything else happens automatically.
+
+**Important:** While scaling from a single node deployment to a cluster (e.g., from 1 node to 3 nodes) is possible,
+it is not recommended. Synchronizing the repository across all nodes can be time-consuming,
+potentially causing scripts to time out.
 
 ## Updating configurations on an active deployment
 
