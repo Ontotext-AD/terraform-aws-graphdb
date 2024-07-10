@@ -1,5 +1,9 @@
 # GraphDB AWS Terraform Module Changelog
 
+# 1.2.1
+
+* Fixed issue where the backup script was not configured
+
 # 1.2.0
 
 * Added support for single node deployment

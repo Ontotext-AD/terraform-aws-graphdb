@@ -29,7 +29,7 @@ function trigger_backup {
   local backup_name="\$(date +'%Y-%m-%d_%H-%M-%S').tar"
   current_time=$(date +"%T %Y-%m-%d")
   start_time=$(date +%s)
-  echo "Creating backup $backup_name at $start_time"
+  echo "Creating backup \$backup_name at \$start_time"
 
   curl \
     -vvv --fail \
