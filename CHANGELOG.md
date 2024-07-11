@@ -1,5 +1,11 @@
 # GraphDB AWS Terraform Module Changelog
 
+# 1.2.2
+
+* Fixed issues with variables in the backup user data script
+* Added ability to choose http port for Route53 availability check
+* Added ability to specify custom FQDN for the Route53 availability URL
+
 # 1.2.1
 
 * Fixed issue where the backup script was not configured

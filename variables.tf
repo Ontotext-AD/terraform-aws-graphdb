@@ -362,6 +362,12 @@ variable "monitoring_route53_health_check_aws_region" {
   default     = "us-east-1"
 }
 
+variable "monitoring_route53_healtcheck_fqdn_url" {
+  description = "Define custom domain name for the Route53 Health check"
+  type        = string
+  default     = ""
+}
+
 # GraphDB overrides
 
 variable "graphdb_properties_path" {
@@ -740,3 +746,4 @@ variable "sns_rotation_enabled" {
   type        = bool
   default     = true
 }
+
