@@ -175,3 +175,25 @@ variable "graphdb_node_count" {
   description = "Number of GraphDB nodes to deploy in ASG"
   type        = number
 }
+
+variable "route53_availability_http_port" {
+  description = "Define the HTTP port for the Route53 availability check"
+  type        = number
+  default     = 80
+}
+
+variable "route53_availability_https_port" {
+  description = "Define the HTTPS port for the Route53 availability check"
+  type        = number
+  default     = 443
+}
+
+variable "lb_tls_certificate_arn" {
+  description = "ARN of the TLS certificate, imported in ACM, which will be used for the TLS listener on the load balancer."
+  type        = string
+}
+
+variable "lb_dns_name" {
+  description = "Define the LB DNS name"
+  type        = string
+}

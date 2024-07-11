@@ -76,7 +76,7 @@ variable "lb_health_check_interval" {
 variable "lb_tls_certificate_arn" {
   description = "ARN of the TLS certificate, imported in ACM, which will be used for the TLS listener on the load balancer."
   type        = string
-  default     = null
+  default     = ""
 }
 
 variable "lb_tls_policy" {
@@ -377,7 +377,6 @@ variable "monitoring_route53_availability_https_port" {
 variable "monitoring_route53_healtcheck_fqdn_url" {
   description = "Define custom domain name for the Route53 Health check"
   type        = string
-  default     = ""
 }
 
 # GraphDB overrides
