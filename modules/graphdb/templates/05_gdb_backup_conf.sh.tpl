@@ -27,8 +27,8 @@ NODE_STATE="\$(curl --silent -u "admin:\$GRAPHDB_ADMIN_PASSWORD" http://localhos
 
 function trigger_backup {
   local backup_name="\$(date +'%Y-%m-%d_%H-%M-%S').tar"
-  current_time=$(date +"%T %Y-%m-%d")
-  start_time=$(date +%s)
+  current_time=\$(date +"%T %Y-%m-%d")
+  start_time=\$(date +%s)
   echo "Creating backup \$backup_name at \$start_time"
 
   curl \
@@ -62,17 +62,19 @@ IS_CLUSTER=\$(
   curl -s -o /dev/null \
     -u "admin:\$GRAPHDB_ADMIN_PASSWORD" \
     -w "%%{http_code}" \
-    http://localhost:7200/rest/monitor/cluster
+    http://localhost:7201/rest/monitor/cluster
 )
 
-if [ "\$IS_CLUSTER" == 200 ]; then
+if [ "\$IS_CLUSTER" -eq 200 ]; then
+  echo "GraphDB is running in a cluster."
   # Checks if the current GraphDB instance is Leader, otherwise exits.
   if [ "\$NODE_STATE" != "LEADER" ]; then
-    echo "current node is not a leader, but \$NODE_STATE"
+    echo "Current node is not a leader, but \$NODE_STATE"
     exit 0
   fi
   (trigger_backup && echo "") | tee -a /var/opt/graphdb/node/graphdb_backup.log
-elif [ "\$IS_CLUSTER" == 503 ]; then
+elif [ "\$IS_CLUSTER" -ne 200 ]; then
+  echo "GraphDB is not running in a cluster."
   (trigger_backup && echo "") | tee -a /var/opt/graphdb/node/graphdb_backup.log
 fi
 

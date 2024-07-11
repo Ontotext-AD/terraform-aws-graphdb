@@ -144,6 +144,7 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | monitoring\_endpoint\_auto\_confirms | Enable or disable endpoint auto confirm subscription to the sns topic | `bool` | `false` | no |
 | monitoring\_log\_group\_retention\_in\_days | Log group retention in days | `number` | `30` | no |
 | monitoring\_route53\_health\_check\_aws\_region | Define the region in which you want the monitoring to be deployed. It is used to define where the Route53 Availability Check will be deployed, since if it is not specified it will deploy the check in us-east-1 and if you deploy in different region it will not find the dimensions. | `string` | `"us-east-1"` | no |
+| monitoring\_route53\_healtcheck\_fqdn\_url | Define custom domain name for the Route53 Health check | `string` | `""` | no |
 | graphdb\_properties\_path | Path to a local file containing GraphDB properties (graphdb.properties) that would be appended to the default in the VM. | `string` | `null` | no |
 | graphdb\_java\_options | GraphDB options to pass to GraphDB with GRAPHDB\_JAVA\_OPTS environment variable. | `string` | `null` | no |
 | deploy\_logging\_module | Enable or disable logging module | `bool` | `false` | no |
