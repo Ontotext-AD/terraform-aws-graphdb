@@ -99,7 +99,7 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | lb\_deregistration\_delay | Amount time, in seconds, for GraphDB LB target group to wait before changing the state of a deregistering target from draining to unused. | `string` | `300` | no |
 | lb\_health\_check\_path | The endpoint to check for GraphDB's health status. | `string` | `"/rest/cluster/node/status"` | no |
 | lb\_health\_check\_interval | (Optional) Interval in seconds for checking the target group healthcheck. Defaults to 10. | `number` | `10` | no |
-| lb\_tls\_certificate\_arn | ARN of the TLS certificate, imported in ACM, which will be used for the TLS listener on the load balancer. | `string` | `null` | no |
+| lb\_tls\_certificate\_arn | ARN of the TLS certificate, imported in ACM, which will be used for the TLS listener on the load balancer. | `string` | `""` | no |
 | lb\_tls\_policy | TLS security policy on the listener. | `string` | `"ELBSecurityPolicy-TLS13-1-2-2021-06"` | no |
 | allowed\_inbound\_cidrs\_lb | (Optional) List of CIDR blocks to permit inbound traffic from to load balancer | `list(string)` | `null` | no |
 | allowed\_inbound\_cidrs\_ssh | (Optional) List of CIDR blocks to permit for SSH to GraphDB nodes | `list(string)` | `null` | no |
@@ -146,7 +146,7 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | monitoring\_route53\_health\_check\_aws\_region | Define the region in which you want the monitoring to be deployed. It is used to define where the Route53 Availability Check will be deployed, since if it is not specified it will deploy the check in us-east-1 and if you deploy in different region it will not find the dimensions. | `string` | `"us-east-1"` | no |
 | monitoring\_route53\_availability\_http\_port | Define the HTTP port for the Route53 availability check | `number` | `80` | no |
 | monitoring\_route53\_availability\_https\_port | Define the HTTPS port for the Route53 availability check | `number` | `443` | no |
-| monitoring\_route53\_healtcheck\_fqdn\_url | Define custom domain name for the Route53 Health check | `string` | `""` | no |
+| monitoring\_route53\_healtcheck\_fqdn\_url | Define custom domain name for the Route53 Health check | `string` | n/a | yes |
 | graphdb\_properties\_path | Path to a local file containing GraphDB properties (graphdb.properties) that would be appended to the default in the VM. | `string` | `null` | no |
 | graphdb\_java\_options | GraphDB options to pass to GraphDB with GRAPHDB\_JAVA\_OPTS environment variable. | `string` | `null` | no |
 | deploy\_logging\_module | Enable or disable logging module | `bool` | `false` | no |

@@ -21,8 +21,8 @@ resource "aws_sns_topic_subscription" "graphdb_route53_sns_topic_subscription" {
 resource "aws_route53_health_check" "graphdb_availability_check" {
   provider          = aws.useast1
   failure_threshold = var.route53_availability_timeout
-  fqdn              = var.route53_availability_request_url
-  port              = var.route53_availability_port
+  fqdn              = var.route53_availability_request_url != "" ? var.route53_availability_request_url : var.lb_dns_name
+  port              = var.lb_tls_certificate_arn != "" ? var.route53_availability_https_port : var.route53_availability_http_port
   request_interval  = var.route53_availability_frequency
   regions           = var.route53_availability_regions
   resource_path     = var.graphdb_node_count == 1 ? "/protocol" : "/rest/cluster/node/status"
