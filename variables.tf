@@ -362,6 +362,18 @@ variable "monitoring_route53_health_check_aws_region" {
   default     = "us-east-1"
 }
 
+variable "monitoring_route53_availability_http_port" {
+  description = "Define the HTTP port for the Route53 availability check"
+  type        = number
+  default     = 80
+}
+
+variable "monitoring_route53_availability_https_port" {
+  description = "Define the HTTPS port for the Route53 availability check"
+  type        = number
+  default     = 443
+}
+
 variable "monitoring_route53_healtcheck_fqdn_url" {
   description = "Define custom domain name for the Route53 Health check"
   type        = string
