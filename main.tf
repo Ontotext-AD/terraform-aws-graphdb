@@ -41,8 +41,6 @@ locals {
     var.sns_default_kms_key)) :
     var.sns_default_kms_key
   )
-  route53_availability_request_url = var.monitoring_route53_healtcheck_fqdn_url != "" ? var.monitoring_route53_healtcheck_fqdn_url: module.load_balancer.lb_dns_name
-  route53_availability_port        = var.lb_tls_certificate_arn != "" ? 443 : 80
 }
 
 locals {
@@ -223,12 +221,12 @@ module "monitoring" {
   cmk_key_alias                          = var.sns_cmk_key_alias
   parameter_store_kms_key_arn            = local.calculated_parameter_store_kms_key_arn
   cloudwatch_log_group_retention_in_days = var.monitoring_log_group_retention_in_days
-  route53_availability_request_url       = local.route53_availability_request_url
+  route53_availability_request_url       = var.monitoring_route53_healtcheck_fqdn_url != "" ? var.monitoring_route53_healtcheck_fqdn_url : module.load_balancer.lb_dns_name
   route53_availability_measure_latency   = var.monitoring_route53_measure_latency
   sns_kms_key_arn                        = local.calculated_sns_kms_key_arn
   graphdb_node_count                     = var.graphdb_node_count
   route53_availability_http_string_type  = local.calculated_http_string_type
-  route53_availability_port              = local.route53_availability_port
+  route53_availability_port              = var.lb_tls_certificate_arn != "" ? var.monitoring_route53_availability_http_port : var.monitoring_route53_availability_https_port
 }
 
 module "graphdb" {
