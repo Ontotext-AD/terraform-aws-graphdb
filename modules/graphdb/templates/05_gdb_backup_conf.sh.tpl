@@ -83,7 +83,7 @@ rotate_backups
 EOF
 
   chmod +x /usr/bin/graphdb_backup
-  log_with_timestamp "${backup_schedule} graphdb /usr/bin/graphdb_backup" >/etc/cron.d/graphdb_backup
+  echo "${backup_schedule} graphdb /usr/bin/graphdb_backup" >/etc/cron.d/graphdb_backup
 
   log_with_timestamp "Cron job created"
 else
