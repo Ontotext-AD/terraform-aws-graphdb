@@ -61,6 +61,7 @@ data "cloudinit_config" "graphdb_user_data" {
     content = templatefile("${path.module}/templates/04_gdb_conf_overrides.sh.tpl", {
       name : var.resource_name_prefix
       region : var.aws_region
+      external_address_protocol : var.external_address_protocol
       graphdb_lb_dns_name : var.graphdb_lb_dns_name
     })
   }

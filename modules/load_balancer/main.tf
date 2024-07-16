@@ -11,7 +11,6 @@ resource "random_id" "tg_name_suffix" {
 locals {
   lb_name           = var.resource_name_prefix
   target_group_name = "${var.resource_name_prefix}-tg-${random_id.tg_name_suffix.hex}"
-  lb_tls_enabled    = var.lb_tls_certificate_arn != null ? true : false
 }
 
 resource "aws_lb" "graphdb_lb" {
@@ -55,7 +54,7 @@ resource "aws_lb_target_group" "graphdb_lb_target_group" {
 }
 
 resource "aws_lb_listener" "graphdb_listener" {
-  count = local.lb_tls_enabled ? 0 : 1
+  count = var.lb_tls_enabled ? 0 : 1
 
   load_balancer_arn = aws_lb.graphdb_lb.id
   port              = 80
@@ -68,7 +67,7 @@ resource "aws_lb_listener" "graphdb_listener" {
 }
 
 resource "aws_lb_listener" "graphdb_tls" {
-  count = local.lb_tls_enabled ? 1 : 0
+  count = var.lb_tls_enabled ? 1 : 0
 
   load_balancer_arn = aws_lb.graphdb_lb.id
   port              = 443

@@ -89,3 +89,8 @@ variable "graphdb_node_count" {
   description = "Number of GraphDB nodes to deploy in ASG"
   type        = number
 }
+
+variable "lb_tls_enabled" {
+  description = "Is TLS enabled for the LB"
+  type        = bool
+}

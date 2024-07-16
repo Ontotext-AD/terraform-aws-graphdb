@@ -306,6 +306,12 @@ variable "route53_zone_dns_name" {
   }
 }
 
+variable "graphdb_external_dns" {
+  description = "External domain name where GraphDB will be accessed"
+  type        = string
+  default     = ""
+}
+
 # Monitoring
 
 variable "deploy_monitoring" {
@@ -372,11 +378,6 @@ variable "monitoring_route53_availability_https_port" {
   description = "Define the HTTPS port for the Route53 availability check"
   type        = number
   default     = 443
-}
-
-variable "monitoring_route53_healtcheck_fqdn_url" {
-  description = "Define custom domain name for the Route53 Health check"
-  type        = string
 }
 
 # GraphDB overrides

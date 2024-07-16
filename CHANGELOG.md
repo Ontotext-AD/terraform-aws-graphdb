@@ -1,5 +1,14 @@
 # GraphDB AWS Terraform Module Changelog
 
+# 1.2.3
+
+* Removed unused resource "aws_ssm_parameter" named "graphdb_lb_dns_name"
+* Fixed `graphdb.properties` values for single node deployment:
+  * Changed `graphdb.external-url` to use `LB_DNS_RECORD` when single node is deployed.
+  * Added `graphdb.external-url.enforce.transactions=true`
+* Removed calculation of `lb_tls_enabled` in the LB module as it is calculated in the main.tf
+* Removed `monitoring_route53_healtcheck_fqdn_url` in favor of `graphdb_external_dns`.
+
 # 1.2.2
 
 * Fixed issues with variables in the backup user data script
