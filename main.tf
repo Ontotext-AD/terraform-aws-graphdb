@@ -165,6 +165,11 @@ module "backup_replication" {
   versioning_enabled        = var.s3_versioning_enabled
 }
 
+locals {
+  lb_tls_enabled      = var.lb_tls_certificate_arn != "" ? true : false
+  calculated_protocol = local.lb_tls_enabled == true ? "https" : "http"
+}
+
 module "load_balancer" {
   source = "./modules/load_balancer"
 
@@ -177,6 +182,7 @@ module "load_balancer" {
   lb_health_check_interval      = var.lb_health_check_interval
   lb_enable_deletion_protection = var.prevent_resource_deletion
   lb_tls_certificate_arn        = var.lb_tls_certificate_arn
+  lb_tls_enabled                = local.lb_tls_enabled
   lb_tls_policy                 = var.lb_tls_policy
   lb_access_logs_bucket_name    = var.lb_enable_access_logs && var.deploy_logging_module ? module.logging[0].graphdb_logging_bucket_name : null
   lb_enable_access_logs         = var.lb_enable_access_logs
@@ -187,11 +193,6 @@ locals {
   graphdb_target_group_arns = concat(
     [module.load_balancer.lb_target_group_arn]
   )
-}
-
-locals {
-  lb_tls_enabled              = var.lb_tls_certificate_arn != null ? true : false
-  calculated_http_string_type = local.lb_tls_enabled == true ? "HTTPS" : "HTTP"
 }
 
 module "monitoring" {
@@ -221,11 +222,11 @@ module "monitoring" {
   cmk_key_alias                          = var.sns_cmk_key_alias
   parameter_store_kms_key_arn            = local.calculated_parameter_store_kms_key_arn
   cloudwatch_log_group_retention_in_days = var.monitoring_log_group_retention_in_days
-  route53_availability_request_url       = var.monitoring_route53_healtcheck_fqdn_url
+  route53_availability_request_url       = var.graphdb_external_dns
   route53_availability_measure_latency   = var.monitoring_route53_measure_latency
   sns_kms_key_arn                        = local.calculated_sns_kms_key_arn
   graphdb_node_count                     = var.graphdb_node_count
-  route53_availability_http_string_type  = local.calculated_http_string_type
+  route53_availability_http_string_type  = upper(local.calculated_protocol)
   lb_tls_certificate_arn                 = var.lb_tls_certificate_arn
   lb_dns_name                            = module.load_balancer.lb_dns_name != "" ? module.load_balancer.lb_dns_name : null
 }
@@ -248,7 +249,7 @@ module "graphdb" {
   # Network Load Balancer
   lb_enable_private_access = var.lb_internal ? var.lb_enable_private_access : false
   lb_subnets               = local.lb_subnets
-  graphdb_lb_dns_name      = module.load_balancer.lb_dns_name
+  graphdb_lb_dns_name      = var.graphdb_external_dns != "" ? var.graphdb_external_dns : module.load_balancer.lb_dns_name
 
   # GraphDB Configurations
 
@@ -309,7 +310,8 @@ module "graphdb" {
 
   # User data scripts
 
-  deploy_monitoring = var.deploy_monitoring
+  deploy_monitoring         = var.deploy_monitoring
+  external_address_protocol = local.calculated_protocol
 
   # S3 Replication Logging Bucket Policy
 

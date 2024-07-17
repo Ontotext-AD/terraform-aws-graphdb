@@ -168,6 +168,13 @@ variable "route53_zone_dns_name" {
   type        = string
 }
 
+# User Data Parameters
+
+variable "external_address_protocol" {
+  description = "External address HTTP string type"
+  type        = string
+}
+
 # Optional Parameters
 
 variable "backup_retention_count" {

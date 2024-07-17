@@ -135,6 +135,7 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | graphdb\_admin\_password | Password for the 'admin' user in GraphDB. | `string` | `null` | no |
 | graphdb\_cluster\_token | Cluster token used for authenticating the communication between the nodes. | `string` | `null` | no |
 | route53\_zone\_dns\_name | DNS name for the private hosted zone in Route 53 | `string` | `"graphdb.cluster"` | no |
+| graphdb\_external\_dns | External domain name where GraphDB will be accessed | `string` | `""` | no |
 | deploy\_monitoring | Enable or disable toggle for monitoring | `bool` | `false` | no |
 | monitoring\_route53\_measure\_latency | Enable or disable route53 function to measure latency | `bool` | `false` | no |
 | monitoring\_actions\_enabled | Enable or disable actions on alarms | `bool` | `false` | no |
@@ -146,7 +147,6 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | monitoring\_route53\_health\_check\_aws\_region | Define the region in which you want the monitoring to be deployed. It is used to define where the Route53 Availability Check will be deployed, since if it is not specified it will deploy the check in us-east-1 and if you deploy in different region it will not find the dimensions. | `string` | `"us-east-1"` | no |
 | monitoring\_route53\_availability\_http\_port | Define the HTTP port for the Route53 availability check | `number` | `80` | no |
 | monitoring\_route53\_availability\_https\_port | Define the HTTPS port for the Route53 availability check | `number` | `443` | no |
-| monitoring\_route53\_healtcheck\_fqdn\_url | Define custom domain name for the Route53 Health check | `string` | n/a | yes |
 | graphdb\_properties\_path | Path to a local file containing GraphDB properties (graphdb.properties) that would be appended to the default in the VM. | `string` | `null` | no |
 | graphdb\_java\_options | GraphDB options to pass to GraphDB with GRAPHDB\_JAVA\_OPTS environment variable. | `string` | `null` | no |
 | deploy\_logging\_module | Enable or disable logging module | `bool` | `false` | no |

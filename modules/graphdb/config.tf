@@ -39,13 +39,6 @@ resource "aws_ssm_parameter" "graphdb_license" {
   key_id      = var.parameter_store_key_arn
 }
 
-resource "aws_ssm_parameter" "graphdb_lb_dns_name" {
-  name        = "/${var.resource_name_prefix}/graphdb/lb_dns_name"
-  description = "The DNS name of the load balancer for the GraphDB nodes."
-  type        = "String"
-  value       = var.graphdb_lb_dns_name
-}
-
 resource "aws_ssm_parameter" "graphdb_properties" {
   count = var.graphdb_properties_path != null ? 1 : 0
 
