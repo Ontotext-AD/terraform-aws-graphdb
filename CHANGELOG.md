@@ -8,6 +8,8 @@
   * Added `graphdb.external-url.enforce.transactions=true`
 * Removed calculation of `lb_tls_enabled` in the LB module as it is calculated in the main.tf
 * Removed `monitoring_route53_healtcheck_fqdn_url` in favor of `graphdb_external_dns`.
+* Change default EC2 instance type r6i.2xlarge
+* Update default GraphDB version to [10.7.1](https://graphdb.ontotext.com/documentation/10.7/release-notes.html#graphdb-10-7-1)
 
 # 1.2.2
 

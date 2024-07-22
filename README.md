@@ -281,7 +281,7 @@ Note: The options mention above will be appended to the ones set in the user dat
 
 **Customize GraphDB Version**
 ```hcl
-graphdb_version = "10.7.0"
+graphdb_version = "10.7.1"
 ```
 
 **Purge Protection**

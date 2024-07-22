@@ -100,7 +100,7 @@ variable "allowed_inbound_cidrs_ssh" {
 variable "ec2_instance_type" {
   description = "EC2 instance type"
   type        = string
-  default     = "r6g.2xlarge"
+  default     = "r6i.2xlarge"
   nullable    = false
 }
 
@@ -229,7 +229,7 @@ variable "ami_id" {
 variable "graphdb_version" {
   description = "GraphDB version"
   type        = string
-  default     = "10.7.0"
+  default     = "10.7.1"
   nullable    = false
 }
 
