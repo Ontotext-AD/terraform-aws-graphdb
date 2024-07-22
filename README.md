@@ -103,7 +103,7 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | lb\_tls\_policy | TLS security policy on the listener. | `string` | `"ELBSecurityPolicy-TLS13-1-2-2021-06"` | no |
 | allowed\_inbound\_cidrs\_lb | (Optional) List of CIDR blocks to permit inbound traffic from to load balancer | `list(string)` | `null` | no |
 | allowed\_inbound\_cidrs\_ssh | (Optional) List of CIDR blocks to permit for SSH to GraphDB nodes | `list(string)` | `null` | no |
-| ec2\_instance\_type | EC2 instance type | `string` | `"r6g.2xlarge"` | no |
+| ec2\_instance\_type | EC2 instance type | `string` | `"r6i.2xlarge"` | no |
 | ec2\_key\_name | (Optional) key pair to use for SSH access to instance | `string` | `null` | no |
 | graphdb\_node\_count | Number of GraphDB nodes to deploy in ASG | `number` | `3` | no |
 | vpc\_dns\_hostnames | Enable or disable DNS hostnames support for the VPC | `bool` | `true` | no |
@@ -123,7 +123,7 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | vpc\_flow\_logs\_expiration\_days | Define the days after which the VPC flow logs should be deleted | `number` | `7` | no |
 | lb\_enable\_private\_access | Enable or disable the private access via PrivateLink to the GraphDB Cluster | `bool` | `false` | no |
 | ami\_id | (Optional) User-provided AMI ID to use with GraphDB instances. If you provide this value, please ensure it will work with the default userdata script (assumes latest version of Ubuntu LTS). Otherwise, please provide your own userdata script using the user\_supplied\_userdata\_path variable. | `string` | `null` | no |
-| graphdb\_version | GraphDB version | `string` | `"10.7.0"` | no |
+| graphdb\_version | GraphDB version | `string` | `"10.7.1"` | no |
 | device\_name | The device to which EBS volumes for the GraphDB data directory will be mapped. | `string` | `"/dev/sdf"` | no |
 | ebs\_volume\_type | Type of the EBS volumes, used by the GraphDB nodes. | `string` | `"gp3"` | no |
 | ebs\_volume\_size | The size of the EBS volumes, used by the GraphDB nodes. | `number` | `500` | no |
@@ -281,7 +281,7 @@ Note: The options mention above will be appended to the ones set in the user dat
 
 **Customize GraphDB Version**
 ```hcl
-graphdb_version = "10.7.0"
+graphdb_version = "10.7.1"
 ```
 
 **Purge Protection**
