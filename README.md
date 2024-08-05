@@ -61,14 +61,15 @@ versions. The next table shows the version compatability between GraphDB, and th
 |--------------------------------------------------------------------------------|--------------------------------------------------------------------------------------|
 | [Version 1.x.x](https://github.com/Ontotext-AD/terraform-aws-graphdb/releases) | [Version 10.6.x](https://graphdb.ontotext.com/documentation/10.6/release-notes.html) |
 | [Version 1.2.x](https://github.com/Ontotext-AD/terraform-aws-graphdb/releases) | [Version 10.7.x](https://graphdb.ontotext.com/documentation/10.7/release-notes.html) |
+
 You can track the particular version updates of GraphDB in the [changelog](CHANGELOG.md).
 
 ## Prerequisites
 
 Before you begin using this Terraform module, ensure you meet the following prerequisites:
 
-- **AWS CLI Installed
-  **: [https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
+- **AWS CLI Installed**:
+  [https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
 
 - **Terraform Installed**: You should have Terraform installed on your local machine. You can download Terraform from
   the [https://developer.hashicorp.com/terraform/install?product_intent=terraform](https://developer.hashicorp.com/terraform/install?product_intent=terraform).
@@ -228,71 +229,87 @@ The following are the important variables you should configure when using this m
 
 To use this module, follow these steps:
 
-Copy and paste into your Terraform configuration, insert the variables, and run ``terraform init``:
+1. Copy and paste into your Terraform configuration, insert the variables, and run ``terraform init``:
 
-```hcl
-module "graphdb" {
-  source  = "Ontotext-AD/graphdb/aws"
-  version = "~> 1.0"
+    ```hcl
+    module "graphdb" {
+      source  = "Ontotext-AD/graphdb/aws"
+      version = "~> 1.0"
 
-  resource_name_prefix     = "graphdb"
-  aws_region               = "us-east-1"
-  ec2_instance_type        = "c5a.2xlarge"
-  graphdb_license_path     = "path-to-graphdb-license"
-  allowed_inbound_cidrs_lb = ["0.0.0.0/0"]
-}
-```
-Initialize the module and its required providers with:
+      resource_name_prefix     = "graphdb"
+      aws_region               = "us-east-1"
+      ec2_instance_type        = "m5.xlarge"
+      graphdb_license_path     = "path-to-graphdb-license"
+      allowed_inbound_cidrs_lb = ["0.0.0.0/0"]
+    }
+    ```
 
-`terraform init`
+2. Initialize the module and its required providers with:
 
-Before deploying, make sure to inspect the plan output with:
+    ```bash
+    terraform init
+    ```
 
-`terraform plan`
+3. Before deploying, make sure to inspect the plan output with:
 
-After a careful review of the output plan, deploy with:
+    ```bash
+    terraform plan
+    ```
 
-`terraform apply`
+4. After a careful review of the output plan, deploy with:
+
+    ```bash
+    terraform apply
+    ```
 
 Once deployed, you should be able to access the environment at the generated FQDN that has been outputted at the end.
 
 ## Examples
-In this section you will find examples regarding customizing your GraphDB Configuration.
+
+In this section you will find examples regarding customizing your GraphDB deployment.
+
+**GraphDB Configurations**
 
 There are several ways to customize the GraphDB properties.
 
 1. Using a Custom GraphDB Properties File:
 
-You can specify a custom GraphDB properties file using the `graphdb_properties_path` variable. For example:
+    You can specify a custom GraphDB properties file using the `graphdb_properties_path` variable. For example:
 
-```hcl
-graphdb_properties_path = "<path_to_custom_graphdb_properties_file>"
-```
+    ```hcl
+    graphdb_properties_path = "<path_to_custom_graphdb_properties_file>"
+    ```
 
 2. Setting Java Options with `graphdb_java_options`:
-Another option is to set Java options using the `graphdb_java_options` variable.
-For instance, if you want to print the command line flags, use:
 
-```hcl
-graphdb_java_options = "-XX:+PrintCommandLineFlags"
-```
+    Another option is to set Java options using the `graphdb_java_options` variable.
+    For instance, if you want to print the command line flags, use:
+
+    ```hcl
+    graphdb_java_options = "-XX:+PrintCommandLineFlags"
+    ```
 
 Note: The options mention above will be appended to the ones set in the user data script.
 
 **Customize GraphDB Version**
+
 ```hcl
 graphdb_version = "10.7.1"
 ```
 
 **Purge Protection**
+
 Resources that support purge protection have them enabled by default. You can override the default configurations with
 the following variables:
+
 ```hcl
 prevent_resource_deletion = false
 ```
+
 **Backup**
 
 To enable deployment of the backup module, you need to enable the following flag:
+
 ```hcl
 deploy_backup = true
 ```
@@ -300,9 +317,11 @@ deploy_backup = true
 **Monitoring**
 
 To enable deployment of the monitoring module, you need to enable the following flag:
+
 ```hcl
 deploy_monitoring = true
 ```
+
 **Providing a TLS certificate**
 
 ```hcl
@@ -313,12 +332,14 @@ lb_tls_certificate_arn = "arn:aws:acm:us-east-1:123456789012:certificate/1234567
 **Private Deployment**
 
 To ensure access to GraphDB exclusively through a private network, you must set the following variables to `true`:
+
 ```hcl
 # Enable creation of a private service endpoint
 lb_enable_private_access = true
 # Enable private access to the Network Load Balancer and disable public access
 lb_internal = true
 ```
+
 By configuring these variables accordingly you enforce GraphDB accessibility solely via a private network, enhancing security and control over network traffic.
 
 **Logging**
@@ -351,6 +372,7 @@ s3_enable_access_logs = true
 #### Load Balancer Access Logs
 
 To enable the load balancer logs you should enable the following variables to `true`:
+
 ```hcl
 deploy_logging_module = true
 lb_access_logs_lifecycle_rule_status = true
@@ -366,6 +388,7 @@ deploy_logging_module = true
 vpc_enable_flow_logs = true
 vpc_flow_logs_lifecycle_rule_status = "Enabled"
 ```
+
 #### KMS Encryption using Customer Master Keys
 
 **Parameter Store encryption**
