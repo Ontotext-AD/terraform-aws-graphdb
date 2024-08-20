@@ -1,9 +1,5 @@
 # GraphDB AWS Terraform Module Changelog
 
-# 1.2.5
-
-* Update default GraphDB version to [10.7.3](https://graphdb.ontotext.com/documentation/10.7/release-notes.html#graphdb-10-7-3)
-
 # 1.2.4
 
 * Update default GraphDB version to [10.7.2](https://graphdb.ontotext.com/documentation/10.7/release-notes.html#graphdb-10-7-2)
