@@ -47,7 +47,7 @@ else
   cat << EOF > /etc/graphdb/graphdb.properties
 graphdb.auth.token.secret=$GRAPHDB_CLUSTER_TOKEN
 graphdb.connector.port=7201
-graphdb.external-url=$${PROTOCOL}://$${NODE_DNS_RECORD}:7201
+graphdb.external-url=http://$${NODE_DNS_RECORD}:7201
 graphdb.rpc.address=$${NODE_DNS_RECORD}:7301
 EOF
 
