@@ -1,14 +1,19 @@
 # GraphDB AWS Terraform Module Changelog
 
-# 1.2.5
+## 1.2.6
+
+* Fixed issue with wrong protocol leading to nodes miscommunication
+* Update default GraphDB version to [10.7.4](https://graphdb.ontotext.com/documentation/10.7/release-notes.html#graphdb-10-7-4)
+
+## 1.2.5
 
 * Update default GraphDB version to [10.7.3](https://graphdb.ontotext.com/documentation/10.7/release-notes.html#graphdb-10-7-3)
 
-# 1.2.4
+## 1.2.4
 
 * Update default GraphDB version to [10.7.2](https://graphdb.ontotext.com/documentation/10.7/release-notes.html#graphdb-10-7-2)
 
-# 1.2.3
+## 1.2.3
 
 * Removed unused resource "aws_ssm_parameter" named "graphdb_lb_dns_name"
 * Fixed `graphdb.properties` values for single node deployment:
@@ -19,17 +24,17 @@
 * Change default EC2 instance type r6i.2xlarge
 * Update default GraphDB version to [10.7.1](https://graphdb.ontotext.com/documentation/10.7/release-notes.html#graphdb-10-7-1)
 
-# 1.2.2
+## 1.2.2
 
 * Fixed issues with variables in the backup user data script
 * Added ability to choose http port for Route53 availability check
 * Added ability to specify custom FQDN for the Route53 availability URL
 
-# 1.2.1
+## 1.2.1
 
 * Fixed issue where the backup script was not configured
 
-# 1.2.0
+## 1.2.0
 
 * Added support for single node deployment
   * Added new userdata script `10_start_graphdb_services.sh.tpl` for single node setup.
