@@ -1,5 +1,8 @@
 # GraphDB AWS Terraform Module Changelog
 
+## 1.2.7
+* Update default GraphDB Version to [10.7.5](https://graphdb.ontotext.com/documentation/10.7/release-notes.html#graphdb-10-7-5)
+
 ## 1.2.6
 
 * Fixed issue with wrong protocol leading to nodes miscommunication
