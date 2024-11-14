@@ -2,7 +2,7 @@
 
 This Terraform module allows you to provision an GraphDB cluster within a Virtual Private Cloud (VPC). The module
 provides a flexible way to configure the cluster and the associated VPC components. It implements the GraphDB reference
-architecture. Check the official [documentation](https://graphdb.ontotext.com/documentation/10.7/aws-deployment.html)
+architecture. Check the official [documentation](https://graphdb.ontotext.com/documentation/10.8/aws-deployment.html)
 for more details.
 
 ## Table of contents
@@ -61,6 +61,7 @@ versions. The next table shows the version compatability between GraphDB, and th
 |--------------------------------------------------------------------------------|--------------------------------------------------------------------------------------|
 | [Version 1.x.x](https://github.com/Ontotext-AD/terraform-aws-graphdb/releases) | [Version 10.6.x](https://graphdb.ontotext.com/documentation/10.6/release-notes.html) |
 | [Version 1.2.x](https://github.com/Ontotext-AD/terraform-aws-graphdb/releases) | [Version 10.7.x](https://graphdb.ontotext.com/documentation/10.7/release-notes.html) |
+| [Version 1.3.x](https://github.com/Ontotext-AD/terraform-aws-graphdb/releases) | [Version 10.8.x](https://graphdb.ontotext.com/documentation/10.8/release-notes.html) |
 
 You can track the particular version updates of GraphDB in the [changelog](CHANGELOG.md).
 
