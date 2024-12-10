@@ -394,3 +394,15 @@ variable "ebs_default_kms_key" {
   description = "Define default KMS key"
   type        = string
 }
+
+variable "instance_maintenance_policy_min_healthy_percentage" {
+  description = "Define minimum healthy percentage for the Instance Maintenance Policy"
+  type        = number
+  default     = 66
+}
+
+variable "instance_maintenance_policy_max_healthy_percentage" {
+  description = "Define maximum healthy percentage for the Instance Maintenance Policy"
+  type        = number
+  default     = 100
+}

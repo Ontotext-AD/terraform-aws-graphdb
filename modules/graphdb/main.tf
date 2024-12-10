@@ -87,6 +87,11 @@ resource "aws_autoscaling_group" "graphdb_auto_scaling_group" {
 
   target_group_arns = var.graphdb_target_group_arns
 
+  instance_maintenance_policy {
+    min_healthy_percentage = var.instance_maintenance_policy_min_healthy_percentage
+    max_healthy_percentage = var.instance_maintenance_policy_max_healthy_percentage
+  }
+
   launch_template {
     id      = aws_launch_template.graphdb.id
     version = aws_launch_template.graphdb.latest_version
@@ -119,3 +124,4 @@ resource "aws_autoscaling_group" "graphdb_auto_scaling_group" {
     }
   }
 }
+

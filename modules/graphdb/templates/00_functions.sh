@@ -1,10 +1,70 @@
 #!/usr/bin/env bash
 
-# Generic helper functions
-
-# Function to print messages with timestamps
+# Function to log messages with a timestamp
 log_with_timestamp() {
   echo "$(date '+%Y-%m-%d %H:%M:%S'): $1"
+}
+
+# Function to check ASG node counts
+wait_for_asg_nodes() {
+  local ASG_NAME="$1"
+  local RETRY_DELAY=10
+  local MAX_RETRIES=65
+  local RETRY_COUNT=0
+
+  # Get the desired capacity of the ASG
+  local NODE_COUNT
+  NODE_COUNT=$(aws autoscaling describe-auto-scaling-groups \
+    --auto-scaling-group-names "$ASG_NAME" \
+    --query "AutoScalingGroups[0].DesiredCapacity" \
+    --output text)
+
+  # Check if NODE_COUNT is not an integer
+  if ! [[ "$NODE_COUNT" =~ ^[0-9]+$ ]]; then
+  log_with_timestamp "Error: Unable to retrieve valid Desired Capacity for ASG: $ASG_NAME. Received value: $NODE_COUNT."
+  exit 1
+  fi
+
+  log_with_timestamp "Checking ASG node count for $ASG_NAME with desired node count: $NODE_COUNT"
+
+  while true; do
+    # Check InService and Terminating states via ASG
+    local IN_SERVICE_NODE_COUNT
+    IN_SERVICE_NODE_COUNT=$(aws autoscaling describe-auto-scaling-groups \
+      --auto-scaling-group-names "$ASG_NAME" \
+      --query "AutoScalingGroups[0].Instances[?LifecycleState=='InService'] | length(@)" \
+      --output text)
+
+    local TERMINATING_NODE_COUNT
+    TERMINATING_NODE_COUNT=$(aws autoscaling describe-auto-scaling-groups \
+      --auto-scaling-group-names "$ASG_NAME" \
+      --query "AutoScalingGroups[0].Instances[?LifecycleState=='Terminating'] | length(@)" \
+      --output text)
+
+    local SHUTTING_DOWN_NODE_COUNT
+    SHUTTING_DOWN_NODE_COUNT=$(aws ec2 describe-instances \
+      --filters "Name=instance-state-name,Values=shutting-down" \
+      --query "Reservations[].Instances[].InstanceId | length(@)" \
+      --output text)
+
+    log_with_timestamp "InService: $IN_SERVICE_NODE_COUNT, Terminating: $TERMINATING_NODE_COUNT, Shutting-down: $SHUTTING_DOWN_NODE_COUNT, Desired: $NODE_COUNT"
+
+    if [[ -z "$IN_SERVICE_NODE_COUNT" || "$IN_SERVICE_NODE_COUNT" -le "$NODE_COUNT" ]] \
+      && [[ "$TERMINATING_NODE_COUNT" -eq 0 ]] \
+      && [[ "$SHUTTING_DOWN_NODE_COUNT" -eq 0 ]]; then
+      log_with_timestamp "Conditions met: InService <= $NODE_COUNT, no Terminating, no Shutting-down. Proceeding..."
+      break
+    else
+      if [ "$RETRY_COUNT" -ge "$MAX_RETRIES" ]; then
+        log_with_timestamp "Error: Maximum retry attempts reached. Exiting..."
+        exit 1
+      fi
+
+      log_with_timestamp "Conditions not met. Waiting... (InService: $IN_SERVICE_NODE_COUNT, Terminating: $TERMINATING_NODE_COUNT, Shutting-down: $SHUTTING_DOWN_NODE_COUNT)"
+      sleep "$RETRY_DELAY"
+      RETRY_COUNT=$((RETRY_COUNT + 1))
+    fi
+  done
 }
 
 # Function which waits for all DNS records to be created

@@ -23,6 +23,15 @@ echo "#####################################################"
 IMDS_TOKEN=$(curl -Ss -H "X-aws-ec2-metadata-token-ttl-seconds: 6000" -XPUT 169.254.169.254/latest/api/token)
 AZ=$(curl -Ss -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" 169.254.169.254/latest/meta-data/placement/availability-zone)
 ASG_NAME=${name}
+GRAPHDB_NODE_COUNT=${node_count}
+
+# Only run the wait_asg_nodes function if graphdb_node_count is more than 1
+if [ "$GRAPHDB_NODE_COUNT" -gt 1 ]; then
+  echo "GraphDB node count is greater than 1. Running wait_asg_nodes..."
+  wait_for_asg_nodes "$ASG_NAME"
+else
+  echo "GraphDB node count is 1 or less. Skipping wait_asg_nodes."
+fi
 
 instance_refresh_status=$(aws autoscaling describe-instance-refreshes --auto-scaling-group-name "$ASG_NAME" --query 'InstanceRefreshes[?Status==`InProgress`]' --output json)
 
