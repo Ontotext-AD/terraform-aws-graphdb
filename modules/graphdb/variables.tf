@@ -168,6 +168,11 @@ variable "route53_zone_dns_name" {
   type        = string
 }
 
+variable "route53_existing_zone_id" {
+  description = "Define existing Route53 Zone ID"
+  type        = string
+}
+
 # User Data Parameters
 
 variable "external_address_protocol" {
@@ -405,9 +410,4 @@ variable "instance_maintenance_policy_max_healthy_percentage" {
   description = "Define maximum healthy percentage for the Instance Maintenance Policy"
   type        = number
   default     = 100
-}
-
-variable "route53_existing_zone_id" {
-  description = "Define existing Route53 Zone ID"
-  type        = string
 }
