@@ -22,6 +22,32 @@ variable "override_owner_id" {
   default     = null
 }
 
+variable "assume_role_arn" {
+  description = "IAM Role that should be used to access another account"
+  type        = string
+  default     = null
+}
+
+variable "assume_role_session_name" {
+  description = "(Optional) name of the session to be assumed to run session"
+  type        = string
+  default     = null
+  validation {
+    condition     = var.assume_role_session_name == "" || var.assume_role_arn != ""
+    error_message = "If 'assume_role_session_name' is set, then 'assume_role_arn' must also be provided."
+  }
+}
+
+variable "assume_role_external_id" {
+  description = "The external ID can be any identifier that is known only by you and the third party. For example, you can use an invoice ID between you and the third party"
+  type        = string
+  default     = null
+  validation {
+    condition     = var.assume_role_external_id == "" || var.assume_role_arn != ""
+    error_message = "If 'assume_role_external_id' is set, then 'assume_role_arn' must also be provided."
+  }
+}
+
 # Backup configurations
 variable "deploy_backup" {
   description = "Deploy backup module"
@@ -229,7 +255,7 @@ variable "ami_id" {
 variable "graphdb_version" {
   description = "GraphDB version"
   type        = string
-  default     = "10.8.1"
+  default     = "10.8.3"
   nullable    = false
 }
 
