@@ -1,5 +1,17 @@
 # GraphDB AWS Terraform Module Changelog
 
+## 1.4.0
+
+* Added ability to specify IAM role to be assumed in provider.tf
+
+## 1.3.3
+
+* Update default GraphDB version to [10.8.3](https://graphdb.ontotext.com/documentation/10.8/release-notes.html#graphdb-10-8-3)
+
+## 1.3.2
+
+* Update default GraphDB version to [10.8.2](https://graphdb.ontotext.com/documentation/10.8/release-notes.html#graphdb-10-8-2)
+
 ## 1.3.1
 
 * Update default GraphDB version to [10.8.1](https://graphdb.ontotext.com/documentation/10.8/release-notes.html#graphdb-10-8-1)

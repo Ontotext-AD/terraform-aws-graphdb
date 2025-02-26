@@ -93,6 +93,9 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | resource\_name\_prefix | Resource name prefix used for tagging and naming AWS resources | `string` | n/a | yes |
 | aws\_region | AWS region to deploy resources into | `string` | n/a | yes |
 | override\_owner\_id | Override the default owner ID used for the AMI images | `string` | `null` | no |
+| assume\_role\_arn | IAM Role that should be used to access another account | `string` | `null` | no |
+| assume\_role\_session\_name | (Optional) name of the session to be assumed to run session | `string` | `null` | no |
+| assume\_role\_external\_id | The external ID can be any identifier that is known only by you and the third party. For example, you can use an invoice ID between you and the third party | `string` | `null` | no |
 | deploy\_backup | Deploy backup module | `bool` | `true` | no |
 | backup\_schedule | Cron expression for the backup job. | `string` | `"0 0 * * *"` | no |
 | backup\_retention\_count | Number of backups to keep. | `number` | `7` | no |
@@ -125,7 +128,7 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | vpc\_flow\_logs\_expiration\_days | Define the days after which the VPC flow logs should be deleted | `number` | `7` | no |
 | lb\_enable\_private\_access | Enable or disable the private access via PrivateLink to the GraphDB Cluster | `bool` | `false` | no |
 | ami\_id | (Optional) User-provided AMI ID to use with GraphDB instances. If you provide this value, please ensure it will work with the default userdata script (assumes latest version of Ubuntu LTS). Otherwise, please provide your own userdata script using the user\_supplied\_userdata\_path variable. | `string` | `null` | no |
-| graphdb\_version | GraphDB version | `string` | `"10.8.1"` | no |
+| graphdb\_version | GraphDB version | `string` | `"10.8.3"` | no |
 | device\_name | The device to which EBS volumes for the GraphDB data directory will be mapped. | `string` | `"/dev/sdf"` | no |
 | ebs\_volume\_type | Type of the EBS volumes, used by the GraphDB nodes. | `string` | `"gp3"` | no |
 | ebs\_volume\_size | The size of the EBS volumes, used by the GraphDB nodes. | `number` | `500` | no |
@@ -493,6 +496,16 @@ Just specify values for the following variables:
 vpc_id = "vpc-12345678"
 vpc_public_subnet_ids = ["subnet-123456","subnet-234567","subnet-345678"]
 vpc_private_subnet_ids = ["subnet-456789","subnet-567891","subnet-678912"]
+```
+
+### AWS Provider Assume Role Configuration
+
+This module allows you to configure the AWS provider to assume a role in another account for cross-account management. You can configure the following variables to control the assume_role behavior:
+
+```hcl
+assume_role_arn           = "arn:aws:iam::accountID:role/rolename"
+assume_role_external_id = "exampleid"
+assume_role_session_name = "session"
 ```
 
 ## Single Node Deployment
