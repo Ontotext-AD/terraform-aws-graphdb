@@ -32,10 +32,6 @@ variable "assume_role_session_name" {
   description = "(Optional) name of the session to be assumed to run session"
   type        = string
   default     = null
-  validation {
-    condition     = var.assume_role_session_name == "" || var.assume_role_arn != ""
-    error_message = "If 'assume_role_session_name' is set, then 'assume_role_arn' must also be provided."
-  }
 }
 
 variable "assume_role_external_id" {
