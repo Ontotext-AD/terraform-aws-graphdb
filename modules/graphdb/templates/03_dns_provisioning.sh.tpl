@@ -33,14 +33,14 @@ if [ -f $NODE_DNS_PATH ]; then
   NODE_DNS_RECORD=$(cat $NODE_DNS_PATH)
 
   # Check if the existing DNS record is pointing to another IP
-  existing_record=$(aws route53 list-resource-record-sets --hosted-zone-id "${zone_id}" --query "ResourceRecordSets[?Name == '$${NODE_DNS_RECORD}.']" --output json)
+  existing_record=$(aws route53 list-resource-record-sets --hosted-zone-id "${route53_zone_id}" --query "ResourceRecordSets[?Name == '$${NODE_DNS_RECORD}.']" --output json)
   existing_ip=$(echo "$existing_record" | jq -r '.[0].ResourceRecords[0].Value')
 
   if [ "$existing_ip" != "$LOCAL_IPv4" ]; then
     log_with_timestamp "Updating IP address for $NODE_DNS_RECORD"
 
     aws --cli-connect-timeout 300 route53 change-resource-record-sets \
-      --hosted-zone-id "${zone_id}" \
+      --hosted-zone-id "${route53_zone_id}" \
       --change-batch '{"Changes": [{"Action": "UPSERT","ResourceRecordSet": {"Name": "'"$NODE_DNS_RECORD"'","Type": "A","TTL": 60,"ResourceRecords": [{"Value": "'"$LOCAL_IPv4"'"}]}}]}'
 
     hostnamectl set-hostname "$NODE_DNS_RECORD"
@@ -52,10 +52,10 @@ else
   log_with_timestamp "$NODE_DNS_PATH does not exist. Checking for non-responding DNS records."
 
   # Check for non-responding DNS records
-  existing_records=$(aws route53 list-resource-record-sets --hosted-zone-id "${zone_id}" --query "ResourceRecordSets[?contains(Name, 'node-')]" --output json)
+  existing_records=$(aws route53 list-resource-record-sets --hosted-zone-id "${route53_zone_id}" --query "ResourceRecordSets[?contains(Name, 'node-')]" --output json)
   for record in $(echo "$existing_records" | jq -r '.[].Name'); do
     record_name=$${record%.}
-    record_ip=$(aws route53 list-resource-record-sets --hosted-zone-id "${zone_id}" --query "ResourceRecordSets[?Name == '$${record_name}.']" --output json | jq -r '.[0].ResourceRecords[0].Value')
+    record_ip=$(aws route53 list-resource-record-sets --hosted-zone-id "${route53_zone_id}" --query "ResourceRecordSets[?Name == '$${record_name}.']" --output json | jq -r '.[0].ResourceRecords[0].Value')
 
     found_count=0
     for i in {1..3}; do
@@ -78,7 +78,7 @@ else
     if [ "$found_count" -lt 3 ]; then
       log_with_timestamp "No instance found with IP $record_ip for record $record_name after 3 attempts. Updating to new IP $LOCAL_IPv4"
       aws --cli-connect-timeout 300 route53 change-resource-record-sets \
-        --hosted-zone-id "${zone_id}" \
+        --hosted-zone-id "${route53_zone_id}" \
         --change-batch '{"Changes": [{"Action": "UPSERT","ResourceRecordSet": {"Name": "'"$record_name"'","Type": "A","TTL": 60,"ResourceRecords": [{"Value": "'"$LOCAL_IPv4"'"}]}}]}'
       echo "$record_name" >/var/opt/graphdb/node_dns
       hostnamectl set-hostname "$record_name"
@@ -93,20 +93,20 @@ else
     NODE_NAME="node-$NODE_NUMBER"
 
     # Check if the Route 53 record exists for the node name
-    DNS_RECORD_TAKEN=$(aws route53 list-resource-record-sets --hosted-zone-id ${zone_id} --query "ResourceRecordSets[?contains(Name, '$NODE_NAME')]" --output text)
+    DNS_RECORD_TAKEN=$(aws route53 list-resource-record-sets --hosted-zone-id ${route53_zone_id} --query "ResourceRecordSets[?contains(Name, '$NODE_NAME')]" --output text)
 
     if [ "$DNS_RECORD_TAKEN" ]; then
-      log_with_timestamp "Record $NODE_NAME is taken in hosted zone ${zone_id}"
+      log_with_timestamp "Record $NODE_NAME is taken in hosted zone ${route53_zone_id}"
       # Increment node number for the next iteration
       NODE_NUMBER=$((NODE_NUMBER + 1))
     else
-      log_with_timestamp "Record $NODE_NAME does not exist in hosted zone ${zone_id}"
+      log_with_timestamp "Record $NODE_NAME does not exist in hosted zone ${route53_zone_id}"
       # Forms the full DNS address for the current node
-      NODE_DNS_RECORD="$NODE_NAME.${zone_dns_name}"
+      NODE_DNS_RECORD="$NODE_NAME.${route53_zone_dns_name}"
 
       # Attempt to create the DNS record
       if aws --cli-connect-timeout 300 route53 change-resource-record-sets \
-        --hosted-zone-id "${zone_id}" \
+        --hosted-zone-id "${route53_zone_id}" \
         --change-batch '{"Changes": [{"Action": "CREATE","ResourceRecordSet": {"Name": "'"$NODE_DNS_RECORD"'","Type": "A","TTL": 60,"ResourceRecords": [{"Value": "'"$LOCAL_IPv4"'"}]}}]}' &>/dev/null; then
         log_with_timestamp "DNS record for $NODE_DNS_RECORD has been created"
         hostnamectl set-hostname "$NODE_DNS_RECORD"

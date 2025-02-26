@@ -50,8 +50,8 @@ data "cloudinit_config" "graphdb_user_data" {
   part {
     content_type = "text/x-shellscript"
     content = templatefile("${path.module}/templates/03_dns_provisioning.sh.tpl", {
-      zone_id : aws_route53_zone.graphdb_zone.id
-      zone_dns_name : var.route53_zone_dns_name
+      route53_zone_id : var.route53_existing_zone_id != null ? var.route53_existing_zone_id : aws_route53_zone.graphdb_zone[0].id
+      route53_zone_dns_name : var.route53_zone_dns_name
       name : var.resource_name_prefix
       region : var.aws_region
     })
@@ -101,7 +101,7 @@ data "cloudinit_config" "graphdb_user_data" {
       content = templatefile("${path.module}/templates/08_cluster_setup.sh.tpl", {
         name : var.resource_name_prefix
         region : var.aws_region
-        zone_id : aws_route53_zone.graphdb_zone.id
+        route53_zone_id : var.route53_existing_zone_id != null ? var.route53_existing_zone_id : aws_route53_zone.graphdb_zone[0].id
         route53_zone_dns_name : var.route53_zone_dns_name
       })
     }
@@ -115,7 +115,7 @@ data "cloudinit_config" "graphdb_user_data" {
       content = templatefile("${path.module}/templates/09_node_join.sh.tpl", {
         region : var.aws_region
         name : var.resource_name_prefix
-        zone_id : aws_route53_zone.graphdb_zone.id
+        route53_zone_id : var.route53_existing_zone_id != null ? var.route53_existing_zone_id : aws_route53_zone.graphdb_zone[0].id
         route53_zone_dns_name : var.route53_zone_dns_name
       })
     }
@@ -129,7 +129,7 @@ data "cloudinit_config" "graphdb_user_data" {
       content = templatefile("${path.module}/templates/10_start_single_graphdb_services.sh.tpl", {
         name : var.resource_name_prefix
         region : var.aws_region
-        zone_id : aws_route53_zone.graphdb_zone.id
+        route53_zone_id : var.route53_existing_zone_id != null ? var.route53_existing_zone_id : aws_route53_zone.graphdb_zone[0].id
         route53_zone_dns_name : var.route53_zone_dns_name
       })
     }

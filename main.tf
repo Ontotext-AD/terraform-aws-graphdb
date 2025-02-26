@@ -306,7 +306,8 @@ module "graphdb" {
 
   # DNS
 
-  route53_zone_dns_name = var.route53_zone_dns_name
+  route53_zone_dns_name    = var.route53_zone_dns_name
+  route53_existing_zone_id = var.route53_existing_zone_id
 
   # User data scripts
 

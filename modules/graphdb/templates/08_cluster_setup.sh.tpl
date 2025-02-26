@@ -43,10 +43,10 @@ fi
 #   Cluster setup   #
 #####################
 
-wait_dns_records "${zone_id}" "${route53_zone_dns_name}" "${name}"
+wait_dns_records "${route53_zone_id}" "${route53_zone_dns_name}" "${name}"
 
 # Existing records are returned with . at the end
-EXISTING_DNS_RECORDS=$(aws route53 list-resource-record-sets --hosted-zone-id "${zone_id}" --query "ResourceRecordSets[?contains(Name, '.${route53_zone_dns_name}') == \`true\`].Name")
+EXISTING_DNS_RECORDS=$(aws route53 list-resource-record-sets --hosted-zone-id "${route53_zone_id}" --query "ResourceRecordSets[?contains(Name, '.${route53_zone_dns_name}') == \`true\`].Name")
 # Convert the output into an array
 readarray -t EXISTING_DNS_RECORDS_ARRAY <<<$(echo "$EXISTING_DNS_RECORDS" | jq -r '.[] | rtrimstr(".")')
 # Builds grpc addresses for all nodes registered in Route53
@@ -55,7 +55,7 @@ CLUSTER_ADDRESS_GRPC=$(echo "$EXISTING_DNS_RECORDS" | jq -r '[ .[] | rtrimstr(".
 SORTED_INSTANCE_IDS=($(echo "$${EXISTING_DNS_RECORDS_ARRAY[@]}" | tr ' ' '\n' | sort -n))
 LOWEST_INSTANCE_ID=$${SORTED_INSTANCE_IDS[0]}
 
-check_all_dns_records "${zone_id}" "${route53_zone_dns_name}" "$RETRY_DELAY"
+check_all_dns_records "${route53_zone_id}" "${route53_zone_dns_name}" "$RETRY_DELAY"
 
 # Function which finds the cluster Leader node
 find_leader_node() {

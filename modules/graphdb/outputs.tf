@@ -44,7 +44,7 @@ output "graphdb_userdata_base64_encoded" {
 
 output "route53_zone_id" {
   description = "ID of the private hosted zone for GraphDB DNS resolving"
-  value       = aws_route53_zone.graphdb_zone.zone_id
+  value       = var.route53_existing_zone_id != "" ? var.route53_existing_zone_id : (aws_route53_zone.graphdb_zone != [] ? aws_route53_zone.graphdb_zone[0].zone_id : null)
 }
 
 # Parameter store KMS

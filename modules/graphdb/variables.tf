@@ -406,3 +406,8 @@ variable "instance_maintenance_policy_max_healthy_percentage" {
   type        = number
   default     = 100
 }
+
+variable "route53_existing_zone_id" {
+  description = "Define existing Route53 Zone ID"
+  type        = string
+}

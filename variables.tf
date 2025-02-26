@@ -328,6 +328,12 @@ variable "route53_zone_dns_name" {
   }
 }
 
+variable "route53_existing_zone_id" {
+  description = "Route53 existing DNS zone ID to add Route53 records in Route 53"
+  type        = string
+  default     = ""
+}
+
 variable "graphdb_external_dns" {
   description = "External domain name where GraphDB will be accessed"
   type        = string
