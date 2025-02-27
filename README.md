@@ -141,7 +141,6 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | graphdb\_cluster\_token | Cluster token used for authenticating the communication between the nodes. | `string` | `null` | no |
 | route53\_zone\_dns\_name | DNS name for the private hosted zone in Route 53 | `string` | `"graphdb.cluster"` | no |
 | route53\_existing\_zone\_id | Route53 existing DNS zone ID to add Route53 records in Route 53 | `string` | `""` | no |
-| existing\_route53\_zone\_name | Define Route53 Zone name | `string` | `""` | no |
 | graphdb\_external\_dns | External domain name where GraphDB will be accessed | `string` | `""` | no |
 | deploy\_monitoring | Enable or disable toggle for monitoring | `bool` | `false` | no |
 | monitoring\_route53\_measure\_latency | Enable or disable route53 function to measure latency | `bool` | `false` | no |
