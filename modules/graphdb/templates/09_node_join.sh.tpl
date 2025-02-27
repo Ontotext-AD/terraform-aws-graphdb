@@ -26,7 +26,7 @@ LEADER_NODE=""
 RAFT_DIR="/var/opt/graphdb/node/data/raft"
 
 # Get existing DNS records from Route53 which contain .${route53_zone_dns_name} in their name
-EXISTING_RECORDS=$(aws route53 list-resource-record-sets --hosted-zone-id "${zone_id}" --query "ResourceRecordSets[?contains(Name, '.${route53_zone_dns_name}') == \`true\`].Name")
+EXISTING_RECORDS=$(aws route53 list-resource-record-sets --hosted-zone-id "${route53_zone_id}" --query "ResourceRecordSets[?contains(Name, '.${route53_zone_dns_name}') == \`true\`].Name")
 # Use jq to process the JSON output, remove the last dot from each element, and convert it to an array
 EXISTING_RECORDS=$(echo "$EXISTING_RECORDS" | jq -r '.[] | rtrimstr(".")')
 # Convert the output into an array

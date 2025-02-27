@@ -3,6 +3,7 @@
 ## 1.4.0
 
 * Added ability to specify IAM role to be assumed in provider.tf
+* Added ability to use existing Route53 Private hosted zone
 
 ## 1.3.3
 

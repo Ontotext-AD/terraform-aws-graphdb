@@ -140,6 +140,7 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | graphdb\_admin\_password | Password for the 'admin' user in GraphDB. | `string` | `null` | no |
 | graphdb\_cluster\_token | Cluster token used for authenticating the communication between the nodes. | `string` | `null` | no |
 | route53\_zone\_dns\_name | DNS name for the private hosted zone in Route 53 | `string` | `"graphdb.cluster"` | no |
+| route53\_existing\_zone\_id | Route53 existing DNS zone ID to add Route53 records in Route 53 | `string` | `""` | no |
 | graphdb\_external\_dns | External domain name where GraphDB will be accessed | `string` | `""` | no |
 | deploy\_monitoring | Enable or disable toggle for monitoring | `bool` | `false` | no |
 | monitoring\_route53\_measure\_latency | Enable or disable route53 function to measure latency | `bool` | `false` | no |
@@ -298,7 +299,7 @@ Note: The options mention above will be appended to the ones set in the user dat
 **Customize GraphDB Version**
 
 ```hcl
-graphdb_version = "10.8.1"
+graphdb_version = "10.8.3"
 ```
 
 **Purge Protection**
@@ -506,6 +507,17 @@ This module allows you to configure the AWS provider to assume a role in another
 assume_role_arn           = "arn:aws:iam::accountID:role/rolename"
 assume_role_external_id = "exampleid"
 assume_role_session_name = "session"
+```
+
+### Deploying in an existing Route53 Private Hosted Zone
+
+If you want to deploy the GraphDB cluster in an existing Route 53 Private Hosted Zone, follow the steps below to configure the necessary variables.
+
+```hcl
+route53_existing_zone_id = "ZONE_ID"
+vpc_id = "vpc-12345678"
+vpc_public_subnet_ids = ["subnet-123456","subnet-234567","subnet-345678"]
+vpc_private_subnet_ids = ["subnet-456789","subnet-567891","subnet-678912"]
 ```
 
 ## Single Node Deployment
