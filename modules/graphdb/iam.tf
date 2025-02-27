@@ -158,8 +158,17 @@ data "aws_iam_policy_document" "graphdb_instance_volume_tagging" {
     }
   }
 }
+resource "aws_iam_role_policy" "graphdb_route53_instance_registration" {
+  count = var.graphdb_node_count > 1 ? 1 : 0
+
+  name   = "${var.resource_name_prefix}-route53-instance-registration"
+  role   = aws_iam_role.graphdb_iam_role.id
+  policy = data.aws_iam_policy_document.graphdb_route53_instance_registration[count.index].json
+}
 
 data "aws_iam_policy_document" "graphdb_route53_instance_registration" {
+  count = var.graphdb_node_count > 1 ? 1 : 0
+
   statement {
     effect = "Allow"
 
@@ -169,15 +178,9 @@ data "aws_iam_policy_document" "graphdb_route53_instance_registration" {
     ]
 
     resources = [
-      "arn:aws:route53:::hostedzone/${aws_route53_zone.graphdb_zone != [] ? aws_route53_zone.graphdb_zone[0].zone_id : var.route53_existing_zone_id}"
+      "arn:aws:route53:::hostedzone/${aws_route53_zone.graphdb_zone != [] ? aws_route53_zone.graphdb_zone[count.index].zone_id : var.route53_existing_zone_id}"
     ]
   }
-}
-
-resource "aws_iam_role_policy" "graphdb_route53_instance_registration" {
-  name   = "${var.resource_name_prefix}-route53-instance-registration"
-  role   = aws_iam_role.graphdb_iam_role.id
-  policy = data.aws_iam_policy_document.graphdb_route53_instance_registration.json
 }
 
 data "aws_iam_policy_document" "graphdb_s3_replication_policy_logging" {

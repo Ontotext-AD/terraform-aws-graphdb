@@ -5,6 +5,7 @@
 * Added ability to specify IAM role to be assumed in provider.tf
 * Added ability to use existing Route53 Private hosted zone
 * Updated Provider version in versions.tf
+* Removed the provisioning of Route53 Hosted zone when deploying a single node.
 
 ## 1.3.3
 
