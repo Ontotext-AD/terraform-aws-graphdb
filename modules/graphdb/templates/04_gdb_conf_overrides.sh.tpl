@@ -21,7 +21,6 @@ echo "#   GraphDB configuration overrides   #"
 echo "#######################################"
 
 LB_DNS_RECORD=${graphdb_lb_dns_name}
-NODE_DNS_RECORD=$(cat /var/opt/graphdb/node_dns)
 PROTOCOL=${external_address_protocol}
 # Get and store the GraphDB license
 aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/license" --with-decryption | \
@@ -30,7 +29,6 @@ aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${na
 
 # Get the cluster token
 GRAPHDB_CLUSTER_TOKEN="$(aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/cluster_token" --with-decryption | jq -r .Parameter.Value | base64 -d)"
-# Get the NODE_DNS_RECORD value from the previous script
 SSM_PARAMETERS=$(aws ssm describe-parameters --cli-connect-timeout 300 --region ${region} --query "Parameters[?starts_with(Name, '/${name}/graphdb/')].Name" --output text)
 NODE_COUNT=$(aws autoscaling describe-auto-scaling-groups --auto-scaling-group-names ${name} --query "AutoScalingGroups[0].DesiredCapacity" --output text)
 
@@ -44,6 +42,8 @@ graphdb.external-url=$${PROTOCOL}://$${LB_DNS_RECORD}
 graphdb.external-url.enforce.transactions=true
 EOF
 else
+  NODE_DNS_RECORD=$(cat /var/opt/graphdb/node_dns)
+
   cat << EOF > /etc/graphdb/graphdb.properties
 graphdb.auth.token.secret=$GRAPHDB_CLUSTER_TOKEN
 graphdb.connector.port=7201

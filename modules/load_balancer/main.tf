@@ -48,7 +48,7 @@ resource "aws_lb_target_group" "graphdb_lb_target_group" {
     unhealthy_threshold = var.lb_unhealthy_threshold
     protocol            = "HTTP"
     port                = 7201
-    path                = var.graphdb_node_count != 1 ? var.lb_health_check_path : "/protocol"
+    path                = var.graphdb_node_count > 1 ? var.lb_health_check_path : "/protocol"
     interval            = var.lb_health_check_interval
   }
 }

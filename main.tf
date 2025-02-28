@@ -203,9 +203,9 @@ module "monitoring" {
 
   count = var.deploy_monitoring ? 1 : 0
 
-  resource_name_prefix                   = var.resource_name_prefix
-  aws_region                             = var.aws_region
-  route53_availability_check_region      = var.monitoring_route53_health_check_aws_region
+  resource_name_prefix = var.resource_name_prefix
+  aws_region           = var.aws_region
+
   cloudwatch_alarms_actions_enabled      = var.monitoring_actions_enabled
   sns_topic_endpoint                     = var.deploy_monitoring ? var.monitoring_sns_topic_endpoint : null
   sns_endpoint_auto_confirms             = var.monitoring_endpoint_auto_confirms
@@ -222,13 +222,17 @@ module "monitoring" {
   cmk_key_alias                          = var.sns_cmk_key_alias
   parameter_store_kms_key_arn            = local.calculated_parameter_store_kms_key_arn
   cloudwatch_log_group_retention_in_days = var.monitoring_log_group_retention_in_days
-  route53_availability_request_url       = var.graphdb_external_dns
-  route53_availability_measure_latency   = var.monitoring_route53_measure_latency
-  sns_kms_key_arn                        = local.calculated_sns_kms_key_arn
-  graphdb_node_count                     = var.graphdb_node_count
-  route53_availability_http_string_type  = upper(local.calculated_protocol)
-  lb_tls_certificate_arn                 = var.lb_tls_certificate_arn
-  lb_dns_name                            = module.load_balancer.lb_dns_name != "" ? module.load_balancer.lb_dns_name : null
+
+  route53_availability_check_region     = var.monitoring_route53_health_check_aws_region
+  route53_availability_request_url      = var.graphdb_node_count > 1 ? var.graphdb_external_dns : module.load_balancer.lb_dns_name
+  route53_availability_measure_latency  = var.graphdb_node_count > 1 ? var.monitoring_route53_measure_latency : false
+  route53_availability_http_string_type = upper(local.calculated_protocol)
+
+  sns_kms_key_arn    = local.calculated_sns_kms_key_arn
+  graphdb_node_count = var.graphdb_node_count
+
+  lb_tls_certificate_arn = var.lb_tls_certificate_arn
+  lb_dns_name            = module.load_balancer.lb_dns_name != "" ? module.load_balancer.lb_dns_name : null
 }
 
 module "graphdb" {
@@ -305,8 +309,7 @@ module "graphdb" {
   ebs_default_kms_key = var.default_ebs_cmk_alias
 
   # DNS
-
-  route53_zone_dns_name    = var.route53_zone_dns_name
+  route53_zone_dns_name    = var.graphdb_node_count > 1 ? var.route53_zone_dns_name : null
   route53_existing_zone_id = var.route53_existing_zone_id
 
   # User data scripts

@@ -187,3 +187,26 @@ check_license() {
     echo "License is mounted"
   fi
 }
+
+# Function which waits for GraphDB to start, checking every 10 seconds up to 5 minutes
+wait_for_local_gdb() {
+  local gdb_address="http://localhost:7201/protocol"
+  local max_wait_time=300  # 5 minutes
+  local wait_interval=10   # Check every 10 seconds
+  local elapsed_time=0
+
+  while [ $elapsed_time -lt $max_wait_time ]; do
+    if curl -s --head -u "admin:$${GRAPHDB_ADMIN_PASSWORD}" --fail "$${gdb_address}" >/dev/null; then
+      log_with_timestamp "Success, GraphDB instance is available at $gdb_address"
+      return 0  # Success
+    fi
+
+    # Wait for the specified interval
+    sleep $wait_interval
+    elapsed_time=$((elapsed_time + wait_interval))
+    log_with_timestamp "Waiting for GraphDB to start, elapsed time: $${elapsed_time}s"
+  done
+
+  log_with_timestamp "Error: GraphDB instance at $gdb_address not available after waiting for $max_wait_time seconds."
+  return 1
+}

@@ -505,7 +505,7 @@ This module allows you to configure the AWS provider to assume a role in another
 
 ```hcl
 assume_role_arn           = "arn:aws:iam::accountID:role/rolename"
-assume_role_external_id = "exampleid"
+assume_role_external_id = "exampleId"
 assume_role_session_name = "session"
 ```
 
@@ -525,9 +525,11 @@ vpc_private_subnet_ids = ["subnet-456789","subnet-567891","subnet-678912"]
 This Terraform module can deploy a single instance of GraphDB.
 To do this, set `graphdb_node_count` to `1`, and the rest will be handled automatically.
 
-**Important:** While it is possible to scale from a single node to a cluster deployment (e.g., from 1 node to 3 nodes),
-it is not recommended. Synchronizing the repository across all nodes can be time-consuming and may cause scripts
-to time out.
+**Important:** Scaling from a single-node deployment to a cluster deployment (e.g., changing `graphdb_node_count` from 1 to 3)
+is not fully automated. While the Terraform module will allow you to scale up and create 3 instances,
+the cluster will not be formed unless you terminate the initial node.
+
+**Please note that this operation is disruptive, and there is a risk that things may not go as expected.**
 
 ## Updating configurations on an active deployment
 

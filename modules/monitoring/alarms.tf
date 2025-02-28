@@ -2,7 +2,7 @@
 
 # Attempting to recover metric filter
 resource "aws_cloudwatch_log_metric_filter" "graphdb_attempting_to_recover_metric_filter" {
-  count = var.graphdb_node_count != 1 ? 1 : 0
+  count = var.graphdb_node_count > 1 ? 1 : 0
 
   name           = "mf-${var.resource_name_prefix}-attempting-to-recover"
   pattern        = "successfully replicated registration will not retry"
@@ -21,7 +21,7 @@ resource "aws_cloudwatch_log_metric_filter" "graphdb_attempting_to_recover_metri
 # Attempting to recover alarm based on metric filter
 
 resource "aws_cloudwatch_metric_alarm" "graphdb_attempting_to_recover_alarm" {
-  count = var.graphdb_node_count != 1 ? 1 : 0
+  count = var.graphdb_node_count > 1 ? 1 : 0
 
   alarm_name          = "al-${var.resource_name_prefix}-attempting-recover"
   alarm_description   = "Attempting to recover through snapshot replication"
@@ -115,7 +115,7 @@ resource "aws_cloudwatch_metric_alarm" "graphdb_cpu_utilization" {
 
 # Alarm for nodes disconnected
 resource "aws_cloudwatch_metric_alarm" "graphdb_nodes_disconnected" {
-  count = var.graphdb_node_count != 1 ? 1 : 0
+  count = var.graphdb_node_count > 1 ? 1 : 0
 
   alarm_name          = "al-${var.resource_name_prefix}-nodes-disconnected"
   alarm_description   = "Alarm will trigger if a node has been disconnected"

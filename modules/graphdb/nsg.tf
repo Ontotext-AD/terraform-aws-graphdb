@@ -19,7 +19,7 @@ resource "aws_security_group_rule" "graphdb_internal_http" {
 }
 
 resource "aws_security_group_rule" "graphdb_internal_raft" {
-  count = var.graphdb_node_count != 1 ? 1 : 0
+  count = var.graphdb_node_count > 1 ? 1 : 0
 
   description       = "Allow GraphDB proxies and nodes to communicate (Raft)."
   security_group_id = aws_security_group.graphdb_security_group.id

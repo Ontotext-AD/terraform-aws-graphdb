@@ -25,7 +25,7 @@ echo "#    Starting GraphDB     #"
 echo "###########################"
 
 # Don't attempt to form a cluster if the node count is 1
-if [ "$${NODE_COUNT}" == 1 ]; then
+if [[ "$${NODE_COUNT}" -eq 1 ]]; then
   log_with_timestamp "Starting Graphdb"
   systemctl daemon-reload
   systemctl start graphdb
