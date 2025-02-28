@@ -96,6 +96,7 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | assume\_role\_arn | IAM Role that should be used to access another account | `string` | `null` | no |
 | assume\_role\_session\_name | (Optional) name of the session to be assumed to run session | `string` | `null` | no |
 | assume\_role\_external\_id | The external ID can be any identifier that is known only by you and the third party. For example, you can use an invoice ID between you and the third party | `string` | `null` | no |
+| assume\_role\_principal\_arn | (Optional) Principal for the IAM role assume policies | `string` | `null` | no |
 | deploy\_backup | Deploy backup module | `bool` | `true` | no |
 | backup\_schedule | Cron expression for the backup job. | `string` | `"0 0 * * *"` | no |
 | backup\_retention\_count | Number of backups to keep. | `number` | `7` | no |
@@ -422,6 +423,14 @@ or you can use the current AWS account by leaving this parameter empty.
 
 ```hcl
 graphdb_parameter_store_key_admin_arn = "arn:aws:iam::123456789012:role/KeyAdminRole"
+```
+
+##### Using Custom Principal ARN
+
+You can set custom principal for the EBS Key Admin Role and for the Parameter Store Admin Role via the following variable:
+
+```hcl
+assume_role_principal_arn = "arn:aws:iam::${accountID}:role/$USER or $ROLE"
 ```
 
 **EBS encryption**

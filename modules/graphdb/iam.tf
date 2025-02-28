@@ -1,3 +1,8 @@
+
+locals {
+  assume_role_principal_arn = var.assume_role_principal_arn != null ? var.assume_role_principal_arn : data.aws_caller_identity.current.arn
+}
+
 resource "aws_iam_instance_profile" "graphdb_iam_instance_profile" {
   name_prefix = "${var.resource_name_prefix}-instance-profile"
   role        = aws_iam_role.graphdb_iam_role.name
@@ -289,7 +294,7 @@ data "aws_iam_policy_document" "ebs_key_admin_role_assume" {
     principals {
       type = "AWS"
       identifiers = [
-        "${data.aws_caller_identity.current.arn}"
+        local.assume_role_principal_arn
       ]
     }
 
@@ -372,7 +377,7 @@ data "aws_iam_policy_document" "param_store_key_admin_role_assume" {
     principals {
       type = "AWS"
       identifiers = [
-        "${data.aws_caller_identity.current.arn}"
+        local.assume_role_principal_arn
       ]
     }
 
