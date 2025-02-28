@@ -96,6 +96,7 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | assume\_role\_arn | IAM Role that should be used to access another account | `string` | `null` | no |
 | assume\_role\_session\_name | (Optional) name of the session to be assumed to run session | `string` | `null` | no |
 | assume\_role\_external\_id | The external ID can be any identifier that is known only by you and the third party. For example, you can use an invoice ID between you and the third party | `string` | `null` | no |
+| assume\_role\_principal\_arn | (Optional) Principal for the IAM role assume policies | `string` | `null` | no |
 | deploy\_backup | Deploy backup module | `bool` | `true` | no |
 | backup\_schedule | Cron expression for the backup job. | `string` | `"0 0 * * *"` | no |
 | backup\_retention\_count | Number of backups to keep. | `number` | `7` | no |
