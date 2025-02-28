@@ -6,6 +6,8 @@
 * Added ability to use existing Route53 Private hosted zone
 * Updated Provider version in versions.tf
 * Removed the provisioning of Route53 Hosted zone when deploying a single node.
+* Added ability to use custom principal for EBS Admin Role and Param Store Admin role via assume_role_principal_arn variable
+
 
 ## 1.3.3
 

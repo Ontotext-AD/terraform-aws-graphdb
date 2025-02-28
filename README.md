@@ -424,6 +424,14 @@ or you can use the current AWS account by leaving this parameter empty.
 graphdb_parameter_store_key_admin_arn = "arn:aws:iam::123456789012:role/KeyAdminRole"
 ```
 
+##### Using Custom Principal ARN
+
+You can set custom principal for the EBS Key Admin Role and for the Parameter Store Admin Role via the following variable:
+
+```hcl
+assume_role_principal_arn = "arn:aws:iam::${accountID}:role/$USER or $ROLE"
+```
+
 **EBS encryption**
 
 You can enhance the security of EBS volumes by using KMS CMKs to encrypt data at rest.

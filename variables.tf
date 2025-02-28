@@ -39,9 +39,15 @@ variable "assume_role_external_id" {
   type        = string
   default     = null
   validation {
-    condition     = var.assume_role_external_id == "" || var.assume_role_arn != ""
+    condition     = var.assume_role_external_id == null || var.assume_role_arn != null
     error_message = "If 'assume_role_external_id' is set, then 'assume_role_arn' must also be provided."
   }
+}
+
+variable "assume_role_principal_arn" {
+  description = "(Optional) Principal for the IAM role assume policies"
+  type        = string
+  default     = null
 }
 
 # Backup configurations

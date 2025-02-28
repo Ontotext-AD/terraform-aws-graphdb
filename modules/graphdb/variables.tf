@@ -25,6 +25,11 @@ variable "override_owner_id" {
   type        = string
 }
 
+variable "assume_role_principal_arn" {
+  description = "Define IAM Role principal for the policies"
+  type        = string
+}
+
 # GraphDB Parameters
 
 variable "graphdb_admin_password" {
