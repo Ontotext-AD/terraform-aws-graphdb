@@ -28,6 +28,9 @@ if [ ${deploy_monitoring} == "true" ]; then
   cat /etc/prometheus/prometheus.yaml | yq '.scrape_configs[].static_configs[].targets = ["localhost:7201"]' >"$tmp" && mv "$tmp" /etc/prometheus/prometheus.yaml
   cat /etc/prometheus/prometheus.yaml | yq '.scrape_configs[].basic_auth.username = "admin"' | yq ".scrape_configs[].basic_auth.password = \"$${GRAPHDB_ADMIN_PASSWORD}\"" >"$tmp" && mv "$tmp" /etc/prometheus/prometheus.yaml
 
+  # Make config file readable only by cwagent user
+  chmod og-rw /etc/prometheus/prometheus.yaml
+  chown -R cwagent:cwagent /etc/prometheus
   amazon-cloudwatch-agent-ctl -a start
   amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/etc/graphdb/cloudwatch-agent-config.json
 
