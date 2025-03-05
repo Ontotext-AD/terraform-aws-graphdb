@@ -71,7 +71,7 @@ data "aws_iam_policy_document" "graphdb_instance_ssm" {
 
     actions = [
       "ssm:DescribeParameters",
-      "kms:*"
+      "kms:Decrypt"
     ]
 
     resources = [
