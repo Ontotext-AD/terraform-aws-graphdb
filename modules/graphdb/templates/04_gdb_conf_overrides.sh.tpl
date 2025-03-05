@@ -85,10 +85,11 @@ fi
 # Appends environment overrides to GDB_JAVA_OPTS
 if [[ $SSM_PARAMETERS == *"/${name}/graphdb/graphdb_java_options"* ]]; then
   extra_graphdb_java_options="$(aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/graphdb_java_options" --with-decryption | jq -r .Parameter.Value)"
-  (
-    source /etc/graphdb/graphdb.env
-    echo "GDB_JAVA_OPTS=\"$GDB_JAVA_OPTS $extra_graphdb_java_options\"" >> /etc/graphdb/graphdb.env
-  )
+  if grep GDB_JAVA_OPTS &>/dev/null /etc/graphdb/graphdb.env; then
+    sed -ie "s/GDB_JAVA_OPTS=\"\(.*\)\"/GDB_JAVA_OPTS=\"\1 $extra_graphdb_java_options\"/g" /etc/graphdb/graphdb.env
+  else
+    echo "GDB_JAVA_OPTS=$extra_garphdb_java_options" > /etc/graphdb/graphdb.env
+  fi
 fi
 
 log_with_timestamp "Completed applying overrides"
