@@ -71,11 +71,11 @@ data "aws_iam_policy_document" "graphdb_instance_ssm" {
 
     actions = [
       "ssm:DescribeParameters",
-      "kms:*"
+      "kms:Decrypt"
     ]
 
     resources = [
-      "arn:aws:ssm:${var.aws_region}:${var.aws_subscription_id}:*"
+      "arn:aws:ssm:${var.aws_region}:${var.aws_subscription_id}:/${var.resource_name_prefix}/graphdb/*"
     ]
   }
 }
