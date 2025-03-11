@@ -7,7 +7,8 @@
 * Updated Provider version in versions.tf
 * Removed the provisioning of Route53 Hosted zone when deploying a single node.
 * Added ability to use custom principal for EBS Admin Role and Param Store Admin role via assume_role_principal_arn variable
-
+* Updated graphdb_instance_ssm policy in iam.tf - added restrictions on ssm:DescribeParameters to only allow usage on graphdb-related resources.
+* Updated graphdb_instance_ssm polict in iam.tf - restricted kms actions to Decrypt only
 
 ## 1.3.3
 

@@ -29,7 +29,6 @@ aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${na
 
 # Get the cluster token
 GRAPHDB_CLUSTER_TOKEN="$(aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/cluster_token" --with-decryption | jq -r .Parameter.Value | base64 -d)"
-SSM_PARAMETERS=$(aws ssm describe-parameters --cli-connect-timeout 300 --region ${region} --query "Parameters[?starts_with(Name, '/${name}/graphdb/')].Name" --output text)
 NODE_COUNT=$(aws autoscaling describe-auto-scaling-groups --auto-scaling-group-names ${name} --query "AutoScalingGroups[0].DesiredCapacity" --output text)
 
 
@@ -77,14 +76,12 @@ Environment="GDB_HEAP_SIZE=$${JVM_MAX_MEMORY}g"
 EOF
 
 # Appends configuration overrides to graphdb.properties
-if [[ $SSM_PARAMETERS == *"/${name}/graphdb/graphdb_properties"* ]]; then
-  aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/graphdb_properties" --with-decryption | jq -r .Parameter.Value | \
-    base64 -d >> /etc/graphdb/graphdb.properties
-fi
+GDB_PROPERTIES=$(aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/graphdb_properties" --with-decryption 2>/dev/null | jq -r .Parameter.Value | base64 -d || /bin/true)
+[[ -n $GDB_PROPERTIES ]] && echo "$GDB_PROPERTIES" >> /etc/graphdb/graphdb.properties
 
 # Appends environment overrides to GDB_JAVA_OPTS
-if [[ $SSM_PARAMETERS == *"/${name}/graphdb/graphdb_java_options"* ]]; then
-  extra_graphdb_java_options="$(aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/graphdb_java_options" --with-decryption | jq -r .Parameter.Value)"
+extra_graphdb_java_options="$(aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/graphdb_java_options" --with-decryption 2>/dev/null | jq -r .Parameter.Value || /bin/true )"
+if [[ -n $extra_graphdb_java_options  ]]; then
   if grep GDB_JAVA_OPTS /etc/graphdb/graphdb.env &>/dev/null; then
     sed -ie "s/GDB_JAVA_OPTS=\"\(.*\)\"/GDB_JAVA_OPTS=\"\1 $extra_graphdb_java_options\"/g" /etc/graphdb/graphdb.env
   else
