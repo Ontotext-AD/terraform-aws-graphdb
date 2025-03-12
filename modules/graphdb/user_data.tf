@@ -85,7 +85,7 @@ data "cloudinit_config" "graphdb_user_data" {
 
   part {
     content_type = "text/x-shellscript"
-    content      = templatefile("${path.module}/templates/06_linux_overrides.sh.tpl", {})
+    content = templatefile("${path.module}/templates/06_linux_overrides.sh.tpl", {})
   }
 
   part {
@@ -151,5 +151,15 @@ data "cloudinit_config" "graphdb_user_data" {
         - [scripts-user, always]
     EOF
     }
+  }
+
+  # 12 Make aws-cli accessible only for root user
+  part {
+    content_type = "text/x-shellscript"
+    content      = <<-EOF
+      #!/bin/bash
+      set -euo pipefail
+      chmod -R og-rwx /usr/local/aws-cli/
+    EOF
   }
 }
