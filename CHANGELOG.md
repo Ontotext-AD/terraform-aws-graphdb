@@ -9,6 +9,7 @@
 * Added ability to use custom principal for EBS Admin Role and Param Store Admin role via assume_role_principal_arn variable
 * Updated graphdb_instance_ssm policy in iam.tf - added restrictions on ssm:DescribeParameters to only allow usage on graphdb-related resources.
 * Updated graphdb_instance_ssm polict in iam.tf - restricted kms actions to Decrypt only
+* Changed owner of /etc/prometheus to cwagent:cwagent. Removed rw permissions for /etc/prometheus/prometheus.yaml for other an group users 
 
 ## 1.3.3
 
