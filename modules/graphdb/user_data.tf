@@ -85,7 +85,7 @@ data "cloudinit_config" "graphdb_user_data" {
 
   part {
     content_type = "text/x-shellscript"
-    content = templatefile("${path.module}/templates/06_linux_overrides.sh.tpl", {})
+    content      = templatefile("${path.module}/templates/06_linux_overrides.sh.tpl", {})
   }
 
   part {
