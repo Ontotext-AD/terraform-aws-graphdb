@@ -30,7 +30,9 @@ if [ "$GRAPHDB_NODE_COUNT" -gt 1 ]; then
   echo "GraphDB node count is greater than 1. Running wait_asg_nodes..."
   wait_for_asg_nodes "$ASG_NAME"
 else
-  echo "GraphDB node count is 1 or less. Skipping wait_asg_nodes."
+  echo "GraphDB node count is 1. Skipping wait_asg_nodes."
+  # Sets hostname to node-1
+  hostnamectl set-hostname "node-1"
 fi
 
 instance_refresh_status=$(aws autoscaling describe-instance-refreshes --auto-scaling-group-name "$ASG_NAME" --query 'InstanceRefreshes[?Status==`InProgress`]' --output json)

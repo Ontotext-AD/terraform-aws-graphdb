@@ -71,23 +71,63 @@ resource "aws_cloudwatch_metric_alarm" "graphdb_low_disk_space_alarm" {
   depends_on = [aws_cloudwatch_log_metric_filter.graphdb_low_disk_space_metric_filter]
 }
 
-resource "aws_cloudwatch_metric_alarm" "graphdb_memory_utilization" {
-  alarm_name          = "al-${var.resource_name_prefix}-memory-utilization"
-  alarm_description   = "Alarm will trigger if Memory utilization is above 90%"
+locals {
+  # Builds a list of instance hostnames
+  instance_hostnames = [
+    for i in range(1, var.graphdb_node_count + 1) :
+    var.route53_zone_dns_name != null ?
+    format("node-%d.%s", i, trim(var.route53_zone_dns_name, ".")) :
+    format("node-%d", i)
+  ]
+}
+
+resource "aws_cloudwatch_metric_alarm" "heap_usage_alarm" {
+  for_each = toset(local.instance_hostnames)
+
+  alarm_name          = "al-${var.resource_name_prefix}-heap-memory-usage-${each.key}"
+  alarm_description   = "Triggers if ${each.key}'s heap usage exceeds 80% of its total memory"
   comparison_operator = "GreaterThanThreshold"
-  evaluation_periods  = var.cloudwatch_evaluation_periods
-  period              = var.cloudwatch_period
-  statistic           = "Maximum"
-  threshold           = var.cloudwatch_al_low_memory_warning_threshold
-  actions_enabled     = var.cloudwatch_alarms_actions_enabled
+  threshold           = 80
+  evaluation_periods  = 1
+  treat_missing_data  = "missing"
   alarm_actions       = [aws_sns_topic.graphdb_sns_topic.arn]
 
-  metric_name = "mem_used_percent"
-  namespace   = "CWAgent"
-  unit        = "Percent"
+  # Define the metric query for heap used memory
+  metric_query {
+    id = "m1"
+    metric {
+      namespace   = var.resource_name_prefix
+      metric_name = "graphdb_heap_used_mem"
+      dimensions = {
+        host = each.key
+      }
+      stat   = "Average"
+      period = 60
+    }
+    return_data = false
+  }
 
-  dimensions = {
-    AutoScalingGroupName = var.resource_name_prefix
+  # Defines the metric query for total memory
+  metric_query {
+    id = "m2"
+    metric {
+      namespace   = "CWAgent"
+      metric_name = "mem_total"
+      dimensions = {
+        AutoScalingGroupName = var.resource_name_prefix
+      }
+      stat   = "Average"
+      period = 60
+    }
+    return_data = false
+  }
+
+  # Defines the expression to calculate heap usage percentage
+  metric_query {
+    id          = "e1"
+    expression  = "(m1 / m2) * 100"
+    label       = "Heap Usage Percentage for ${each.key}"
+    return_data = true
   }
 }
 

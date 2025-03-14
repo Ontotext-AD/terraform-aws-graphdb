@@ -31,7 +31,6 @@ aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${na
 GRAPHDB_CLUSTER_TOKEN="$(aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/cluster_token" --with-decryption | jq -r .Parameter.Value | base64 -d)"
 NODE_COUNT=$(aws autoscaling describe-auto-scaling-groups --auto-scaling-group-names ${name} --query "AutoScalingGroups[0].DesiredCapacity" --output text)
 
-
 # graphdb.external-url.enforce.transactions: determines whether it is necessary to rewrite the Location header when no proxy is configured.
 # This is required because when working with the GDB transaction endpoint it returns an erroneous URL with HTTP protocol instead of HTTPS
 if [ "$NODE_COUNT" -eq 1 ]; then

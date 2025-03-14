@@ -188,6 +188,11 @@ variable "route53_availability_https_port" {
   default     = 443
 }
 
+variable "route53_zone_dns_name" {
+  description = "DNS name for the private hosted zone in Route 53"
+  type        = string
+}
+
 variable "lb_tls_certificate_arn" {
   description = "ARN of the TLS certificate, imported in ACM, which will be used for the TLS listener on the load balancer."
   type        = string
