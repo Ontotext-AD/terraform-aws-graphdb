@@ -159,7 +159,8 @@
                 "measurement": [
                     "mem_used_percent",
                     "mem_free",
-                    "mem_available_percent"
+                    "mem_available_percent",
+                    "mem_total"
                 ],
                 "metrics_collection_interval": 10
             }
