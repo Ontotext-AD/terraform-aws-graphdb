@@ -37,7 +37,7 @@ create_volume() {
     --size "${ebs_volume_size}" \
     --iops "${ebs_volume_iops}" \
     --throughput "${ebs_volume_throughput}" \
-    --tag-specifications "ResourceType=volume,Tags=[{Key=Name,Value=${name}-graphdb-data}]" \
+    --tag-specifications "ResourceType=volume,Tags=[{Key=Name,Value=${name}-graphdb-data},{Key=DeployTag,Value=${deployment_tag}}]" \
     --query "VolumeId" --output text)
   AVAILABLE_VOLUMES+=("$VOLUME_ID")
 

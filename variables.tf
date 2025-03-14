@@ -1,4 +1,8 @@
 # Common configurations
+variable "deploy_tag" {
+  description = "Deployment tag."
+  type = string
+}
 
 variable "common_tags" {
   description = "(Optional) Map of common tags for all taggable AWS resources."

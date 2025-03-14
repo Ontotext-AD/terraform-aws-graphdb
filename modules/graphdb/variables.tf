@@ -1,4 +1,8 @@
 # Common parameters
+variable "deploy_tag" {
+  description = "Deployment tag."
+  type = string
+}
 
 variable "resource_name_prefix" {
   description = "Resource name prefix used for tagging and naming AWS resources."

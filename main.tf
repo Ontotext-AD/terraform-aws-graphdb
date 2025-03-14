@@ -241,6 +241,7 @@ module "graphdb" {
   source = "./modules/graphdb"
 
   resource_name_prefix      = var.resource_name_prefix
+  deploy_tag                = var.deploy_tag
   aws_region                = data.aws_region.current.name
   aws_subscription_id       = data.aws_caller_identity.current.account_id
   assume_role_principal_arn = var.assume_role_principal_arn
