@@ -107,6 +107,7 @@ data "aws_iam_policy_document" "graphdb_describe_resources" {
 data "aws_iam_policy_document" "graphdb_instance_volume" {
   statement {
     effect = "Allow"
+
     actions = [
       "ec2:DescribeVolumes",
       "ec2:MonitorInstances",
@@ -128,6 +129,7 @@ data "aws_iam_policy_document" "graphdb_instance_volume" {
       "kms:EnableKey",
       "kms:DisableKey"
     ]
+
     resources = [
       "arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.current.account_id}:volume/*",
       "arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.current.account_id}:instance/*",
@@ -138,22 +140,27 @@ data "aws_iam_policy_document" "graphdb_instance_volume" {
   }
   statement {
     effect = "Allow"
+
     actions = [
       "ec2:CreateVolume"
     ]
+
     resources = [
       "arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.current.account_id}:volume/*"
     ]
+
     condition {
       test     = "StringEquals"
       values = [ var.deploy_tag ]
       variable = "aws:ResourceTag/DeployTag"
     }
+
     condition {
       test     = "StringEquals"
       values = [ "${var.resource_name_prefix}-graphdb-data" ]
       variable = "aws:ResourceTag/Name"
     }
+
     condition {
       test = "ForAllValues:StringEquals"
       values = [ "Name", "DeployTag" ]
@@ -164,13 +171,16 @@ data "aws_iam_policy_document" "graphdb_instance_volume" {
 
   statement {
     effect = "Allow"
+
     actions = [
       "ec2:AttachVolume",
     ]
+
     resources = [
       "arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.current.account_id}:volume/*",
-      "arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.current.account_id}:instance/*",
+      "arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.current.account_id}:instance/*"
     ]
+
     condition {
       test     = "StringEquals"
       values = [ var.deploy_tag ]
