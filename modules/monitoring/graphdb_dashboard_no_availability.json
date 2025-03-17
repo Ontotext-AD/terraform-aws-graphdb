@@ -1,0 +1,202 @@
+{
+  "widgets": [
+      {
+          "height": 6,
+          "width": 6,
+          "y": 0,
+          "x": 6,
+          "type": "metric",
+          "properties": {
+              "metrics": [
+                  [ { "expression": "SELECT MAX(CPUUtilization) FROM \"AWS/EC2\" GROUP BY AutoScalingGroupName", "label": "Query1", "id": "q1", "region": "${aws_region}" } ]
+              ],
+              "region": "${aws_region}",
+              "stacked": false,
+              "view": "timeSeries",
+              "period": 300,
+              "stat": "Average",
+              "yAxis": {
+                  "left": {
+                      "max": 100,
+                      "label": "Percent",
+                      "showUnits": false
+                  },
+                  "right": {
+                      "label": "",
+                      "showUnits": false
+                  }
+              },
+              "title": "CPU utilization for the Auto Scaling Group"
+          }
+      },
+      {
+        "height": 6,
+        "width": 6,
+        "y": 0,
+        "x": 12,
+        "type": "metric",
+        "properties": {
+            "metrics": [
+                [ { "expression": "SELECT MAX(mem_used_percent) FROM \"CWAgent\" GROUP BY AutoScalingGroupName", "label": "Query1", "id": "q1", "region": "${aws_region}" } ]
+            ],
+            "region": "${aws_region}",
+            "stacked": false,
+            "view": "timeSeries",
+            "period": 300,
+            "stat": "Average",
+            "yAxis": {
+                "left": {
+                    "max": 100,
+                    "label": "Percent",
+                    "showUnits": false
+                },
+                "right": {
+                    "label": "",
+                    "showUnits": false
+                }
+            },
+            "title": "GraphDB Memory Used % for the Auto Scaling Group"
+        }
+    },
+      {
+          "height": 6,
+          "width": 6,
+          "y": 6,
+          "x": 6,
+          "type": "metric",
+          "properties": {
+              "metrics": [
+                  [ { "expression": "SELECT AVG(graphdb_data_dir_free) FROM \"${resource_name_prefix}\" GROUP BY host", "label": "Query1", "id": "q1", "region": "${aws_region}" } ]
+              ],
+              "region": "${aws_region}",
+              "stacked": false,
+              "view": "timeSeries",
+              "period": 300,
+              "stat": "Average",
+              "yAxis": {
+                  "left": {
+                      "label": "Gigabytes",
+                      "showUnits": false
+                  },
+                  "right": {
+                      "label": "",
+                      "showUnits": false
+                  }
+              },
+              "title": "GraphDB Data Dir Free per instance"
+          }
+      },
+      {
+          "height": 6,
+          "width": 6,
+          "y": 6,
+          "x": 0,
+          "type": "metric",
+          "properties": {
+              "metrics": [
+                  [ { "expression": "SELECT AVG(graphdb_data_dir_used) FROM \"${resource_name_prefix}\" GROUP BY host", "label": "Query1", "id": "q1", "region": "${aws_region}" } ]
+              ],
+              "region": "${aws_region}",
+              "stacked": false,
+              "view": "timeSeries",
+              "period": 300,
+              "stat": "Average",
+              "yAxis": {
+                  "left": {
+                      "label": "Gigabytes",
+                      "showUnits": false
+                  },
+                  "right": {
+                      "label": "",
+                      "showUnits": false
+                  }
+              },
+              "title": "GraphDB Data Dir Used per instance"
+          }
+      },
+      {
+          "height": 6,
+          "width": 6,
+          "y": 0,
+          "x": 18,
+          "type": "metric",
+          "properties": {
+              "metrics": [
+                  [ { "expression": "SELECT COUNT(graphdb_failure_recoveries_count) FROM \"${resource_name_prefix}\"", "label": "Query1", "id": "q1", "region": "${aws_region}" } ]
+              ],
+              "region": "${aws_region}",
+              "stacked": false,
+              "view": "timeSeries",
+              "period": 300,
+              "stat": "Average",
+              "yAxis": {
+                  "left": {
+                      "label": "Count",
+                      "showUnits": false
+                  },
+                  "right": {
+                      "label": "",
+                      "showUnits": false
+                  }
+              },
+              "title": "GraphDB Failure Recoveries"
+          }
+      },
+      {
+          "height": 6,
+          "width": 6,
+          "y": 6,
+          "x": 18,
+          "type": "metric",
+          "properties": {
+              "metrics": [
+                  [ { "expression": "SELECT MAX(graphdb_nodes_disconnected) FROM \"${resource_name_prefix}\"", "label": "Query1", "id": "q1", "region": "${aws_region}" } ]
+              ],
+              "region": "${aws_region}",
+              "stacked": false,
+              "view": "timeSeries",
+              "period": 300,
+              "stat": "Average",
+              "yAxis": {
+                  "left": {
+                      "label": "Count",
+                      "showUnits": false
+                  },
+                  "right": {
+                      "label": "",
+                      "showUnits": false
+                  }
+              },
+              "title": "GraphDB nodes disconnected"
+          }
+      },
+      {
+        "height": 6,
+        "width": 6,
+        "y": 6,
+        "x": 12,
+        "type": "metric",
+        "properties": {
+            "metrics": [
+                [ { "expression": "SELECT MAX(graphdb_nodes_out_of_sync) FROM \"${resource_name_prefix}\"", "label": "Query1", "id": "q1", "region": "${aws_region}" } ]
+            ],
+            "region": "${aws_region}",
+            "stacked": false,
+            "view": "timeSeries",
+            "period": 300,
+            "stat": "Average",
+            "yAxis": {
+                "left": {
+                    "label": "Count",
+                    "showUnits": false
+                },
+                "right": {
+                    "label": "",
+                    "showUnits": false
+                }
+            },
+            "title": "GraphDB nodes out of sync"
+        }
+    }
+  ]
+}

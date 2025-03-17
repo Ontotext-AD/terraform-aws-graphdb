@@ -11,6 +11,7 @@
 * Updated graphdb_instance_ssm polict in iam.tf - restricted kms actions to Decrypt only
 * Changed owner of /etc/prometheus to cwagent:cwagent. Removed rw permissions for /etc/prometheus/prometheus.yaml for other an group users 
 * Removed access to aws cli for users other than root
+* Added a toggle for enabling/disabling the availability tests in CloudWatch
 
 ## 1.3.3
 
