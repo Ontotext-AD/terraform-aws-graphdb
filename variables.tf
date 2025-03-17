@@ -414,6 +414,12 @@ variable "monitoring_route53_availability_https_port" {
   default     = 443
 }
 
+variable "monitoring_enable_availability_tests" {
+  description = "Enable Route 53 availability tests and alarms"
+  type        = bool
+  default     = true
+}
+
 # GraphDB overrides
 
 variable "graphdb_properties_path" {

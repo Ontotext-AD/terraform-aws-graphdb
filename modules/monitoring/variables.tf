@@ -202,3 +202,8 @@ variable "lb_dns_name" {
   description = "Define the LB DNS name"
   type        = string
 }
+
+variable "enable_availability_tests" {
+  description = "Enable Route 53 availability tests and alarms"
+  type        = bool
+}

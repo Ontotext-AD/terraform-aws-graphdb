@@ -222,6 +222,7 @@ module "monitoring" {
   cmk_key_alias                          = var.sns_cmk_key_alias
   parameter_store_kms_key_arn            = local.calculated_parameter_store_kms_key_arn
   cloudwatch_log_group_retention_in_days = var.monitoring_log_group_retention_in_days
+  enable_availability_tests              = var.monitoring_enable_availability_tests
 
   route53_availability_check_region     = var.monitoring_route53_health_check_aws_region
   route53_availability_request_url      = var.graphdb_node_count > 1 ? var.graphdb_external_dns : module.load_balancer.lb_dns_name
