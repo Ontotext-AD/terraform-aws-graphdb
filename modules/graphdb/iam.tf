@@ -151,19 +151,19 @@ data "aws_iam_policy_document" "graphdb_instance_volume" {
 
     condition {
       test     = "StringEquals"
-      values = [ var.deploy_tag ]
-      variable = "aws:ResourceTag/DeployTag"
+      values   = [var.deploy_tag]
+      variable = "aws:RequestTag/DeployTag"
     }
 
     condition {
       test     = "StringEquals"
-      values = [ "${var.resource_name_prefix}-graphdb-data" ]
-      variable = "aws:ResourceTag/Name"
+      values   = ["${var.resource_name_prefix}-graphdb-data"]
+      variable = "aws:RequestTag/Name"
     }
 
     condition {
-      test = "ForAllValues:StringEquals"
-      values = [ "Name", "DeployTag" ]
+      test     = "ForAllValues:StringEquals"
+      values   = ["Name", "DeployTag"]
       variable = "aws:TagKeys"
     }
 
@@ -183,7 +183,7 @@ data "aws_iam_policy_document" "graphdb_instance_volume" {
 
     condition {
       test     = "StringEquals"
-      values = [ var.deploy_tag ]
+      values   = [var.deploy_tag]
       variable = "aws:ResourceTag/DeployTag"
     }
   }

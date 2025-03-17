@@ -1,7 +1,7 @@
 # Common configurations
 variable "deploy_tag" {
-  description = "Deployment tag."
-  type = string
+  description = "Deployment tag used to restrict access via IAM policies"
+  type        = string
 }
 
 variable "common_tags" {

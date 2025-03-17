@@ -1,7 +1,7 @@
 # Common parameters
 variable "deploy_tag" {
   description = "Deployment tag used to restrict access via IAM policies"
-  type = string
+  type        = string
 }
 
 variable "resource_name_prefix" {
