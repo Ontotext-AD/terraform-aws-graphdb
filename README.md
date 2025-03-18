@@ -89,7 +89,7 @@ Before you begin using this Terraform module, ensure you meet the following prer
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| deploy\_tag | Deployment tag. | `string` | n/a | yes |
+| deploy\_tag | Deployment tag used to restrict access via IAM policies | `string` | n/a | yes |
 | common\_tags | (Optional) Map of common tags for all taggable AWS resources. | `map(string)` | `{}` | no |
 | resource\_name\_prefix | Resource name prefix used for tagging and naming AWS resources | `string` | n/a | yes |
 | aws\_region | AWS region to deploy resources into | `string` | n/a | yes |
