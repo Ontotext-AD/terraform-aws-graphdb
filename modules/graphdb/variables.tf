@@ -1,4 +1,9 @@
 # Common parameters
+variable "deployment_restriction_tag" {
+  description = "Deployment tag used to restrict access via IAM policies"
+  type        = string
+  default     = "deploymentTag"
+}
 
 variable "resource_name_prefix" {
   description = "Resource name prefix used for tagging and naming AWS resources."

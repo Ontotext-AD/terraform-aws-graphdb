@@ -115,6 +115,12 @@ resource "aws_autoscaling_group" "graphdb_auto_scaling_group" {
     }
   }
 
+  tag {
+    key                 = "DeployTag"
+    value               = var.deployment_restriction_tag
+    propagate_at_launch = true
+  }
+
   dynamic "tag" {
     for_each = data.aws_default_tags.current.tags
     content {

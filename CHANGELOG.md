@@ -8,10 +8,13 @@
 * Removed the provisioning of Route53 Hosted zone when deploying a single node.
 * Added ability to use custom principal for EBS Admin Role and Param Store Admin role via assume_role_principal_arn variable
 * Updated graphdb_instance_ssm policy in iam.tf - added restrictions on ssm:DescribeParameters to only allow usage on graphdb-related resources.
-* Updated graphdb_instance_ssm polict in iam.tf - restricted kms actions to Decrypt only
-* Changed owner of /etc/prometheus to cwagent:cwagent. Removed rw permissions for /etc/prometheus/prometheus.yaml for other an group users 
+* Updated graphdb_instance_ssm policy in iam.tf - restricted kms actions to Decrypt only
+* Changed owner of /etc/prometheus to cwagent:cwagent. Removed rw permissions for /etc/prometheus/prometheus.yaml for other an group users
 * Removed access to aws cli for users other than root
 * Added a toggle for enabling/disabling the availability tests in CloudWatch
+* Added new variable, deployment_restriction_tag to be used for tagging resources as part of the deployment. This allows for stricter IAM policies on certain (dangerous) actions
+* Changed graphdb_instance_volume policy to restrict ec2:AttachVolume and ec2:CreateVolume for only specifically tagged volumes
+* Extended graphdb_instance_volume_tagging by adding an additional constraint on ec2:CreateTags to allow instances that are already tagged with deployment_restriction_tag to be tagged with a Name
 
 ## 1.3.3
 

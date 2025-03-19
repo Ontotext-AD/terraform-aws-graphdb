@@ -1,5 +1,12 @@
 # Common configurations
 
+
+variable "deployment_restriction_tag" {
+  description = "Deployment tag used to restrict access via IAM policies"
+  type        = string
+  default     = "deploymentTag"
+}
+
 variable "common_tags" {
   description = "(Optional) Map of common tags for all taggable AWS resources."
   type        = map(string)
