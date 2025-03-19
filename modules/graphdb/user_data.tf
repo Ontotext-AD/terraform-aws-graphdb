@@ -42,7 +42,7 @@ data "cloudinit_config" "graphdb_user_data" {
       ebs_volume_size : var.ebs_volume_size
       ebs_volume_iops : var.ebs_volume_iops
       ebs_volume_throughput : var.ebs_volume_throughput
-      deployment_tag : var.deploy_tag
+      deployment_tag : var.deployment_restriction_tag
       device_name : var.device_name
       ebs_kms_key_arn : var.ebs_key_arn
     })

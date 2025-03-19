@@ -12,9 +12,9 @@
 * Changed owner of /etc/prometheus to cwagent:cwagent. Removed rw permissions for /etc/prometheus/prometheus.yaml for other an group users
 * Removed access to aws cli for users other than root
 * Added a toggle for enabling/disabling the availability tests in CloudWatch
-* Added new variable, deploy_tag to be used for tagging resources as part of the deployment. This allows for stricter IAM policies on certain (dangerous) actions
+* Added new variable, deployment_restriction_tag to be used for tagging resources as part of the deployment. This allows for stricter IAM policies on certain (dangerous) actions
 * Changed graphdb_instance_volume policy to restrict ec2:AttachVolume and ec2:CreateVolume for only specifically tagged volumes
-* Extended graphdb_instance_volume_tagging by adding an additional constraint on ec2:CreateTags to allow instances that are already tagged with deploy_tag to be tagged with a Name
+* Extended graphdb_instance_volume_tagging by adding an additional constraint on ec2:CreateTags to allow instances that are already tagged with deployment_restriction_tag to be tagged with a Name
 
 ## 1.3.3
 

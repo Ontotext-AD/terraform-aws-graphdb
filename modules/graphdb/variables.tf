@@ -1,5 +1,5 @@
 # Common parameters
-variable "deploy_tag" {
+variable "deployment_restriction_tag" {
   description = "Deployment tag used to restrict access via IAM policies"
   type        = string
 }

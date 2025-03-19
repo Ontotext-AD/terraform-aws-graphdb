@@ -151,7 +151,7 @@ data "aws_iam_policy_document" "graphdb_instance_volume" {
 
     condition {
       test     = "StringEquals"
-      values   = [var.deploy_tag]
+      values   = [var.deployment_restriction_tag]
       variable = "aws:RequestTag/DeployTag"
     }
 
@@ -183,7 +183,7 @@ data "aws_iam_policy_document" "graphdb_instance_volume" {
 
     condition {
       test     = "StringEquals"
-      values   = [var.deploy_tag]
+      values   = [var.deployment_restriction_tag]
       variable = "aws:ResourceTag/DeployTag"
     }
   }
@@ -227,7 +227,7 @@ data "aws_iam_policy_document" "graphdb_instance_volume_tagging" {
       test     = "StringEquals"
       variable = "aws:ResourceTag/DeployTag"
       values = [
-        var.deploy_tag
+        var.deployment_restriction_tag
       ]
     }
 
