@@ -17,12 +17,17 @@ echo "#    Configuring the GraphDB backup cron job    #"
 echo "#################################################"
 
 if [ ${deploy_backup} == "true" ]; then
-  GRAPHDB_ADMIN_PASSWORD="$(aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/admin_password" --with-decryption | jq -r .Parameter.Value | base64 -d)"
+  # Initialize the log file so that we are safe from potential attacks
+  [[ -f /var/opt/graphdb/node/graphdb_backup.log ]] && rm /var/opt/graphdb/node/graphdb_backup.log
+  touch /var/opt/graphdb/node/graphdb_backup.log
+  # We should already be root but let's make sure
+  chown root:root /var/opt/graphdb/node/graphdb_backup.log
+  chmod og-rw /var/opt/graphdb/node/graphdb_backup.log
   cat <<-EOF >/usr/bin/graphdb_backup
 #!/bin/bash
 
 set -euo pipefail
-GRAPHDB_ADMIN_PASSWORD="\$1"
+GRAPHDB_ADMIN_PASSWORD="\$(aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/admin_password" --with-decryption | jq -r .Parameter.Value | base64 -d)"
 NODE_STATE="\$(curl --silent -u "admin:\$GRAPHDB_ADMIN_PASSWORD" http://localhost:7201/rest/cluster/node/status | jq -r .nodeState)"
 
 function trigger_backup {
@@ -83,7 +88,7 @@ fi
 EOF
 
   chmod +x /usr/bin/graphdb_backup
-  echo "${backup_schedule} graphdb /usr/bin/graphdb_backup $GRAPHDB_ADMIN_PASSWORD" >/etc/cron.d/graphdb_backup
+  echo "${backup_schedule} root /usr/bin/graphdb_backup" >/etc/cron.d/graphdb_backup
   chmod og-rwx /etc/cron.d/graphdb_backup
 
   log_with_timestamp "Cron job created"
