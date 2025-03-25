@@ -17,11 +17,14 @@ echo "#    Configuring the GraphDB backup cron job    #"
 echo "#################################################"
 
 if [ ${deploy_backup} == "true" ]; then
+  # Create the backup user. ID : 1010
+  echo "Creating the backup user"
+  useradd -r -M -s /usr/sbin/nologin gdb-backup
   # Initialize the log file so that we are safe from potential attacks
   [[ -f /var/opt/graphdb/node/graphdb_backup.log ]] && rm /var/opt/graphdb/node/graphdb_backup.log
   touch /var/opt/graphdb/node/graphdb_backup.log
   # We should already be root but let's make sure
-  chown root:root /var/opt/graphdb/node/graphdb_backup.log
+  chown gdb-backup:gdb-backup /var/opt/graphdb/node/graphdb_backup.log
   chmod og-rw /var/opt/graphdb/node/graphdb_backup.log
   cat <<-EOF >/usr/bin/graphdb_backup
 #!/bin/bash
@@ -88,9 +91,11 @@ fi
 EOF
 
   chmod +x /usr/bin/graphdb_backup
-  echo "${backup_schedule} root /usr/bin/graphdb_backup" >/etc/cron.d/graphdb_backup
+  echo "${backup_schedule} gdb-backup /usr/bin/graphdb_backup" >/etc/cron.d/graphdb_backup
   chmod og-rwx /etc/cron.d/graphdb_backup
-
+  # Set ownership of aws-cli to backup user
+  chown -R gdb-backup:gdb-backup /usr/local/aws-cli
+  chmod -R og-rwx /usr/local/aws-cli/
   log_with_timestamp "Cron job created"
 else
   log_with_timestamp "Backup module is not deployed, skipping provisioning..."
