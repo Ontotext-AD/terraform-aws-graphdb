@@ -82,7 +82,7 @@ GDB_PROPERTIES=$(aws --cli-connect-timeout 300 ssm get-parameter --region ${regi
 extra_graphdb_java_options="$(aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/graphdb_java_options" --with-decryption 2>/dev/null | jq -r .Parameter.Value || /bin/true )"
 if [[ -n $extra_graphdb_java_options  ]]; then
   if grep GDB_JAVA_OPTS /etc/graphdb/graphdb.env &>/dev/null; then
-    sed -ie "s/GDB_JAVA_OPTS=\"\(.*\)\"/GDB_JAVA_OPTS=\"\1 $extra_graphdb_java_options\"/g" /etc/graphdb/graphdb.env
+    sed -ie "s|GDB_JAVA_OPTS=\"\(.*\)\"|GDB_JAVA_OPTS=\"\1 $extra_graphdb_java_options\"|g" /etc/graphdb/graphdb.env
   else
     echo "GDB_JAVA_OPTS=$extra_graphdb_java_options" > /etc/graphdb/graphdb.env
   fi

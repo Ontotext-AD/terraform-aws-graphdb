@@ -17,12 +17,19 @@ echo "#    Configuring the GraphDB backup cron job    #"
 echo "#################################################"
 
 if [ ${deploy_backup} == "true" ]; then
-  GRAPHDB_ADMIN_PASSWORD="$(aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/admin_password" --with-decryption | jq -r .Parameter.Value | base64 -d)"
+  # Create the backup user. ID : 1010
+  echo "Creating the backup user"
+  useradd -r -M -s /usr/sbin/nologin gdb-backup
+  # Initialize the log file so that we are safe from potential attacks
+  [[ -f /var/opt/graphdb/node/graphdb_backup.log ]] && rm /var/opt/graphdb/node/graphdb_backup.log
+  touch /var/opt/graphdb/node/graphdb_backup.log
+  chown gdb-backup:gdb-backup /var/opt/graphdb/node/graphdb_backup.log
+  chmod og-rw /var/opt/graphdb/node/graphdb_backup.log
   cat <<-EOF >/usr/bin/graphdb_backup
 #!/bin/bash
 
 set -euo pipefail
-GRAPHDB_ADMIN_PASSWORD="\$1"
+GRAPHDB_ADMIN_PASSWORD="\$(aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/admin_password" --with-decryption | jq -r .Parameter.Value | base64 -d)"
 NODE_STATE="\$(curl --silent -u "admin:\$GRAPHDB_ADMIN_PASSWORD" http://localhost:7201/rest/cluster/node/status | jq -r .nodeState)"
 
 function trigger_backup {
@@ -83,9 +90,11 @@ fi
 EOF
 
   chmod +x /usr/bin/graphdb_backup
-  echo "${backup_schedule} graphdb /usr/bin/graphdb_backup $GRAPHDB_ADMIN_PASSWORD" >/etc/cron.d/graphdb_backup
+  echo "${backup_schedule} gdb-backup /usr/bin/graphdb_backup" >/etc/cron.d/graphdb_backup
   chmod og-rwx /etc/cron.d/graphdb_backup
-
+  # Set ownership of aws-cli to backup user
+  chown -R gdb-backup:gdb-backup /usr/local/aws-cli
+  chmod -R og-rwx /usr/local/aws-cli/
   log_with_timestamp "Cron job created"
 else
   log_with_timestamp "Backup module is not deployed, skipping provisioning..."

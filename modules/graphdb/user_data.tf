@@ -72,16 +72,20 @@ data "cloudinit_config" "graphdb_user_data" {
     })
   }
 
-  part {
-    content_type = "text/x-shellscript"
-    content = templatefile("${path.module}/templates/05_gdb_backup_conf.sh.tpl", {
-      name : var.resource_name_prefix
-      region : var.aws_region
-      backup_schedule : var.backup_schedule
-      backup_retention_count : var.backup_retention_count
-      backup_bucket_name : var.backup_bucket_name
-      deploy_backup : var.deploy_backup
-    })
+  dynamic "part" {
+    for_each = var.deploy_backup ? [1] : []
+
+    content {
+      content_type = "text/x-shellscript"
+      content = templatefile("${path.module}/templates/05_gdb_backup_conf.sh.tpl", {
+        name : var.resource_name_prefix
+        region : var.aws_region
+        backup_schedule : var.backup_schedule
+        backup_retention_count : var.backup_retention_count
+        backup_bucket_name : var.backup_bucket_name
+        deploy_backup : var.deploy_backup
+      })
+    }
   }
 
   part {
@@ -154,13 +158,19 @@ data "cloudinit_config" "graphdb_user_data" {
     }
   }
 
-  # 12 Make aws-cli accessible only for root user
-  part {
-    content_type = "text/x-shellscript"
-    content      = <<-EOF
-      #!/bin/bash
+  # 12 Make aws-cli accessible only for root user iff backup is not enabled (otherwise, will be owned by the backup user)
+  dynamic "part" {
+    for_each = var.deploy_backup ? [] : [1]
+
+    content {
+      content_type = "text/x-shellscript"
+      content      = <<-EOF
+            #!/bin/bash
       set -euo pipefail
       chmod -R og-rwx /usr/local/aws-cli/
     EOF
+    }
+
   }
+
 }
