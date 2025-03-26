@@ -23,7 +23,6 @@ if [ ${deploy_backup} == "true" ]; then
   # Initialize the log file so that we are safe from potential attacks
   [[ -f /var/opt/graphdb/node/graphdb_backup.log ]] && rm /var/opt/graphdb/node/graphdb_backup.log
   touch /var/opt/graphdb/node/graphdb_backup.log
-  # We should already be root but let's make sure
   chown gdb-backup:gdb-backup /var/opt/graphdb/node/graphdb_backup.log
   chmod og-rw /var/opt/graphdb/node/graphdb_backup.log
   cat <<-EOF >/usr/bin/graphdb_backup
