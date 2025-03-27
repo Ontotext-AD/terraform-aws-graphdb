@@ -531,6 +531,49 @@ vpc_public_subnet_ids = ["subnet-123456","subnet-234567","subnet-345678"]
 vpc_private_subnet_ids = ["subnet-456789","subnet-567891","subnet-678912"]
 ```
 
+#### User Data Customization
+
+- Providing user_supplied_scripts
+
+Paths to local shell script files that will be injected into the instance user data.
+Each file should be a valid shell script.
+•	Scripts are executed in the order provided.
+
+```hcl
+user_supplied_scripts = [
+"${path.module}/scripts/init.sh",
+"${path.module}/scripts/configure.sh"
+]
+```
+- Providing user_supplied_rendered_templates
+
+A list of raw shell script strings, already rendered, which will be included directly into the instance user data.
+
+```hcl
+user_supplied_rendered_templates = [
+  <<-EOT
+    #!/bin/bash
+    echo "Inline startup task"
+    export ENV=production
+  EOT
+]
+```
+
+- Providing user_supplied_templates
+
+A list of template files (plus variables) that will be rendered and included into the instance user data.
+
+```hcl
+graphdb_user_supplied_templates = [
+  {
+    path = "s3_copy.sh.tpl"
+    variables = {
+      s3_bucket_url = "s3://test-bucket-zhekov"
+    }
+  }
+]
+```
+
 ## Single Node Deployment
 
 This Terraform module can deploy a single instance of GraphDB.

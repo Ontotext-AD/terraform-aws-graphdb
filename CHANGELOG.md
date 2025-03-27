@@ -15,6 +15,7 @@
 * Added new variable, deployment_restriction_tag to be used for tagging resources as part of the deployment. This allows for stricter IAM policies on certain (dangerous) actions
 * Changed graphdb_instance_volume policy to restrict ec2:AttachVolume and ec2:CreateVolume for only specifically tagged volumes
 * Extended graphdb_instance_volume_tagging by adding an additional constraint on ec2:CreateTags to allow instances that are already tagged with deployment_restriction_tag to be tagged with a Name
+* Added ability to attach custom user data scripts, templates or rendered templates to the EC2 Userdata
 
 ## 1.3.3
 
