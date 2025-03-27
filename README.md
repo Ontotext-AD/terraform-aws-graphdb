@@ -175,6 +175,9 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | asg\_enable\_instance\_refresh | Enables instance refresh for the GraphDB Auto scaling group. A refresh is started when any of the following Auto Scaling Group properties change: launch\_configuration, launch\_template, mixed\_instances\_policy | `bool` | `false` | no |
 | asg\_instance\_refresh\_checkpoint\_delay | Number of seconds to wait after a checkpoint. | `number` | `3600` | no |
 | graphdb\_enable\_userdata\_scripts\_on\_reboot | (Experimental) Modifies cloud-config to always run user data scripts on EC2 boot | `bool` | `false` | no |
+| graphdb\_user\_supplied\_scripts | A list of paths to user-supplied shell scripts (local files) to be injected as additional parts in the EC2 user\_data. | `list(string)` | `[]` | no |
+| graphdb\_user\_supplied\_rendered\_templates | A list of strings containing pre-rendered shell script content to be added as parts in EC2 user\_data. | `list(string)` | `[]` | no |
+| graphdb\_user\_supplied\_templates | A list of maps where each map contains a 'path' to the template file and a 'variables' map used to render it. | ```list(object({ path = string variables = map(any) }))``` | `[]` | no |
 | create\_s3\_kms\_key | Enable creation of KMS key for S3 bucket encryption | `bool` | `false` | no |
 | s3\_kms\_key\_admin\_arn | ARN of the role or user granted administrative access to the S3 KMS key. | `string` | `""` | no |
 | s3\_key\_rotation\_enabled | Specifies whether key rotation is enabled. | `bool` | `true` | no |
