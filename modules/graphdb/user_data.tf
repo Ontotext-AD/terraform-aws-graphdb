@@ -170,7 +170,32 @@ data "cloudinit_config" "graphdb_user_data" {
       chmod -R og-rwx /usr/local/aws-cli/
     EOF
     }
-
   }
 
+  # Execute additional scripts
+  dynamic "part" {
+    for_each = var.user_supplied_scripts
+    content {
+      content_type = "text/x-shellscript"
+      content      = file(part.value)
+    }
+  }
+
+  # Execute additional rendered templates
+  dynamic "part" {
+    for_each = var.user_supplied_rendered_templates
+    content {
+      content_type = "text/x-shellscript"
+      content      = part.value
+    }
+  }
+
+  # Execute additional templates
+  dynamic "part" {
+    for_each = var.user_supplied_templates
+    content {
+      content_type = "text/x-shellscript"
+      content      = templatefile(part.value["path"], part.value["variables"])
+    }
+  }
 }

@@ -340,6 +340,9 @@ module "graphdb" {
   asg_enable_instance_refresh               = var.asg_enable_instance_refresh
   asg_instance_refresh_checkpoint_delay     = var.asg_instance_refresh_checkpoint_delay
   graphdb_enable_userdata_scripts_on_reboot = var.graphdb_enable_userdata_scripts_on_reboot
+  user_supplied_scripts                     = var.graphdb_user_supplied_scripts
+  user_supplied_templates                   = var.graphdb_user_supplied_templates
+  user_supplied_rendered_templates          = var.graphdb_user_supplied_rendered_templates
 
   # Parameter store encryption
 

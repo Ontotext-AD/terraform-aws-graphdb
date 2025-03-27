@@ -175,6 +175,9 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | asg\_enable\_instance\_refresh | Enables instance refresh for the GraphDB Auto scaling group. A refresh is started when any of the following Auto Scaling Group properties change: launch\_configuration, launch\_template, mixed\_instances\_policy | `bool` | `false` | no |
 | asg\_instance\_refresh\_checkpoint\_delay | Number of seconds to wait after a checkpoint. | `number` | `3600` | no |
 | graphdb\_enable\_userdata\_scripts\_on\_reboot | (Experimental) Modifies cloud-config to always run user data scripts on EC2 boot | `bool` | `false` | no |
+| graphdb\_user\_supplied\_scripts | A list of paths to user-supplied shell scripts (local files) to be injected as additional parts in the EC2 user\_data. | `list(string)` | `[]` | no |
+| graphdb\_user\_supplied\_rendered\_templates | A list of strings containing pre-rendered shell script content to be added as parts in EC2 user\_data. | `list(string)` | `[]` | no |
+| graphdb\_user\_supplied\_templates | A list of maps where each map contains a 'path' to the template file and a 'variables' map used to render it. | ```list(object({ path = string variables = map(any) }))``` | `[]` | no |
 | create\_s3\_kms\_key | Enable creation of KMS key for S3 bucket encryption | `bool` | `false` | no |
 | s3\_kms\_key\_admin\_arn | ARN of the role or user granted administrative access to the S3 KMS key. | `string` | `""` | no |
 | s3\_key\_rotation\_enabled | Specifies whether key rotation is enabled. | `bool` | `true` | no |
@@ -529,6 +532,49 @@ route53_existing_zone_id = "ZONE_ID"
 vpc_id = "vpc-12345678"
 vpc_public_subnet_ids = ["subnet-123456","subnet-234567","subnet-345678"]
 vpc_private_subnet_ids = ["subnet-456789","subnet-567891","subnet-678912"]
+```
+
+#### User Data Customization
+
+- Providing user_supplied_scripts
+
+Paths to local shell script files that will be injected into the instance user data.
+Each file should be a valid shell script.
+•	Scripts are executed in the order provided.
+
+```hcl
+user_supplied_scripts = [
+"${path.module}/scripts/init.sh",
+"${path.module}/scripts/configure.sh"
+]
+```
+- Providing user_supplied_rendered_templates
+
+A list of raw shell script strings, already rendered, which will be included directly into the instance user data.
+
+```hcl
+user_supplied_rendered_templates = [
+  <<-EOT
+    #!/bin/bash
+    echo "Inline startup task"
+    export ENV=production
+  EOT
+]
+```
+
+- Providing user_supplied_templates
+
+A list of template files (plus variables) that will be rendered and included into the instance user data.
+
+```hcl
+graphdb_user_supplied_templates = [
+  {
+    path = "s3_copy.sh.tpl"
+    variables = {
+      s3_bucket_url = "s3://test-bucket-zhekov"
+    }
+  }
+]
 ```
 
 ## Single Node Deployment

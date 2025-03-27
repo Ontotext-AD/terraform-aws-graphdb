@@ -547,6 +547,27 @@ variable "graphdb_enable_userdata_scripts_on_reboot" {
   default     = false
 }
 
+variable "graphdb_user_supplied_scripts" {
+  description = "A list of paths to user-supplied shell scripts (local files) to be injected as additional parts in the EC2 user_data."
+  type        = list(string)
+  default     = []
+}
+
+variable "graphdb_user_supplied_rendered_templates" {
+  description = "A list of strings containing pre-rendered shell script content to be added as parts in EC2 user_data."
+  type        = list(string)
+  default     = []
+}
+
+variable "graphdb_user_supplied_templates" {
+  description = "A list of maps where each map contains a 'path' to the template file and a 'variables' map used to render it."
+  type = list(object({
+    path      = string
+    variables = map(any)
+  }))
+  default = []
+}
+
 # S3 bucket encryption
 
 variable "create_s3_kms_key" {
