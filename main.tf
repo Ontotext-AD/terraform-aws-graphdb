@@ -245,6 +245,7 @@ module "graphdb" {
   aws_region                 = data.aws_region.current.name
   aws_subscription_id        = data.aws_caller_identity.current.account_id
   assume_role_principal_arn  = var.assume_role_principal_arn
+  additional_policy_arns     = var.graphdb_additional_policy_arns
 
   # Networking
 
