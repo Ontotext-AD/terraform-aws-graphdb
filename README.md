@@ -571,9 +571,22 @@ graphdb_user_supplied_templates = [
   {
     path = "s3_copy.sh.tpl"
     variables = {
-      s3_bucket_url = "s3://test-bucket-zhekov"
+      s3_bucket_url = "s3://bucket-name"
     }
   }
+]
+```
+
+#### Attaching additional IAM policies
+
+- To grant extra permissions to the instance role used by the GraphDB module, you can attach additional IAM policies
+  by specifying their ARNs in the graphdb_additional_policy_arns variable. This variable accepts a list of policy ARNs.
+  For example, if you want to attach two additional policies, you can configure the variable as follows:
+
+```hcl
+graphdb_additional_policy_arns = [
+"arn:aws:iam::123456789012:policy/ExtraPolicy1",
+"arn:aws:iam::123456789012:policy/ExtraPolicy2",
 ]
 ```
 

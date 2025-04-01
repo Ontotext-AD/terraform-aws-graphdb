@@ -1,5 +1,9 @@
 # GraphDB AWS Terraform Module Changelog
 
+## 1.5.0
+* Added ability to provide additiona ARNs for IAM Policies
+* Added ability to dynamically get http protocol based on lb_certificate_arn
+
 ## 1.4.1
 
 * Update default GraphDB version to [10.8.5](https://graphdb.ontotext.com/documentation/10.8/release-notes.html#graphdb-10-8-5)
