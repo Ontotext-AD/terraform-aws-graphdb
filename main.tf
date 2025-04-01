@@ -245,6 +245,7 @@ module "graphdb" {
   aws_region                 = data.aws_region.current.name
   aws_subscription_id        = data.aws_caller_identity.current.account_id
   assume_role_principal_arn  = var.assume_role_principal_arn
+  additional_policy_arns     = var.graphdb_additional_policy_arns
 
   # Networking
 
@@ -337,8 +338,6 @@ module "graphdb" {
   backup_enable_replication  = var.backup_enable_bucket_replication
 
   # ASG instance deployment options
-  asg_enable_instance_refresh               = var.asg_enable_instance_refresh
-  asg_instance_refresh_checkpoint_delay     = var.asg_instance_refresh_checkpoint_delay
   graphdb_enable_userdata_scripts_on_reboot = var.graphdb_enable_userdata_scripts_on_reboot
   user_supplied_scripts                     = var.graphdb_user_supplied_scripts
   user_supplied_templates                   = var.graphdb_user_supplied_templates

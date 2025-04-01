@@ -98,6 +98,7 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | assume\_role\_session\_name | (Optional) name of the session to be assumed to run session | `string` | `null` | no |
 | assume\_role\_external\_id | The external ID can be any identifier that is known only by you and the third party. For example, you can use an invoice ID between you and the third party | `string` | `null` | no |
 | assume\_role\_principal\_arn | (Optional) Principal for the IAM role assume policies | `string` | `null` | no |
+| graphdb\_additional\_policy\_arns | List of additional IAM policy ARNs to attach to the instance IAM role | `list(string)` | `[]` | no |
 | deploy\_backup | Deploy backup module | `bool` | `true` | no |
 | backup\_schedule | Cron expression for the backup job. | `string` | `"0 0 * * *"` | no |
 | backup\_retention\_count | Number of backups to keep. | `number` | `7` | no |
@@ -172,8 +173,6 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | lb\_enable\_access\_logs | Enable or disable access logs for the NLB | `bool` | `false` | no |
 | lb\_access\_logs\_expiration\_days | Define the days after which the LB access logs should be deleted. | `number` | `14` | no |
 | bucket\_replication\_destination\_region | Define in which Region should the bucket be replicated | `string` | `null` | no |
-| asg\_enable\_instance\_refresh | Enables instance refresh for the GraphDB Auto scaling group. A refresh is started when any of the following Auto Scaling Group properties change: launch\_configuration, launch\_template, mixed\_instances\_policy | `bool` | `false` | no |
-| asg\_instance\_refresh\_checkpoint\_delay | Number of seconds to wait after a checkpoint. | `number` | `3600` | no |
 | graphdb\_enable\_userdata\_scripts\_on\_reboot | (Experimental) Modifies cloud-config to always run user data scripts on EC2 boot | `bool` | `false` | no |
 | graphdb\_user\_supplied\_scripts | A list of paths to user-supplied shell scripts (local files) to be injected as additional parts in the EC2 user\_data. | `list(string)` | `[]` | no |
 | graphdb\_user\_supplied\_rendered\_templates | A list of strings containing pre-rendered shell script content to be added as parts in EC2 user\_data. | `list(string)` | `[]` | no |
@@ -569,11 +568,24 @@ A list of template files (plus variables) that will be rendered and included int
 ```hcl
 graphdb_user_supplied_templates = [
   {
-    path = "s3_copy.sh.tpl"
+    path = "/path/to/yourscript.sh.tpl"
     variables = {
-      s3_bucket_url = "s3://test-bucket-zhekov"
+      s3_bucket_url = "s3://bucket-name"
     }
   }
+]
+```
+
+#### Attaching additional IAM policies
+
+- To grant extra permissions to the instance role used by the GraphDB module, you can attach additional IAM policies
+  by specifying their ARNs in the graphdb_additional_policy_arns variable. This variable accepts a list of policy ARNs.
+  For example, if you want to attach two additional policies, you can configure the variable as follows:
+
+```hcl
+graphdb_additional_policy_arns = [
+  "arn:aws:iam::123456789012:policy/ExtraPolicy1",
+  "arn:aws:iam::123456789012:policy/ExtraPolicy2"
 ]
 ```
 
@@ -585,6 +597,8 @@ To do this, set `graphdb_node_count` to `1`, and the rest will be handled automa
 **Important:** Scaling from a single-node deployment to a cluster deployment (e.g., changing `graphdb_node_count` from 1 to 3)
 is not fully automated. While the Terraform module will allow you to scale up and create 3 instances,
 the cluster will not be formed unless you terminate the initial node.
+
+**Note:** Make sure that the new instances are running before terminating the initial node.
 
 **Please note that this operation is disruptive, and there is a risk that things may not go as expected.**
 
@@ -612,29 +626,11 @@ Support for this will be introduced in the future.
 
 ### Upgrading GraphDB Version
 
-To automatically update the GraphDB version with `terraform apply`, you could set `asg_enable_instance_refresh` to `true`
-in your `tfvars` file. This configuration will enable [instance refresh](https://docs.aws.amazon.com/autoscaling/ec2/userguide/instance-refresh-overview.html)
-for the ASG and will replace your already running instances with new ones, one at a time.
+Updating the graphdb version is performed by changing the value of `graphdb_version` property and executing `terraform apply`.
 
-By default, the instance refresh process waits for one hour before updating the next instance.
-This delay allows GraphDB time to sync with other nodes.
-You can adjust this delay by changing the `asg_instance_refresh_checkpoint_delay` value.
-If there are many writes to the cluster, consider increasing this delay.
-
-Note that any changes to GraphDB configurations will be applied during the instance refresh process,
-except for the `graphdb_admin_password`.
-Support for updating the admin password will be introduced in a future release.
-
-### ⚠️ **WARNING**
-Enabling `asg_enable_instance_refresh` while scaling out the GraphDB cluster may lead to data replication issues or broken cluster configuration.
-Existing instances could still undergo the refresh process, might change their original Availability zone
-and new nodes might fail to join the cluster due to the instance refresh, depending on the data size.
-
-**We strongly recommend disabling `asg_enable_instance_refresh` when scaling up the cluster.**
-
-To work around this issue, you can manually set "Scale-in protection" on the existing nodes, scale out the cluster,
-and then remove the "Scale-in protection".
-However, any configuration changes will not be applied to the old instances, which could cause them to drift apart.
+Note that the EC2 instances won't be automatically updated to the latest model, and they need to be recreated.
+Make sure the instances are recreated one by one, allowing them time to rejoin the cluster, to avoid downtime and
+unexpected behavior.
 
 ## Local Development
 

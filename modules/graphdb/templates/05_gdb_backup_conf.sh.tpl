@@ -39,28 +39,42 @@ function trigger_backup {
   echo "Creating backup \$backup_name at \$start_time"
 
   curl \
-    -vvv --fail \
-    --user "admin:\$GRAPHDB_ADMIN_PASSWORD" \
-    --url localhost:7201/rest/recovery/cloud-backup \
-    --header 'Content-Type: application/json' \
-    --header 'Accept: application/json' \
-    --data-binary @- <<-DATA
-    {
-      "backupOptions": { "backupSystemData": true },
-      "bucketUri": "s3:///${backup_bucket_name}/\$backup_name?region=${region}"
-    }
+      -vvv --fail \
+      --user "admin:\$GRAPHDB_ADMIN_PASSWORD" \
+      --url localhost:7201/rest/recovery/cloud-backup \
+      --header 'Content-Type: multipart/form-data' \
+      --header 'Accept: application/json' \
+      --form "params=\$(cat <<-DATA
+  {
+        "backupSystemData": true,
+        "bucketUri": "s3:///${backup_bucket_name}/\$backup_name?region=${region}"
+  }
 DATA
+  )"
 }
 
 function rotate_backups {
-  all_files="\$(aws --cli-connect-timeout 300 s3api list-objects --bucket ${backup_bucket_name} --query 'Contents' | jq .)"
-  count="\$(echo \$all_files | jq length)"
-  delete_count="\$((count - ${backup_retention_count} - 1))"
+  echo "Rotating backups - permanently deleting old versions"
+  versions_json=\$(aws --cli-connect-timeout 300 s3api list-object-versions --bucket ${backup_bucket_name})
+  version_count=\$(echo "\$${versions_json}" | jq '[.Versions[]] | length')
+  delete_count=\$((version_count - ${backup_retention_count} - 1))
 
   for i in \$(seq 0 \$delete_count); do
-    key="\$(echo \$all_files | jq -r .[\$i].Key)"
+    key=\$(echo "\$${versions_json}" | jq -r ".Versions[\$${i}].Key")
+    version_id=\$(echo "\$${versions_json}" | jq -r ".Versions[\$${i}].VersionId")
 
-    aws --cli-connect-timeout 300 s3 rm s3://${backup_bucket_name}/\$key
+    echo "Deleting: \$${key} (version: \$${version_id})"
+    aws --cli-connect-timeout 300 s3api delete-object --bucket ${backup_bucket_name} --key "\$${key}" --version-id "\$${version_id}"
+  done
+
+  # Also clean up delete markers if any exist
+  delete_markers=\$(echo "\$${versions_json}" | jq -c '.DeleteMarkers[]?')
+  for dm in \$${delete_markers}; do
+    dm_key=\$(echo "\$${dm}" | jq -r .Key)
+    dm_version_id=\$(echo "\$${dm}" | jq -r .VersionId)
+
+    echo "Deleting delete marker: \$${dm_key} (version: \$${dm_version_id})"
+    aws --cli-connect-timeout 300 s3api delete-object --bucket ${backup_bucket_name} --key "\$${dm_key}" --version-id "\$${dm_version_id}"
   done
 }
 
@@ -85,7 +99,7 @@ elif [ "\$IS_CLUSTER" -ne 200 ]; then
   (trigger_backup && echo "") | tee -a /var/opt/graphdb/node/graphdb_backup.log
 fi
 
-  rotate_backups
+rotate_backups | tee -a /var/opt/graphdb/node/graphdb_backup.log
 
 EOF
 

@@ -520,3 +520,9 @@ resource "aws_iam_role_policy" "param_store_key_admin_role_permissions" {
   role   = aws_iam_role.param_store_key_admin_role.name
   policy = data.aws_iam_policy_document.param_store_key_admin_role_permissions.json
 }
+
+resource "aws_iam_role_policy_attachment" "additional_policies" {
+  for_each   = toset(var.additional_policy_arns)
+  role       = aws_iam_role.graphdb_iam_role.id
+  policy_arn = each.value
+}

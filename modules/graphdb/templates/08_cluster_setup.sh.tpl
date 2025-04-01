@@ -51,9 +51,9 @@ EXISTING_DNS_RECORDS=$(aws route53 list-resource-record-sets --hosted-zone-id "$
 readarray -t EXISTING_DNS_RECORDS_ARRAY <<<$(echo "$EXISTING_DNS_RECORDS" | jq -r '.[] | rtrimstr(".")')
 # Builds grpc addresses for all nodes registered in Route53
 CLUSTER_ADDRESS_GRPC=$(echo "$EXISTING_DNS_RECORDS" | jq -r '[ .[] | rtrimstr(".") + ":7301" ]')
-# Determine with is the lowest instance ID
+# Determine which is the highest instance ID
 SORTED_INSTANCE_IDS=($(echo "$${EXISTING_DNS_RECORDS_ARRAY[@]}" | tr ' ' '\n' | sort -n))
-LOWEST_INSTANCE_ID=$${SORTED_INSTANCE_IDS[0]}
+HIGHEST_INSTANCE_ID=$${SORTED_INSTANCE_IDS[$${#SORTED_INSTANCE_IDS[@]}-1]}
 
 check_all_dns_records "${route53_zone_id}" "${route53_zone_dns_name}" "$RETRY_DELAY"
 
@@ -112,7 +112,7 @@ create_cluster() {
     elif [ "$is_cluster" == 503 ]; then
       # Create the GraphDB cluster configuration if it does not exist.
       local cluster_create=$(
-        curl -X POST -s "http://node-1.${route53_zone_dns_name}:7201/rest/cluster/config" \
+        curl -X POST -s "http://localhost:7201/rest/cluster/config" \
           -o "/dev/null" \
           -w "%%{http_code}" \
           -H 'Content-type: application/json' \
@@ -135,12 +135,11 @@ create_cluster() {
   done
 }
 
-#  Only the instance with the lowest ID would attempt to create the cluster
-if [ $NODE_DNS_RECORD == $LOWEST_INSTANCE_ID ]; then
+if [ "$NODE_DNS_RECORD" == "$HIGHEST_INSTANCE_ID" ]; then
   check_license
   create_cluster
   find_leader_node
   configure_graphdb_security "$GRAPHDB_ADMIN_PASSWORD"
 else
-  log_with_timestamp "Node $NODE_DNS_RECORD is not the lowest instance, skipping cluster creation."
+  log_with_timestamp "Node $NODE_DNS_RECORD is not the highest instance, skipping cluster creation."
 fi
