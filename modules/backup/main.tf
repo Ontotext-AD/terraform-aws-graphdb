@@ -81,7 +81,9 @@ data "aws_iam_policy_document" "backup_s3_crud" {
       "s3:PutObject",
       "s3:GetAccelerateConfiguration",
       "s3:ListMultipartUploadParts",
-      "s3:AbortMultipartUpload"
+      "s3:AbortMultipartUpload",
+      "s3:ListBucketVersions",
+      "s3:DeleteObjectVersion"
     ]
     resources = [
       # the exact ARN is needed for the list bucket action, star for put,get,delete
