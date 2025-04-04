@@ -98,6 +98,7 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | assume\_role\_session\_name | (Optional) name of the session to be assumed to run session | `string` | `null` | no |
 | assume\_role\_external\_id | The external ID can be any identifier that is known only by you and the third party. For example, you can use an invoice ID between you and the third party | `string` | `null` | no |
 | assume\_role\_principal\_arn | (Optional) Principal for the IAM role assume policies | `string` | `null` | no |
+| graphdb\_additional\_policy\_arns | List of additional IAM policy ARNs to attach to the instance IAM role | `list(string)` | `[]` | no |
 | deploy\_backup | Deploy backup module | `bool` | `true` | no |
 | backup\_schedule | Cron expression for the backup job. | `string` | `"0 0 * * *"` | no |
 | backup\_retention\_count | Number of backups to keep. | `number` | `7` | no |
@@ -571,9 +572,22 @@ graphdb_user_supplied_templates = [
   {
     path = "s3_copy.sh.tpl"
     variables = {
-      s3_bucket_url = "s3://test-bucket-zhekov"
+      s3_bucket_url = "s3://bucket-name"
     }
   }
+]
+```
+
+#### Attaching additional IAM policies
+
+- To grant extra permissions to the instance role used by the GraphDB module, you can attach additional IAM policies
+  by specifying their ARNs in the graphdb_additional_policy_arns variable. This variable accepts a list of policy ARNs.
+  For example, if you want to attach two additional policies, you can configure the variable as follows:
+
+```hcl
+graphdb_additional_policy_arns = [
+"arn:aws:iam::123456789012:policy/ExtraPolicy1",
+"arn:aws:iam::123456789012:policy/ExtraPolicy2",
 ]
 ```
 

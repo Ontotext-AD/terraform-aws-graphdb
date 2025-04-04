@@ -442,3 +442,9 @@ variable "user_supplied_templates" {
   }))
   default = []
 }
+
+variable "additional_policy_arns" {
+  description = "List of additional IAM policy ARNs to attach to the instance IAM role"
+  type        = list(string)
+  default     = []
+}

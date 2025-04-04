@@ -1,6 +1,5 @@
 # Common configurations
 
-
 variable "deployment_restriction_tag" {
   description = "Deployment tag used to restrict access via IAM policies"
   type        = string
@@ -57,7 +56,14 @@ variable "assume_role_principal_arn" {
   default     = null
 }
 
+variable "graphdb_additional_policy_arns" {
+  description = "List of additional IAM policy ARNs to attach to the instance IAM role"
+  type        = list(string)
+  default     = []
+}
+
 # Backup configurations
+
 variable "deploy_backup" {
   description = "Deploy backup module"
   type        = bool
@@ -765,6 +771,7 @@ variable "create_ebs_kms_key" {
   type        = bool
   default     = false
 }
+
 # SNS Encryption
 
 variable "create_sns_kms_key" {
