@@ -570,7 +570,7 @@ A list of template files (plus variables) that will be rendered and included int
 ```hcl
 graphdb_user_supplied_templates = [
   {
-    path = "s3_copy.sh.tpl"
+    path = "/path/to/yourscript.sh.tpl"
     variables = {
       s3_bucket_url = "s3://bucket-name"
     }
