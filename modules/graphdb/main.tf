@@ -97,24 +97,6 @@ resource "aws_autoscaling_group" "graphdb_auto_scaling_group" {
     version = aws_launch_template.graphdb.latest_version
   }
 
-  dynamic "instance_refresh" {
-    for_each = var.asg_enable_instance_refresh ? [1] : []
-    content {
-      strategy = "Rolling"
-
-      preferences {
-        min_healthy_percentage = var.asg_instance_refresh_min_healthy_percentage
-        instance_warmup        = var.asg_instance_refresh_instance_warmup
-        skip_matching          = var.asg_instance_refresh_skip_matching
-        checkpoint_delay       = var.asg_instance_refresh_checkpoint_delay
-        checkpoint_percentages = [
-          for i in range(var.graphdb_node_count) :
-          floor((i + 1) * 100 / var.graphdb_node_count)
-        ]
-      }
-    }
-  }
-
   tag {
     key                 = "DeployTag"
     value               = var.deployment_restriction_tag
