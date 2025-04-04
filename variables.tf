@@ -535,18 +535,6 @@ variable "bucket_replication_destination_region" {
 
 # ASG instance deployment options
 
-variable "asg_enable_instance_refresh" {
-  description = "Enables instance refresh for the GraphDB Auto scaling group. A refresh is started when any of the following Auto Scaling Group properties change: launch_configuration, launch_template, mixed_instances_policy"
-  type        = bool
-  default     = false
-}
-
-variable "asg_instance_refresh_checkpoint_delay" {
-  description = "Number of seconds to wait after a checkpoint."
-  type        = number
-  default     = 3600
-}
-
 variable "graphdb_enable_userdata_scripts_on_reboot" {
   description = "(Experimental) Modifies cloud-config to always run user data scripts on EC2 boot"
   type        = bool
