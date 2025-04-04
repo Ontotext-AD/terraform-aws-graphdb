@@ -2,7 +2,7 @@
 
 ## 1.5.0
 * Added ability to provide additiona ARNs for IAM Policies
-* Added ability to dynamically get http protocol based on lb_certificate_arn
+* Added ability to get dynamic http protocol for gdb_conf_overrides based on the lb_certificate_arn
 
 ## 1.4.1
 
