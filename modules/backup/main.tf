@@ -99,3 +99,20 @@ resource "aws_s3_bucket_logging" "graphdb_backup_bucket_logs" {
   target_bucket = var.s3_access_logs_bucket_name
   target_prefix = "s3_access_logs/"
 }
+
+resource "aws_s3_bucket_lifecycle_configuration" "graphdb_backup_lifecycle" {
+  bucket = aws_s3_bucket.graphdb_backup.id
+
+  rule {
+    id     = "expire-deleted-items"
+    status = "Enabled"
+
+    filter {
+      prefix = ""
+    }
+
+    expiration {
+      days = 1
+    }
+  }
+}
