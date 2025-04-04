@@ -1,5 +1,9 @@
 # GraphDB AWS Terraform Module Changelog
 
+## 1.4.1
+
+* Update default GraphDB version to [10.8.5](https://graphdb.ontotext.com/documentation/10.8/release-notes.html#graphdb-10-8-5)
+
 ## 1.4.0
 
 * Added ability to specify IAM role to be assumed in provider.tf
@@ -16,6 +20,10 @@
 * Changed graphdb_instance_volume policy to restrict ec2:AttachVolume and ec2:CreateVolume for only specifically tagged volumes
 * Extended graphdb_instance_volume_tagging by adding an additional constraint on ec2:CreateTags to allow instances that are already tagged with deployment_restriction_tag to be tagged with a Name
 * Added ability to attach custom user data scripts, templates or rendered templates to the EC2 Userdata
+
+## 1.3.4
+
+* Update default GraphDB version to [10.8.4](https://graphdb.ontotext.com/documentation/10.8/release-notes.html#graphdb-10-8-4)
 
 ## 1.3.3
 
