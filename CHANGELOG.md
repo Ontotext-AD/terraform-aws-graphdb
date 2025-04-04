@@ -1,8 +1,10 @@
 # GraphDB AWS Terraform Module Changelog
 
 ## 1.5.0
-* Added ability to provide additiona ARNs for IAM Policies
+* Added ability to provide additional ARNs for IAM Policies
 * Added ability to get dynamic http protocol for gdb_conf_overrides based on the lb_certificate_arn
+* Removed the `asg_enable_instance_refresh` property and the instance auto-refresh functionality.
+* Fixed issue where the cluster was not formed when scaling from 1 node to 3 or more nodes.
 * Updated backup script to use the new multipart endpoint
 
 ## 1.4.1

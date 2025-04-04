@@ -233,34 +233,6 @@ variable "graphdb_enable_userdata_scripts_on_reboot" {
   type        = bool
 }
 
-variable "asg_enable_instance_refresh" {
-  description = "Enables instance refresh for the GraphDB Auto scaling group"
-  type        = bool
-}
-
-variable "asg_instance_refresh_min_healthy_percentage" {
-  description = "Specifies the lower limit on the number of instances that must be in the InService state with a healthy status during an instance replacement activity."
-  type        = number
-  default     = 66
-}
-
-variable "asg_instance_refresh_instance_warmup" {
-  description = "Number of seconds until a newly launched instance is configured and ready to use. Default behavior is to use the Auto Scaling Group's health check grace period."
-  type        = number
-  default     = 0
-}
-
-variable "asg_instance_refresh_skip_matching" {
-  description = " Replace instances that already have your desired configuration."
-  type        = bool
-  default     = false
-}
-
-variable "asg_instance_refresh_checkpoint_delay" {
-  description = "Number of seconds to wait after a checkpoint."
-  type        = number
-}
-
 variable "lb_enable_private_access" {
   description = "Enable or disable the private access via PrivateLink to the GraphDB Cluster"
   type        = bool

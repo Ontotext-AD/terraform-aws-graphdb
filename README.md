@@ -600,6 +600,8 @@ To do this, set `graphdb_node_count` to `1`, and the rest will be handled automa
 is not fully automated. While the Terraform module will allow you to scale up and create 3 instances,
 the cluster will not be formed unless you terminate the initial node.
 
+**Note:** Make sure that the new instances are running before terminating the initial node.
+
 **Please note that this operation is disruptive, and there is a risk that things may not go as expected.**
 
 ## Updating configurations on an active deployment
@@ -626,29 +628,11 @@ Support for this will be introduced in the future.
 
 ### Upgrading GraphDB Version
 
-To automatically update the GraphDB version with `terraform apply`, you could set `asg_enable_instance_refresh` to `true`
-in your `tfvars` file. This configuration will enable [instance refresh](https://docs.aws.amazon.com/autoscaling/ec2/userguide/instance-refresh-overview.html)
-for the ASG and will replace your already running instances with new ones, one at a time.
+Updating the graphdb version is performed by changing the value of `graphdb_version` property and executing `terraform apply`.
 
-By default, the instance refresh process waits for one hour before updating the next instance.
-This delay allows GraphDB time to sync with other nodes.
-You can adjust this delay by changing the `asg_instance_refresh_checkpoint_delay` value.
-If there are many writes to the cluster, consider increasing this delay.
-
-Note that any changes to GraphDB configurations will be applied during the instance refresh process,
-except for the `graphdb_admin_password`.
-Support for updating the admin password will be introduced in a future release.
-
-### ⚠️ **WARNING**
-Enabling `asg_enable_instance_refresh` while scaling out the GraphDB cluster may lead to data replication issues or broken cluster configuration.
-Existing instances could still undergo the refresh process, might change their original Availability zone
-and new nodes might fail to join the cluster due to the instance refresh, depending on the data size.
-
-**We strongly recommend disabling `asg_enable_instance_refresh` when scaling up the cluster.**
-
-To work around this issue, you can manually set "Scale-in protection" on the existing nodes, scale out the cluster,
-and then remove the "Scale-in protection".
-However, any configuration changes will not be applied to the old instances, which could cause them to drift apart.
+Note that the EC2 instances won't be automatically updated to the latest model, and they need to be recreated.
+Make sure the instances are recreated one by one, allowing them time to rejoin the cluster, to avoid downtime and
+unexpected behavior.
 
 ## Local Development
 
