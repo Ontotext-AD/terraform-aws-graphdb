@@ -39,17 +39,18 @@ function trigger_backup {
   echo "Creating backup \$backup_name at \$start_time"
 
   curl \
-    -vvv --fail \
-    --user "admin:\$GRAPHDB_ADMIN_PASSWORD" \
-    --url localhost:7201/rest/recovery/cloud-backup \
-    --header 'Content-Type: application/json' \
-    --header 'Accept: application/json' \
-    --data-binary @- <<-DATA
-    {
-      "backupOptions": { "backupSystemData": true },
-      "bucketUri": "s3:///${backup_bucket_name}/\$backup_name?region=${region}"
-    }
+      -vvv --fail \
+      --user "admin:\$GRAPHDB_ADMIN_PASSWORD" \
+      --url localhost:7201/rest/recovery/cloud-backup \
+      --header 'Content-Type: multipart/form-data' \
+      --header 'Accept: application/json' \
+      --form "params=\$(cat <<-DATA
+  {
+        "backupSystemData": true,
+        "bucketUri": "s3:///${backup_bucket_name}/\$backup_name?region=${region}"
+  }
 DATA
+  )"
 }
 
 function rotate_backups {
@@ -85,8 +86,7 @@ elif [ "\$IS_CLUSTER" -ne 200 ]; then
   (trigger_backup && echo "") | tee -a /var/opt/graphdb/node/graphdb_backup.log
 fi
 
-  rotate_backups
-
+rotate_backups
 EOF
 
   chmod +x /usr/bin/graphdb_backup
