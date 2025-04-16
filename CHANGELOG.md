@@ -1,6 +1,7 @@
 # GraphDB AWS Terraform Module Changelog
 
 ## 2.0.0
+* Updated GraphDB default version to [11.0.0](https://graphdb.ontotext.com/documentation/11.0/release-notes.html#graphdb-11-0-0)
 
 ## 1.5.0
 * Added ability to provide additional ARNs for IAM Policies
