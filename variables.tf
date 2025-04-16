@@ -1,6 +1,5 @@
 # Common configurations
 
-
 variable "deployment_restriction_tag" {
   description = "Deployment tag used to restrict access via IAM policies"
   type        = string
@@ -57,7 +56,14 @@ variable "assume_role_principal_arn" {
   default     = null
 }
 
+variable "graphdb_additional_policy_arns" {
+  description = "List of additional IAM policy ARNs to attach to the instance IAM role"
+  type        = list(string)
+  default     = []
+}
+
 # Backup configurations
+
 variable "deploy_backup" {
   description = "Deploy backup module"
   type        = bool
@@ -529,18 +535,6 @@ variable "bucket_replication_destination_region" {
 
 # ASG instance deployment options
 
-variable "asg_enable_instance_refresh" {
-  description = "Enables instance refresh for the GraphDB Auto scaling group. A refresh is started when any of the following Auto Scaling Group properties change: launch_configuration, launch_template, mixed_instances_policy"
-  type        = bool
-  default     = false
-}
-
-variable "asg_instance_refresh_checkpoint_delay" {
-  description = "Number of seconds to wait after a checkpoint."
-  type        = number
-  default     = 3600
-}
-
 variable "graphdb_enable_userdata_scripts_on_reboot" {
   description = "(Experimental) Modifies cloud-config to always run user data scripts on EC2 boot"
   type        = bool
@@ -765,6 +759,7 @@ variable "create_ebs_kms_key" {
   type        = bool
   default     = false
 }
+
 # SNS Encryption
 
 variable "create_sns_kms_key" {
