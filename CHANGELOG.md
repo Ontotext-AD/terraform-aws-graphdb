@@ -1,5 +1,12 @@
 # GraphDB AWS Terraform Module Changelog
 
+## 2.0.0
+* Updated GraphDB default version to [11.0.0](https://graphdb.ontotext.com/documentation/11.0/release-notes.html#graphdb-11-0-0)
+* Fixed issue with [write-only arguments][https://developer.hashicorp.com/terraform/language/resources/ephemeral/write-only]
+  The SSM Parameter’s write‑only value field was causing endless drift because Terraform kept expecting it back in state,
+  so we replaced it with a write‑only value_wo attribute and a value_wo_version argument—honored via
+  WriteOnly: true—to send the secret only on writes and reapply it when the version is bumped
+
 ## 1.5.0
 * Added ability to provide additional ARNs for IAM Policies
 * Added ability to get dynamic http protocol for gdb_conf_overrides based on the lb_certificate_arn
