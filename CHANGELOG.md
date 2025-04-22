@@ -1,5 +1,8 @@
 # GraphDB AWS Terraform Module Changelog
 
+## 2.1.0
+
+
 ## 2.0.0
 * Updated GraphDB default version to [11.0.0](https://graphdb.ontotext.com/documentation/11.0/release-notes.html#graphdb-11-0-0)
 * Fixed issue with [write-only arguments][https://developer.hashicorp.com/terraform/language/resources/ephemeral/write-only]
