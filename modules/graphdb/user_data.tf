@@ -165,7 +165,7 @@ data "cloudinit_config" "graphdb_user_data" {
     content {
       content_type = "text/x-shellscript"
       content      = <<-EOF
-            #!/bin/bash
+      #!/bin/bash
       set -euo pipefail
       chmod -R og-rwx /usr/local/aws-cli/
     EOF
