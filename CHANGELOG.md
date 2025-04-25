@@ -2,6 +2,9 @@
 
 ## 2.1.0
 * Added ability to use existing Load Balancer for more info check the Existing Load Balancer section in the README.md
+* Added option to choose between Application Load Balancer and Network Load Balancer
+* Resolved an issue in the additional user data script where incorrect handling of AWS CLI permissions (chmod)
+  that caused cloud-init to fail during instance initialization.
 
 ## 2.0.0
 * Updated GraphDB default version to [11.0.0](https://graphdb.ontotext.com/documentation/11.0/release-notes.html#graphdb-11-0-0)

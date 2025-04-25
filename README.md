@@ -105,10 +105,12 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | backup\_retention\_count | Number of backups to keep. | `number` | `7` | no |
 | backup\_enable\_bucket\_replication | Enable or disable S3 bucket replication | `bool` | `false` | no |
 | lb\_internal | Whether the load balancer will be internal or public | `bool` | `false` | no |
+| lb\_type | Type of load balancer to create. Supported: 'network' or 'application' | `string` | `"network"` | no |
 | lb\_deregistration\_delay | Amount time, in seconds, for GraphDB LB target group to wait before changing the state of a deregistering target from draining to unused. | `string` | `300` | no |
 | lb\_health\_check\_path | The endpoint to check for GraphDB's health status. | `string` | `"/rest/cluster/node/status"` | no |
 | lb\_health\_check\_interval | (Optional) Interval in seconds for checking the target group healthcheck. Defaults to 10. | `number` | `10` | no |
 | lb\_tls\_certificate\_arn | ARN of the TLS certificate, imported in ACM, which will be used for the TLS listener on the load balancer. | `string` | `""` | no |
+| lb\_idle\_timeout | (Optional) The time in seconds that the connection is allowed to be idle. | `number` | `604800` | no |
 | lb\_tls\_policy | TLS security policy on the listener. | `string` | `"ELBSecurityPolicy-TLS13-1-2-2021-06"` | no |
 | allowed\_inbound\_cidrs\_lb | (Optional) List of CIDR blocks to permit inbound traffic from to load balancer | `list(string)` | `null` | no |
 | allowed\_inbound\_cidrs\_ssh | (Optional) List of CIDR blocks to permit for SSH to GraphDB nodes | `list(string)` | `null` | no |
@@ -620,6 +622,20 @@ vpc_id                        = "vpc-0123456789abcdef0"
 vpc_private_subnet_ids        = ["subnet-ddddddddddddddddd", "subnet-eeeeeeeeeeeeeeeee", "subnet-fffffffffffffffff"]
 vpc_public_subnet_ids         = ["subnet-ggggggggggggggggg", "subnet-hhhhhhhhhhhhhhhhh", "subnet-iiiiiiiiiiiiiiiii"]
 ```
+
+#### Selecting Load Balancer Type
+
+By default, this module deploys a Network Load Balancer (NLB), which operates at Layer 4 and supports configuration of the TCP keep-alive timeout. This is useful for supporting long-running requests (e.g., SPARQL queries).
+
+However, NLBs do not support HTTP routing (such as host-based rules). If that's the case, we recommend using an Application Load Balancer (ALB) instead.
+
+To switch to ALB, set the following variable:
+
+```hcl
+lb_type = "application"
+```
+
+💡 Note: ALBs support idle timeouts of up to [7 days](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/edit-load-balancer-attributes.html#http-client-keep-alive-duration), which is ideal for persistent connections and long-running operations over HTTP/HTTPS.
 
 ## Single Node Deployment
 

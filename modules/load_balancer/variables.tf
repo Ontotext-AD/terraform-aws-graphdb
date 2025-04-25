@@ -94,3 +94,29 @@ variable "lb_tls_enabled" {
   description = "Is TLS enabled for the LB"
   type        = bool
 }
+
+variable "lb_type" {
+  description = "Type of load balancer to create. Supported: 'network' or 'application'"
+  type        = string
+}
+
+variable "allowed_inbound_cidrs_lb" {
+  description = "Allows inbound traffic to the Application Load Balancer"
+  type        = list(string)
+  default     = []
+}
+
+variable "lb_idle_timeout" {
+  description = "(Optional) The time in seconds that the connection is allowed to be idle."
+  type        = number
+}
+
+variable "lb_client_keep_alive_timeout" {
+  description = "(Optional) The time in seconds that the client connection is allowed to be idle."
+  type        = number
+}
+
+variable "lb_enable_http2" {
+  description = "Enable HTTP/2 on the load balancer."
+  type        = bool
+}

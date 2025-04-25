@@ -8,114 +8,113 @@ locals {
     var.parameter_store_external_kms_key != ""
     ? var.parameter_store_external_kms_key
     : (
-    module.graphdb.parameter_store_cmk_arn != ""
-    ? module.graphdb.parameter_store_cmk_arn
-    : var.parameter_store_default_key
-  )
+      module.graphdb.parameter_store_cmk_arn != ""
+      ? module.graphdb.parameter_store_cmk_arn
+      : var.parameter_store_default_key
+    )
   ) : var.parameter_store_default_key
 
   calculated_ebs_kms_key_arn = var.create_ebs_kms_key ? (
     var.ebs_external_kms_key != ""
     ? var.ebs_external_kms_key
     : (
-    module.graphdb.ebs_kms_key_arn != ""
-    ? module.graphdb.ebs_kms_key_arn
-    : var.ebs_default_kms_key
-  )
+      module.graphdb.ebs_kms_key_arn != ""
+      ? module.graphdb.ebs_kms_key_arn
+      : var.ebs_default_kms_key
+    )
   ) : var.ebs_default_kms_key
 
   calculated_s3_kms_key_arn = var.create_s3_kms_key ? (
     var.s3_external_kms_key_arn != ""
     ? var.s3_external_kms_key_arn
     : (
-    module.backup[0].s3_cmk_arn != ""
-    ? module.backup[0].s3_cmk_arn
-    : var.s3_kms_default_key
-  )
+      module.backup[0].s3_cmk_arn != ""
+      ? module.backup[0].s3_cmk_arn
+      : var.s3_kms_default_key
+    )
   ) : var.s3_kms_default_key
 
   calculated_sns_kms_key_arn = var.create_sns_kms_key ? (
     var.sns_external_kms_key != ""
     ? var.sns_external_kms_key
     : (
-    module.monitoring[0].sns_cmk_arn != ""
-    ? module.monitoring[0].sns_cmk_arn
-    : var.sns_default_kms_key
-  )
+      module.monitoring[0].sns_cmk_arn != ""
+      ? module.monitoring[0].sns_cmk_arn
+      : var.sns_default_kms_key
+    )
   ) : var.sns_default_kms_key
 
 
   # TLS & Protocol
   lb_tls_enabled      = var.lb_tls_certificate_arn != "" ? true : false
-  calculated_protocol = local.lb_tls_enabled              ? "https" : "http"
+  calculated_protocol = local.lb_tls_enabled ? "https" : "http"
 
 
   # Subnet CIDR lists
   effective_private_subnet_cidrs = var.graphdb_node_count == 1 ? [var.vpc_private_subnet_cidrs[0]] : var.vpc_private_subnet_cidrs
-
   effective_public_subnet_cidrs  = var.graphdb_node_count == 1 ? [var.vpc_public_subnet_cidrs[0]] : var.vpc_public_subnet_cidrs
 
   lb_subnets = var.existing_lb_arn != "" ? var.existing_lb_subnets : (
-      var.graphdb_node_count == 1
-      ? (
+    var.graphdb_node_count == 1
+    ? (
       var.vpc_id == ""
       ? (
-      var.lb_internal
-      ? [module.vpc[0].private_subnet_ids[0]]
-      : [module.vpc[0].public_subnet_ids[0]]
-    )
+        var.lb_internal
+        ? [module.vpc[0].private_subnet_ids[0]]
+        : [module.vpc[0].public_subnet_ids[0]]
+      )
       : (
-      var.lb_internal
-      ? [var.vpc_private_subnet_ids[0]]
-      : [var.vpc_public_subnet_ids[0]]
+        var.lb_internal
+        ? [var.vpc_private_subnet_ids[0]]
+        : [var.vpc_public_subnet_ids[0]]
+      )
     )
-    )
-      : (
+    : (
       var.vpc_id == ""
       ? (
-      var.lb_internal
-      ? module.vpc[0].private_subnet_ids
-      : module.vpc[0].public_subnet_ids
-    )
+        var.lb_internal
+        ? module.vpc[0].private_subnet_ids
+        : module.vpc[0].public_subnet_ids
+      )
       : (
-      var.lb_internal
-      ? var.vpc_private_subnet_ids
-      : var.vpc_public_subnet_ids
+        var.lb_internal
+        ? var.vpc_private_subnet_ids
+        : var.vpc_public_subnet_ids
+      )
     )
-    )
-    )
+  )
 
   graphdb_subnets = var.graphdb_node_count == 1 ? [
-      (var.vpc_id != ""
-        ? var.vpc_private_subnet_ids
-        : module.vpc[0].private_subnet_ids
-      )[0]
-    ] : (
-      var.vpc_id != ""
+    (var.vpc_id != ""
       ? var.vpc_private_subnet_ids
       : module.vpc[0].private_subnet_ids
-    )
+    )[0]
+    ] : (
+    var.vpc_id != ""
+    ? var.vpc_private_subnet_ids
+    : module.vpc[0].private_subnet_ids
+  )
 
 
   # Load Balancer ARNs & DNS
-  lb_arn_list    = var.existing_lb_arn != "" ? [var.existing_lb_arn] : module.load_balancer[*].lb_arn
+  lb_arn_list = var.existing_lb_arn != "" ? [var.existing_lb_arn] : module.load_balancer[*].lb_arn
 
   lb_tg_arn_list = (
-  var.existing_lb_target_group_arns != null
-  && length(var.existing_lb_target_group_arns) > 0
+    var.existing_lb_target_group_arns != null
+    && length(var.existing_lb_target_group_arns) > 0
   ) ? var.existing_lb_target_group_arns : module.load_balancer[*].lb_target_group_arn
 
   lb_dns = var.existing_lb_dns_name != "" ? var.existing_lb_dns_name : (
-      var.graphdb_external_dns != ""
-      ? var.graphdb_external_dns
-      : try(module.load_balancer[0].lb_dns_name, "")
-    )
+    var.graphdb_external_dns != ""
+    ? var.graphdb_external_dns
+    : try(module.load_balancer[0].lb_dns_name, "")
+  )
 }
-
 
 module "vpc" {
   source = "./modules/vpc"
-  count  = var.vpc_id == "" ? 1 : 0
+
+  count = var.vpc_id == "" ? 1 : 0
 
   resource_name_prefix                            = var.resource_name_prefix
   vpc_dns_hostnames                               = var.vpc_dns_hostnames
@@ -138,7 +137,8 @@ module "vpc" {
 
 module "backup" {
   source = "./modules/backup"
-  count  = var.deploy_backup ? 1 : 0
+
+  count = var.deploy_backup ? 1 : 0
 
   resource_name_prefix  = var.resource_name_prefix
   iam_role_id           = module.graphdb.iam_role_id
@@ -162,7 +162,8 @@ module "backup" {
 
 module "logging" {
   source = "./modules/logging"
-  count  = var.deploy_logging_module ? 1 : 0
+
+  count = var.deploy_logging_module ? 1 : 0
 
   resource_name_prefix = var.resource_name_prefix
   lb_access_logs_expiration_days = var.deploy_logging_module && var.lb_enable_access_logs ? (
@@ -191,54 +192,50 @@ module "logging" {
 
 module "logging_replication" {
   source = "./modules/logging_replication"
-  count  = var.logging_enable_bucket_replication ? 1 : 0
 
   providers = {
     aws.bucket_replication_destination_region = aws.bucket_replication_destination_region
   }
 
-  resource_name_prefix = var.resource_name_prefix
-  graphdb_logging_bucket_id = var.deploy_logging_module && var.logging_enable_bucket_replication ? (
-    module.logging[0].graphdb_logging_bucket_id
-  ) : null
-  graphdb_logging_bucket_arn = var.deploy_logging_module && var.logging_enable_bucket_replication ? (
-    module.logging[0].graphdb_logging_bucket_arn
-  ) : null
-  s3_iam_role_arn    = module.graphdb.s3_iam_role_arn
-  mfa_delete         = var.s3_mfa_delete
-  enable_replication = var.s3_enable_replication_rule
-  versioning_enabled = var.s3_versioning_enabled
+  count = var.logging_enable_bucket_replication ? 1 : 0
+
+  resource_name_prefix       = var.resource_name_prefix
+  graphdb_logging_bucket_id  = var.deploy_logging_module && var.logging_enable_bucket_replication ? module.logging[0].graphdb_logging_bucket_id : null
+  graphdb_logging_bucket_arn = var.deploy_logging_module && var.logging_enable_bucket_replication ? module.logging[0].graphdb_logging_bucket_arn : null
+  s3_iam_role_arn            = module.graphdb.s3_iam_role_arn
+  mfa_delete                 = var.s3_mfa_delete
+  enable_replication         = var.s3_enable_replication_rule
+  versioning_enabled         = var.s3_versioning_enabled
 }
 
 module "backup_replication" {
   source = "./modules/backup_replication"
-  count  = var.backup_enable_bucket_replication ? 1 : 0
 
   providers = {
     aws.bucket_replication_destination_region = aws.bucket_replication_destination_region
   }
 
-  resource_name_prefix = var.resource_name_prefix
-  graphdb_backup_bucket_id = var.deploy_backup && var.backup_enable_bucket_replication ? (
-    module.backup[0].bucket_id
-  ) : null
-  graphdb_backup_bucket_arn = var.deploy_backup && var.backup_enable_bucket_replication ? (
-    module.backup[0].bucket_arn
-  ) : null
-  s3_iam_role_arn    = module.graphdb.s3_iam_role_arn
-  mfa_delete         = var.s3_mfa_delete
-  enable_replication = var.s3_enable_replication_rule
-  versioning_enabled = var.s3_versioning_enabled
+  count = var.backup_enable_bucket_replication ? 1 : 0
+
+  resource_name_prefix      = var.resource_name_prefix
+  graphdb_backup_bucket_id  = var.deploy_backup && var.backup_enable_bucket_replication ? module.backup[0].bucket_id : null
+  graphdb_backup_bucket_arn = var.deploy_backup && var.backup_enable_bucket_replication ? module.backup[0].bucket_arn : null
+  s3_iam_role_arn           = module.graphdb.s3_iam_role_arn
+  mfa_delete                = var.s3_mfa_delete
+  enable_replication        = var.s3_enable_replication_rule
+  versioning_enabled        = var.s3_versioning_enabled
 }
 
 module "load_balancer" {
   source = "./modules/load_balancer"
-  count  = var.existing_lb_arn != "" ? 0 : 1
+
+  count = var.existing_lb_arn != "" ? 0 : 1
 
   resource_name_prefix          = var.resource_name_prefix
   vpc_id                        = var.vpc_id != "" ? var.vpc_id : module.vpc[0].vpc_id
   lb_subnets                    = local.lb_subnets
   lb_internal                   = var.lb_internal
+  lb_type                       = var.lb_type
   lb_deregistration_delay       = var.lb_deregistration_delay
   lb_health_check_path          = var.lb_health_check_path
   lb_health_check_interval      = var.lb_health_check_interval
@@ -246,23 +243,26 @@ module "load_balancer" {
   lb_tls_certificate_arn        = var.lb_tls_certificate_arn
   lb_tls_enabled                = local.lb_tls_enabled
   lb_tls_policy                 = var.lb_tls_policy
-  lb_access_logs_bucket_name = var.lb_enable_access_logs && var.deploy_logging_module ? (
-    module.logging[0].graphdb_logging_bucket_name
-  ) : null
-  lb_enable_access_logs = var.lb_enable_access_logs
-  graphdb_node_count    = var.graphdb_node_count
+  lb_access_logs_bucket_name    = var.lb_enable_access_logs && var.deploy_logging_module ? module.logging[0].graphdb_logging_bucket_name : null
+  lb_enable_access_logs         = var.lb_enable_access_logs
+  graphdb_node_count            = var.graphdb_node_count
+  allowed_inbound_cidrs_lb      = var.allowed_inbound_cidrs_lb
+  lb_idle_timeout               = var.lb_idle_timeout
+  lb_client_keep_alive_timeout  = var.lb_client_keep_alive_timeout
+  lb_enable_http2               = var.alb_enable_http2
 }
 
 module "monitoring" {
   source = "./modules/monitoring"
-  count  = var.deploy_monitoring ? 1 : 0
-
   providers = {
     aws.useast1 = aws.useast1
   }
 
-  resource_name_prefix                   = var.resource_name_prefix
-  aws_region                             = var.aws_region
+  count = var.deploy_monitoring ? 1 : 0
+
+  resource_name_prefix = var.resource_name_prefix
+  aws_region           = var.aws_region
+
   cloudwatch_alarms_actions_enabled      = var.monitoring_actions_enabled
   sns_topic_endpoint                     = var.deploy_monitoring ? var.monitoring_sns_topic_endpoint : null
   sns_endpoint_auto_confirms             = var.monitoring_endpoint_auto_confirms
@@ -280,15 +280,18 @@ module "monitoring" {
   parameter_store_kms_key_arn            = local.calculated_parameter_store_kms_key_arn
   cloudwatch_log_group_retention_in_days = var.monitoring_log_group_retention_in_days
   enable_availability_tests              = var.monitoring_enable_availability_tests
-  route53_availability_check_region      = var.monitoring_route53_health_check_aws_region
-  route53_availability_request_url       = var.graphdb_node_count > 1 ? var.graphdb_external_dns : module.load_balancer[0].lb_dns_name
-  route53_availability_measure_latency   = var.graphdb_node_count > 1 ? var.monitoring_route53_measure_latency : false
-  route53_availability_http_string_type  = upper(local.calculated_protocol)
-  route53_zone_dns_name                  = var.graphdb_node_count > 1 ? var.route53_zone_dns_name : null
-  sns_kms_key_arn                        = local.calculated_sns_kms_key_arn
-  graphdb_node_count                     = var.graphdb_node_count
-  lb_tls_certificate_arn                 = var.lb_tls_certificate_arn
-  lb_dns_name                            = local.lb_dns
+
+  route53_availability_check_region     = var.monitoring_route53_health_check_aws_region
+  route53_availability_request_url      = var.graphdb_node_count > 1 ? var.graphdb_external_dns : module.load_balancer[0].lb_dns_name
+  route53_availability_measure_latency  = var.graphdb_node_count > 1 ? var.monitoring_route53_measure_latency : false
+  route53_availability_http_string_type = upper(local.calculated_protocol)
+  route53_zone_dns_name                 = var.graphdb_node_count > 1 ? var.route53_zone_dns_name : null
+
+  sns_kms_key_arn    = local.calculated_sns_kms_key_arn
+  graphdb_node_count = var.graphdb_node_count
+
+  lb_tls_certificate_arn = var.lb_tls_certificate_arn
+  lb_dns_name            = module.load_balancer[0].lb_dns_name != "" ? module.load_balancer[0].lb_dns_name : null
 }
 
 module "graphdb" {
