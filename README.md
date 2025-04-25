@@ -914,6 +914,20 @@ tgw_enable_propagation = true
 tgw_associate_to_route_table = true
 ```
 
+#### Selecting Load Balancer Type
+
+By default, this module deploys a Network Load Balancer (NLB), which operates at Layer 4 and supports configuration of the TCP keep-alive timeout. This is useful for supporting long-running requests (e.g., SPARQL queries).
+
+However, NLBs do not support HTTP routing (such as host-based rules). If that's the case, we recommend using an Application Load Balancer (ALB) instead.
+
+To switch to ALB, set the following variable:
+
+```hcl
+lb_type = "application"
+```
+
+💡 Note: ALBs support idle timeouts of up to [7 days](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/edit-load-balancer-attributes.html#http-client-keep-alive-duration), which is ideal for persistent connections and long-running operations over HTTP/HTTPS.
+
 ## Single Node Deployment
 
 This Terraform module can deploy a single instance of GraphDB.

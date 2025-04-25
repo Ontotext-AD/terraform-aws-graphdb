@@ -148,7 +148,7 @@ resource "aws_flow_log" "graphdb_vpc_flow_log" {
 # Private Link Service
 
 resource "aws_vpc_endpoint_service" "graphdb_vpc_endpoint_service" {
-  count = var.lb_enable_private_access ? 1 : 0
+  count = var.lb_enable_private_access && length(var.network_load_balancer_arns) > 0 ? 1 : 0
 
   network_load_balancer_arns = var.network_load_balancer_arns
   acceptance_required        = var.vpc_endpoint_service_accept_connection_requests
