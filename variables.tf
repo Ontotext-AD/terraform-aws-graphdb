@@ -509,6 +509,30 @@ variable "s3_enable_replication_rule" {
   default     = "Disabled"
 }
 
+variable "existing_lb_arn" {
+  description = "(Optional) ARN of an existing Load Balancer. If provided, the module will not create a new LB."
+  type        = string
+  default     = ""
+}
+
+variable "existing_lb_dns_name" {
+  description = " (Optional) Use the DNS Name of an existing Load Balancer."
+  type        = string
+  default     = ""
+}
+
+variable "existing_lb_subnets" {
+  description = "(Optional) Provide the subnet/s of the existing Load Balancer"
+  type        = list(string)
+  default     = []
+}
+
+variable "existing_lb_target_group_arns" {
+  description = "(Optional) Provide existing LB target group ARNs to attach to the Load Balancer"
+  type        = list(string)
+  default     = []
+}
+
 variable "lb_access_logs_lifecycle_rule_status" {
   description = "Define status of the S3 lifecycle rule. Possible options are enabled or disabled."
   type        = string
