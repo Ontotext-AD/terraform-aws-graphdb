@@ -603,6 +603,14 @@ the cluster will not be formed unless you terminate the initial node.
 
 **Please note that this operation is disruptive, and there is a risk that things may not go as expected.**
 
+**Note:** Scaling down a cluster to a single node is not supported. To do this you need to:
+1. Disable user access
+2. Deleted the cluster
+3. Manually scale down to `0`
+4. Apply the module with `graphdb_node_count = 1`
+
+Also, the EBS for the deleted instances need to be removed
+
 ## Updating configurations on an active deployment
 
 ### Updating Configurations
