@@ -1,7 +1,7 @@
 # GraphDB AWS Terraform Module Changelog
 
 ## 2.1.0
-
+* Added ability to use existing Load Balancer for more info check the Existing Load Balancer section in the README.md
 
 ## 2.0.0
 * Updated GraphDB default version to [11.0.0](https://graphdb.ontotext.com/documentation/11.0/release-notes.html#graphdb-11-0-0)

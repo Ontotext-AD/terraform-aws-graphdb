@@ -170,6 +170,10 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | s3\_versioning\_enabled | Enable versioning. Once you version-enable a bucket, it can never return to an unversioned state. You can, however, suspend versioning on that bucket. | `string` | `"Enabled"` | no |
 | s3\_abort\_multipart\_upload | Specifies the number of days after initiating a multipart upload when the multipart upload must be completed. | `number` | `7` | no |
 | s3\_enable\_replication\_rule | Enable or disable S3 bucket replication | `string` | `"Disabled"` | no |
+| existing\_lb\_arn | (Optional) ARN of an existing Load Balancer. If provided, the module will not create a new LB. | `string` | `""` | no |
+| existing\_lb\_dns\_name | (Optional) Use the DNS Name of an existing Load Balancer. | `string` | `""` | no |
+| existing\_lb\_subnets | (Optional) Provide the subnet/s of the existing Load Balancer | `list(string)` | `[]` | no |
+| existing\_lb\_target\_group\_arns | (Optional) Provide existing LB target group ARNs to attach to the Load Balancer | `list(string)` | `[]` | no |
 | lb\_access\_logs\_lifecycle\_rule\_status | Define status of the S3 lifecycle rule. Possible options are enabled or disabled. | `string` | `"Disabled"` | no |
 | lb\_enable\_access\_logs | Enable or disable access logs for the NLB | `bool` | `false` | no |
 | lb\_access\_logs\_expiration\_days | Define the days after which the LB access logs should be deleted. | `number` | `14` | no |
@@ -588,6 +592,33 @@ graphdb_additional_policy_arns = [
   "arn:aws:iam::123456789012:policy/ExtraPolicy1",
   "arn:aws:iam::123456789012:policy/ExtraPolicy2"
 ]
+```
+
+#### Using Existing Load Balancer
+
+To deploy the GraphDB module with an existing Load Balancer, configure the module with the ARN, DNS name,
+subnets, and target group ARNs of a pre-existing NLB, along with the VPC and subnet IDs.
+
+ PREREQUISITES:
+
+ * Create your VPC (with the public & private subnets).
+ * Provision a  Load Balancer in those public subnets.
+ * Create a Target Group (initially empty) whose:
+   * Protocol = TCP
+   * Port     = 7201 for single-node, or 7200 for multi-node clusters
+   * Health-check protocol = TCP, same port as above
+
+
+Configure the module by specifying the following variables:
+
+```hcl
+existing_lb_arn               = "arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/net/<YOUR-LB-NAME>/<LB-ID>"
+existing_lb_dns_name          = "<YOUR-LB-NAME>-<LB-ID>.elb.us-east-1.amazonaws.com"
+existing_lb_subnets           = ["subnet-aaaaaaaaaaaaaaaaa", "subnet-bbbbbbbbbbbbbbbbb", "subnet-ccccccccccccccccc"]
+existing_lb_target_group_arns = ["arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/<YOUR-TG-NAME>/<TG-ID>"]
+vpc_id                        = "vpc-0123456789abcdef0"
+vpc_private_subnet_ids        = ["subnet-ddddddddddddddddd", "subnet-eeeeeeeeeeeeeeeee", "subnet-fffffffffffffffff"]
+vpc_public_subnet_ids         = ["subnet-ggggggggggggggggg", "subnet-hhhhhhhhhhhhhhhhh", "subnet-iiiiiiiiiiiiiiiii"]
 ```
 
 ## Single Node Deployment
