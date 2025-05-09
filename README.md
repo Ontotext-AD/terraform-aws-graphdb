@@ -110,7 +110,9 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | lb\_health\_check\_path | The endpoint to check for GraphDB's health status. | `string` | `"/rest/cluster/node/status"` | no |
 | lb\_health\_check\_interval | (Optional) Interval in seconds for checking the target group healthcheck. Defaults to 10. | `number` | `10` | no |
 | lb\_tls\_certificate\_arn | ARN of the TLS certificate, imported in ACM, which will be used for the TLS listener on the load balancer. | `string` | `""` | no |
-| lb\_idle\_timeout | (Optional) The time in seconds that the connection is allowed to be idle. | `number` | `604800` | no |
+| lb\_idle\_timeout | (Optional) The time in seconds that the connection is allowed to be idle. | `number` | `4000` | no |
+| lb\_client\_keep\_alive\_timeout | (Optional) The time in seconds that the client connection is allowed to be idle. | `number` | `604800` | no |
+| alb\_enable\_http2 | Enable HTTP/2 on the load balancer. | `bool` | `true` | no |
 | lb\_tls\_policy | TLS security policy on the listener. | `string` | `"ELBSecurityPolicy-TLS13-1-2-2021-06"` | no |
 | allowed\_inbound\_cidrs\_lb | (Optional) List of CIDR blocks to permit inbound traffic from to load balancer | `list(string)` | `null` | no |
 | allowed\_inbound\_cidrs\_ssh | (Optional) List of CIDR blocks to permit for SSH to GraphDB nodes | `list(string)` | `null` | no |
