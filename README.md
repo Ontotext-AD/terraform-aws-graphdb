@@ -105,10 +105,14 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | backup\_retention\_count | Number of backups to keep. | `number` | `7` | no |
 | backup\_enable\_bucket\_replication | Enable or disable S3 bucket replication | `bool` | `false` | no |
 | lb\_internal | Whether the load balancer will be internal or public | `bool` | `false` | no |
+| lb\_type | Type of load balancer to create. Supported: 'network' or 'application' | `string` | `"network"` | no |
 | lb\_deregistration\_delay | Amount time, in seconds, for GraphDB LB target group to wait before changing the state of a deregistering target from draining to unused. | `string` | `300` | no |
 | lb\_health\_check\_path | The endpoint to check for GraphDB's health status. | `string` | `"/rest/cluster/node/status"` | no |
 | lb\_health\_check\_interval | (Optional) Interval in seconds for checking the target group healthcheck. Defaults to 10. | `number` | `10` | no |
 | lb\_tls\_certificate\_arn | ARN of the TLS certificate, imported in ACM, which will be used for the TLS listener on the load balancer. | `string` | `""` | no |
+| lb\_idle\_timeout | (Optional) The time in seconds that the connection is allowed to be idle. | `number` | `4000` | no |
+| lb\_client\_keep\_alive\_timeout | (Optional) The time in seconds that the client connection is allowed to be idle. | `number` | `604800` | no |
+| alb\_enable\_http2 | Enable HTTP/2 on the load balancer. | `bool` | `true` | no |
 | lb\_tls\_policy | TLS security policy on the listener. | `string` | `"ELBSecurityPolicy-TLS13-1-2-2021-06"` | no |
 | allowed\_inbound\_cidrs\_lb | (Optional) List of CIDR blocks to permit inbound traffic from to load balancer | `list(string)` | `null` | no |
 | allowed\_inbound\_cidrs\_ssh | (Optional) List of CIDR blocks to permit for SSH to GraphDB nodes | `list(string)` | `null` | no |
@@ -170,6 +174,10 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | s3\_versioning\_enabled | Enable versioning. Once you version-enable a bucket, it can never return to an unversioned state. You can, however, suspend versioning on that bucket. | `string` | `"Enabled"` | no |
 | s3\_abort\_multipart\_upload | Specifies the number of days after initiating a multipart upload when the multipart upload must be completed. | `number` | `7` | no |
 | s3\_enable\_replication\_rule | Enable or disable S3 bucket replication | `string` | `"Disabled"` | no |
+| existing\_lb\_arn | (Optional) ARN of an existing Load Balancer. If provided, the module will not create a new LB. | `string` | `""` | no |
+| existing\_lb\_dns\_name | (Optional) Use the DNS Name of an existing Load Balancer. | `string` | `""` | no |
+| existing\_lb\_subnets | (Optional) Provide the subnet/s of the existing Load Balancer | `list(string)` | `[]` | no |
+| existing\_lb\_target\_group\_arns | (Optional) Provide existing LB target group ARNs to attach to the Load Balancer | `list(string)` | `[]` | no |
 | lb\_access\_logs\_lifecycle\_rule\_status | Define status of the S3 lifecycle rule. Possible options are enabled or disabled. | `string` | `"Disabled"` | no |
 | lb\_enable\_access\_logs | Enable or disable access logs for the NLB | `bool` | `false` | no |
 | lb\_access\_logs\_expiration\_days | Define the days after which the LB access logs should be deleted. | `number` | `14` | no |
@@ -589,6 +597,47 @@ graphdb_additional_policy_arns = [
   "arn:aws:iam::123456789012:policy/ExtraPolicy2"
 ]
 ```
+
+#### Using Existing Load Balancer
+
+To deploy the GraphDB module with an existing Load Balancer, configure the module with the ARN, DNS name,
+subnets, and target group ARNs of a pre-existing NLB, along with the VPC and subnet IDs.
+
+ PREREQUISITES:
+
+ * Create your VPC (with the public & private subnets).
+ * Provision a  Load Balancer in those public subnets.
+ * Create a Target Group (initially empty) whose:
+   * Protocol = TCP
+   * Port     = 7201 for single-node, or 7200 for multi-node clusters
+   * Health-check protocol = TCP, same port as above
+
+
+Configure the module by specifying the following variables:
+
+```hcl
+existing_lb_arn               = "arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/net/<YOUR-LB-NAME>/<LB-ID>"
+existing_lb_dns_name          = "<YOUR-LB-NAME>-<LB-ID>.elb.us-east-1.amazonaws.com"
+existing_lb_subnets           = ["subnet-aaaaaaaaaaaaaaaaa", "subnet-bbbbbbbbbbbbbbbbb", "subnet-ccccccccccccccccc"]
+existing_lb_target_group_arns = ["arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/<YOUR-TG-NAME>/<TG-ID>"]
+vpc_id                        = "vpc-0123456789abcdef0"
+vpc_private_subnet_ids        = ["subnet-ddddddddddddddddd", "subnet-eeeeeeeeeeeeeeeee", "subnet-fffffffffffffffff"]
+vpc_public_subnet_ids         = ["subnet-ggggggggggggggggg", "subnet-hhhhhhhhhhhhhhhhh", "subnet-iiiiiiiiiiiiiiiii"]
+```
+
+#### Selecting Load Balancer Type
+
+By default, this module deploys a Network Load Balancer (NLB), which operates at Layer 4 and supports configuration of the TCP keep-alive timeout. This is useful for supporting long-running requests (e.g., SPARQL queries).
+
+However, NLBs do not support HTTP routing (such as host-based rules). If that's the case, we recommend using an Application Load Balancer (ALB) instead.
+
+To switch to ALB, set the following variable:
+
+```hcl
+lb_type = "application"
+```
+
+💡 Note: ALBs support idle timeouts of up to [7 days](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/edit-load-balancer-attributes.html#http-client-keep-alive-duration), which is ideal for persistent connections and long-running operations over HTTP/HTTPS.
 
 ## Single Node Deployment
 

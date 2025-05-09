@@ -96,6 +96,17 @@ variable "lb_internal" {
   default     = false
 }
 
+variable "lb_type" {
+  description = "Type of load balancer to create. Supported: 'network' or 'application'"
+  type        = string
+  default     = "network"
+
+  validation {
+    condition     = contains(["network", "application"], var.lb_type)
+    error_message = "lb_type must be either 'network' or 'application'."
+  }
+}
+
 variable "lb_deregistration_delay" {
   description = "Amount time, in seconds, for GraphDB LB target group to wait before changing the state of a deregistering target from draining to unused."
   type        = string
@@ -118,6 +129,24 @@ variable "lb_tls_certificate_arn" {
   description = "ARN of the TLS certificate, imported in ACM, which will be used for the TLS listener on the load balancer."
   type        = string
   default     = ""
+}
+
+variable "lb_idle_timeout" {
+  description = "(Optional) The time in seconds that the connection is allowed to be idle."
+  type        = number
+  default     = 4000
+}
+
+variable "lb_client_keep_alive_timeout" {
+  description = "(Optional) The time in seconds that the client connection is allowed to be idle."
+  type        = number
+  default     = 604800 # 7 Days
+}
+
+variable "alb_enable_http2" {
+  description = "Enable HTTP/2 on the load balancer."
+  type        = bool
+  default     = true
 }
 
 variable "lb_tls_policy" {
@@ -507,6 +536,30 @@ variable "s3_enable_replication_rule" {
   description = "Enable or disable S3 bucket replication"
   type        = string
   default     = "Disabled"
+}
+
+variable "existing_lb_arn" {
+  description = "(Optional) ARN of an existing Load Balancer. If provided, the module will not create a new LB."
+  type        = string
+  default     = ""
+}
+
+variable "existing_lb_dns_name" {
+  description = " (Optional) Use the DNS Name of an existing Load Balancer."
+  type        = string
+  default     = ""
+}
+
+variable "existing_lb_subnets" {
+  description = "(Optional) Provide the subnet/s of the existing Load Balancer"
+  type        = list(string)
+  default     = []
+}
+
+variable "existing_lb_target_group_arns" {
+  description = "(Optional) Provide existing LB target group ARNs to attach to the Load Balancer"
+  type        = list(string)
+  default     = []
 }
 
 variable "lb_access_logs_lifecycle_rule_status" {
