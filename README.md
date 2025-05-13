@@ -341,6 +341,8 @@ To enable deployment of the monitoring module, you need to enable the following 
 deploy_monitoring = true
 ```
 
+**Note**: In order for the Cloudwatch Alarms to be able to publish alarms in SNS you should use [CMK key](https://repost.aws/knowledge-center/cloudwatch-configure-alarm-sns).
+
 **Providing a TLS certificate**
 
 ```hcl
@@ -498,6 +500,16 @@ or you can use the current AWS account by leaving this parameter empty.
 
 ```hcl
 s3_kms_key_admin_arn = "arn:aws:iam::123456789012:role/KeyAdminRole"
+```
+
+##### SNS CMK Key
+You can enable the creation of SNS CMK Key which you will need if you want to publish Cloudwatch Alarms to SNS Topic. Use the following variables to enable it:
+
+```hcl
+create_sns_kms_key            = true
+sns_key_admin_arn             = "arn:aws:iam::123456789012:user/john.doh@example.com"
+app_name                      = "example_app"
+environment_name              = "env_name"
 ```
 
 #### Replication

@@ -6,6 +6,18 @@ variable "deployment_restriction_tag" {
   default     = "deploymentTag"
 }
 
+variable "environment_name" {
+  description = "Environment name used to generate the environment"
+  type        = string
+  default     = ""
+}
+
+variable "app_name" {
+  description = "Application name used to generate the environment"
+  type        = string
+  default     = ""
+}
+
 variable "common_tags" {
   description = "(Optional) Map of common tags for all taggable AWS resources."
   type        = map(string)
@@ -398,12 +410,6 @@ variable "deploy_monitoring" {
 
 variable "monitoring_route53_measure_latency" {
   description = "Enable or disable route53 function to measure latency"
-  type        = bool
-  default     = false
-}
-
-variable "monitoring_actions_enabled" {
-  description = "Enable or disable actions on alarms"
   type        = bool
   default     = false
 }

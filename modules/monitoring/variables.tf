@@ -19,11 +19,6 @@ variable "route53_availability_request_url" {
   type        = string
 }
 
-variable "cloudwatch_alarms_actions_enabled" {
-  description = "Enable or disable actions on alarms"
-  type        = bool
-}
-
 variable "route53_availability_frequency" {
   description = "Interval in seconds between tests. Valid options are 5-30. Default is 30."
   type        = number

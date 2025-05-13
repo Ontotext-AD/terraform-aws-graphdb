@@ -141,7 +141,6 @@ resource "aws_cloudwatch_metric_alarm" "graphdb_cpu_utilization" {
   period              = var.cloudwatch_period
   statistic           = "Maximum"
   threshold           = 80
-  actions_enabled     = var.cloudwatch_alarms_actions_enabled
   alarm_actions       = [aws_sns_topic.graphdb_sns_topic.arn]
 
   metric_name = "CPUUtilization"
