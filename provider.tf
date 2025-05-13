@@ -28,6 +28,8 @@ provider "aws" {
       {
         Release_Name = var.resource_name_prefix
         Name         = "${var.resource_name_prefix}"
+        Environment  = var.environment_name
+        App_Name     = var.app_name
       },
       var.common_tags
     )

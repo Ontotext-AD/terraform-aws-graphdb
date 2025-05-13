@@ -5,6 +5,10 @@
 * Added option to choose between Application Load Balancer and Network Load Balancer
 * Resolved an issue in the additional user data script where incorrect handling of AWS CLI permissions (chmod)
   that caused cloud-init to fail during instance initialization.
+* Fixed SNS Key Access Policy so Cloudwatch Service can publish to the SNS topic [Cloudwatch Alarms via SNS](https://repost.aws/knowledge-center/cloudwatch-configure-alarm-sns)
+* Removed monitoring_actions_enabled because it's enabled by default in the provider if action is specified.
+* Introduced new variables app_name and environment name, so if you deploy several deployments in one account, to be able to deploy different CMK keys.
+* Moved the CMK Alias generation in a local variable so it can be dynamically generated.
 
 ## 2.0.1
 * Updated GraphDB default version to [11.0.1](https://graphdb.ontotext.com/documentation/11.0/release-notes.html#graphdb-11-0-1)

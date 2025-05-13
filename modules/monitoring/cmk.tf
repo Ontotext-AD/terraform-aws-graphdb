@@ -95,7 +95,8 @@ resource "aws_kms_key_policy" "sns_cmk_policy" {
           "Service" : [
             "sns.amazonaws.com",
             "ec2.amazonaws.com",
-            "ssm.amazonaws.com"
+            "ssm.amazonaws.com",
+            "cloudwatch.amazonaws.com"
           ]
         },
         "Action" : [

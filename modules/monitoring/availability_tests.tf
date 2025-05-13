@@ -49,7 +49,6 @@ resource "aws_cloudwatch_metric_alarm" "graphdb_availability_alert" {
   period              = var.cloudwatch_period
   statistic           = "Average"
   threshold           = "100"
-  actions_enabled     = var.cloudwatch_alarms_actions_enabled
   alarm_actions       = [aws_sns_topic.graphdb_route53_sns_topic[0].arn]
 
   dimensions = {

@@ -44,11 +44,14 @@ locals {
     )
   ) : var.sns_default_kms_key
 
+  cmk_key_alias = var.deploy_monitoring ? (
+    var.app_name != "" && var.environment_name != ""
+    ? "alias/${var.app_name}-${var.environment_name}-graphdb-sns-cmk-alias"
+  : var.sns_cmk_key_alias) : null
 
   # TLS & Protocol
   lb_tls_enabled      = var.lb_tls_certificate_arn != "" ? true : false
   calculated_protocol = local.lb_tls_enabled ? "https" : "http"
-
 
   # Subnet CIDR lists
   effective_private_subnet_cidrs = var.graphdb_node_count == 1 ? [var.vpc_private_subnet_cidrs[0]] : var.vpc_private_subnet_cidrs
@@ -263,7 +266,6 @@ module "monitoring" {
   resource_name_prefix = var.resource_name_prefix
   aws_region           = var.aws_region
 
-  cloudwatch_alarms_actions_enabled      = var.monitoring_actions_enabled
   sns_topic_endpoint                     = var.deploy_monitoring ? var.monitoring_sns_topic_endpoint : null
   sns_endpoint_auto_confirms             = var.monitoring_endpoint_auto_confirms
   sns_protocol                           = var.monitoring_sns_protocol
@@ -276,7 +278,7 @@ module "monitoring" {
   key_enabled                            = var.sns_key_enabled
   key_spec                               = var.sns_key_spec
   sns_default_kms_key                    = var.sns_default_kms_key
-  cmk_key_alias                          = var.sns_cmk_key_alias
+  cmk_key_alias                          = local.cmk_key_alias
   parameter_store_kms_key_arn            = local.calculated_parameter_store_kms_key_arn
   cloudwatch_log_group_retention_in_days = var.monitoring_log_group_retention_in_days
   enable_availability_tests              = var.monitoring_enable_availability_tests
