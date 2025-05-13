@@ -91,6 +91,8 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | deployment\_restriction\_tag | Deployment tag used to restrict access via IAM policies | `string` | `"deploymentTag"` | no |
+| environment\_name | Environment name used to generate the environment | `string` | `""` | no |
+| app\_name | Application name used to generate the environment | `string` | `""` | no |
 | common\_tags | (Optional) Map of common tags for all taggable AWS resources. | `map(string)` | `{}` | no |
 | resource\_name\_prefix | Resource name prefix used for tagging and naming AWS resources | `string` | n/a | yes |
 | aws\_region | AWS region to deploy resources into | `string` | n/a | yes |
@@ -152,7 +154,6 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | graphdb\_external\_dns | External domain name where GraphDB will be accessed | `string` | `""` | no |
 | deploy\_monitoring | Enable or disable toggle for monitoring | `bool` | `false` | no |
 | monitoring\_route53\_measure\_latency | Enable or disable route53 function to measure latency | `bool` | `false` | no |
-| monitoring\_actions\_enabled | Enable or disable actions on alarms | `bool` | `false` | no |
 | monitoring\_sns\_topic\_endpoint | Define an SNS endpoint which will be receiving the alerts via email | `string` | `null` | no |
 | monitoring\_sns\_protocol | Define an SNS protocol that you will use to receive alerts. Possible options are: Email, Email-JSON, HTTP, HTTPS. | `string` | `"email"` | no |
 | monitoring\_enable\_detailed\_instance\_monitoring | If true, the launched EC2 instance will have detailed monitoring enabled | `bool` | `false` | no |
