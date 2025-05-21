@@ -58,7 +58,7 @@ resource "aws_kms_key_policy" "parameter_store_cmk_policy" {
         "Sid" : "Allow access for Key Administrators",
         "Effect" : "Allow",
         "Principal" : {
-          "AWS" : var.parameter_store_key_admin_arn != "" ? var.parameter_store_key_admin_arn : aws_iam_role.param_store_key_admin_role.arn
+          "AWS" = length(trimspace(var.parameter_store_key_admin_arn)) > 0 ? split(",", var.parameter_store_key_admin_arn) : [aws_iam_role.param_store_key_admin_role.arn]
         },
         "Action" : [
           "kms:CreateAlias",
