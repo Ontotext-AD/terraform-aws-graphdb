@@ -513,6 +513,14 @@ app_name                      = "example_app"
 environment_name              = "env_name"
 ```
 
+If you want to grant all users in a specific IAM group administrative access to the KMS keys, you can configure the module like this:
+
+```hcl
+iam_admin_group = "Your_Iam_Group_Name"
+```
+
+The module will automatically resolve the ARNs of the users in the specified group and use them as KMS key administrators.
+
 #### Replication
 
 You can enable replication for S3 buckets by setting the following variables to true:
