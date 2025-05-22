@@ -229,6 +229,7 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | sns\_key\_spec | Specification of the Key. | `string` | `"SYMMETRIC_DEFAULT"` | no |
 | sns\_key\_enabled | Specifies whether the key is enabled. | `bool` | `true` | no |
 | sns\_rotation\_enabled | Specifies whether key rotation is enabled. | `bool` | `true` | no |
+| iam\_admin\_group | Define IAM group that should have access to the KMS keys and other resources | `string` | `""` | no |
 <!-- END_TF_DOCS -->
 
 ## Usage
