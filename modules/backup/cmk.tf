@@ -55,7 +55,7 @@ resource "aws_kms_key_policy" "s3_cmk_policy" {
         "Sid" : "Allow Key Administrators",
         "Effect" : "Allow",
         "Principal" : {
-          "AWS" : var.s3_kms_key_admin_arn != "" ? var.s3_kms_key_admin_arn : "${aws_iam_role.graphdb_s3_key_admin_role.arn}"
+          "AWS" = length(trimspace(var.s3_kms_key_admin_arn)) > 0 ? split(",", var.s3_kms_key_admin_arn) : [aws_iam_role.graphdb_s3_key_admin_role.arn]
         },
         "Action" : [
           "kms:Create*",
@@ -78,7 +78,7 @@ resource "aws_kms_key_policy" "s3_cmk_policy" {
         "Sid" : "Allow S3 Use of the Key",
         "Effect" : "Allow",
         "Principal" : {
-          "AWS" : var.s3_kms_key_admin_arn != "" ? var.s3_kms_key_admin_arn : "${aws_iam_role.graphdb_s3_key_admin_role.arn}"
+          "AWS" = length(trimspace(var.s3_kms_key_admin_arn)) > 0 ? split(",", var.s3_kms_key_admin_arn) : [aws_iam_role.graphdb_s3_key_admin_role.arn]
         },
         "Action" : [
           "kms:Encrypt",

@@ -63,7 +63,7 @@ resource "aws_kms_key_policy" "sns_cmk_policy" {
         "Sid" : "Allow access for Key Administrators",
         "Effect" : "Allow",
         "Principal" : {
-          "AWS" : var.sns_key_admin_arn != "" ? var.sns_key_admin_arn : aws_iam_role.sns_key_admin_role.arn
+          "AWS" = length(trimspace(var.sns_key_admin_arn)) > 0 ? split(",", var.sns_key_admin_arn) : [aws_iam_role.sns_key_admin_role.arn]
         },
         "Action" : [
           "kms:CreateAlias",

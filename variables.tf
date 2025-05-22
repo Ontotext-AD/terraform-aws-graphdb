@@ -881,3 +881,8 @@ variable "sns_rotation_enabled" {
   default     = true
 }
 
+variable "iam_admin_group" {
+  description = "Define IAM group that should have access to the KMS keys and other resources"
+  type        = string
+  default     = ""
+}
