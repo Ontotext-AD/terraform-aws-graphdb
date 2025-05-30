@@ -1,6 +1,11 @@
 # GraphDB AWS Terraform Module Changelog
 
+## 1.5.1
+
+* Update default GraphDB version to [10.8.7](https://graphdb.ontotext.com/documentation/10.8/release-notes.html#graphdb-10-8-7)
+
 ## 1.5.0
+
 * Added ability to provide additional ARNs for IAM Policies
 * Added ability to get dynamic http protocol for gdb_conf_overrides based on the lb_certificate_arn
 * Removed the `asg_enable_instance_refresh` property and the instance auto-refresh functionality.
