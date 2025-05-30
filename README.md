@@ -229,6 +229,7 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | sns\_key\_spec | Specification of the Key. | `string` | `"SYMMETRIC_DEFAULT"` | no |
 | sns\_key\_enabled | Specifies whether the key is enabled. | `bool` | `true` | no |
 | sns\_rotation\_enabled | Specifies whether key rotation is enabled. | `bool` | `true` | no |
+| iam\_admin\_group | Define IAM group that should have access to the KMS keys and other resources | `string` | `""` | no |
 <!-- END_TF_DOCS -->
 
 ## Usage
@@ -512,6 +513,14 @@ sns_key_admin_arn             = "arn:aws:iam::123456789012:user/john.doh@example
 app_name                      = "example_app"
 environment_name              = "env_name"
 ```
+
+If you want to grant all users in a specific IAM group administrative access to the KMS keys, you can configure the module like this:
+
+```hcl
+iam_admin_group = "Your_Iam_Group_Name"
+```
+
+The module will automatically resolve the ARNs of the users in the specified group and use them as KMS key administrators.
 
 #### Replication
 
