@@ -1,6 +1,7 @@
 # GraphDB AWS Terraform Module Changelog
 
 ## 2.2.0
+* Added variables to change CPU Utilization and Memory utilization alarms threshold
 * Added support for deriving KMS key administrators from an IAM group, making it easier to manage multi-user access.
 * Introduced new local.admin_user_arns variable to dynamically fetch IAM user ARNs from a group.
 * Improved logic for selecting KMS key principals using conditional preference
