@@ -85,9 +85,9 @@ resource "aws_cloudwatch_metric_alarm" "heap_usage_alarm" {
   for_each = toset(local.instance_hostnames)
 
   alarm_name          = "al-${var.resource_name_prefix}-heap-memory-usage-${each.key}"
-  alarm_description   = "Triggers if ${each.key}'s heap usage exceeds 80% of its total memory"
+  alarm_description   = "Triggers if ${each.key}'s heap usage exceeds threshold of its total memory"
   comparison_operator = "GreaterThanThreshold"
-  threshold           = 80
+  threshold           = var.graphdb_memory_utilization_threshold
   evaluation_periods  = 1
   treat_missing_data  = "missing"
   alarm_actions       = [aws_sns_topic.graphdb_sns_topic.arn]
@@ -140,8 +140,7 @@ resource "aws_cloudwatch_metric_alarm" "graphdb_cpu_utilization" {
   evaluation_periods  = var.cloudwatch_evaluation_periods
   period              = var.cloudwatch_period
   statistic           = "Maximum"
-  threshold           = 80
-  actions_enabled     = var.cloudwatch_alarms_actions_enabled
+  threshold           = var.cloudwatch_cpu_utilization_threshold
   alarm_actions       = [aws_sns_topic.graphdb_sns_topic.arn]
 
   metric_name = "CPUUtilization"
