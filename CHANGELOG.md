@@ -1,5 +1,8 @@
 # GraphDB AWS Terraform Module Changelog
 
+## 2.2.0
+
+
 ## 2.1.0
 * Added ability to use existing Load Balancer for more info check the Existing Load Balancer section in the README.md
 * Added option to choose between Application Load Balancer and Network Load Balancer
