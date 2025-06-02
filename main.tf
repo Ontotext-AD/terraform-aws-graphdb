@@ -426,6 +426,7 @@ module "graphdb" {
   user_supplied_scripts                     = var.graphdb_user_supplied_scripts
   user_supplied_templates                   = var.graphdb_user_supplied_templates
   user_supplied_rendered_templates          = var.graphdb_user_supplied_rendered_templates
+  enable_asg_wait                           = var.enable_asg_wait
 
   # Parameter Store Encryption
 

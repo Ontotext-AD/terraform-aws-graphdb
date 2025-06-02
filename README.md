@@ -189,6 +189,7 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | graphdb\_user\_supplied\_scripts | A list of paths to user-supplied shell scripts (local files) to be injected as additional parts in the EC2 user\_data. | `list(string)` | `[]` | no |
 | graphdb\_user\_supplied\_rendered\_templates | A list of strings containing pre-rendered shell script content to be added as parts in EC2 user\_data. | `list(string)` | `[]` | no |
 | graphdb\_user\_supplied\_templates | A list of maps where each map contains a 'path' to the template file and a 'variables' map used to render it. | ```list(object({ path = string variables = map(any) }))``` | `[]` | no |
+| enable\_asg\_wait | Whether to enable waiting for ASG node readiness | `string` | `"true"` | no |
 | create\_s3\_kms\_key | Enable creation of KMS key for S3 bucket encryption | `bool` | `false` | no |
 | s3\_kms\_key\_admin\_arn | ARN of the role or user granted administrative access to the S3 KMS key. | `string` | `""` | no |
 | s3\_key\_rotation\_enabled | Specifies whether key rotation is enabled. | `bool` | `true` | no |
@@ -343,6 +344,16 @@ To enable deployment of the monitoring module, you need to enable the following 
 
 ```hcl
 deploy_monitoring = true
+```
+
+**ASG_WAIT**
+
+That will wait for the termination process to finish to continue attaching the existing volume.
+This is a considerably slow, but necessary operation.
+For testing purposes this operation can be skipped by configuring the following variable:
+
+```hcl
+enable_asg_wait = false
 ```
 
 Changing CPU utilization and Memory Utiliziation Alarm threshold (the values are in %):
