@@ -468,6 +468,18 @@ variable "monitoring_enable_availability_tests" {
   default     = true
 }
 
+variable "monitoring_cpu_utilization_threshold" {
+  description = "Alarm threshold for Cloudwatch CPU Utilization"
+  type        = number
+  default     = 80
+}
+
+variable "monitoring_memory_utilization_threshold" {
+  description = "Alarm threshold for GraphDB Memory Utilization"
+  type        = number
+  default     = 80
+}
+
 # GraphDB overrides
 
 variable "graphdb_properties_path" {

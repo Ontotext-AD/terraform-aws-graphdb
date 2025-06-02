@@ -312,6 +312,10 @@ module "monitoring" {
 
   lb_tls_certificate_arn = var.lb_tls_certificate_arn
   lb_dns_name            = module.load_balancer[0].lb_dns_name != "" ? module.load_balancer[0].lb_dns_name : null
+
+  # Alarms Threshold
+  cloudwatch_cpu_utilization_threshold = var.monitoring_cpu_utilization_threshold
+  graphdb_memory_utilization_threshold = var.monitoring_memory_utilization_threshold
 }
 
 module "graphdb" {

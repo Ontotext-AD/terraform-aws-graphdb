@@ -163,6 +163,8 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | monitoring\_route53\_availability\_http\_port | Define the HTTP port for the Route53 availability check | `number` | `80` | no |
 | monitoring\_route53\_availability\_https\_port | Define the HTTPS port for the Route53 availability check | `number` | `443` | no |
 | monitoring\_enable\_availability\_tests | Enable Route 53 availability tests and alarms | `bool` | `true` | no |
+| monitoring\_cpu\_utilization\_threshold | Alarm threshold for Cloudwatch CPU Utilization | `number` | `80` | no |
+| monitoring\_memory\_utilization\_threshold | Alarm threshold for GraphDB Memory Utilization | `number` | `80` | no |
 | graphdb\_properties\_path | Path to a local file containing GraphDB properties (graphdb.properties) that would be appended to the default in the VM. | `string` | `null` | no |
 | graphdb\_java\_options | GraphDB options to pass to GraphDB with GRAPHDB\_JAVA\_OPTS environment variable. | `string` | `null` | no |
 | deploy\_logging\_module | Enable or disable logging module | `bool` | `false` | no |
@@ -341,6 +343,13 @@ To enable deployment of the monitoring module, you need to enable the following 
 
 ```hcl
 deploy_monitoring = true
+```
+
+Changing CPU utilization and Memory Utiliziation Alarm threshold (the values are in %):
+
+```hcl
+monitoring_cpu_utilization_threshold = 80
+monitoring_memory_utilization_threshold = 80
 ```
 
 **Note**: In order for the Cloudwatch Alarms to be able to publish alarms in SNS you should use [CMK key](https://repost.aws/knowledge-center/cloudwatch-configure-alarm-sns).
