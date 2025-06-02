@@ -163,8 +163,8 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | monitoring\_route53\_availability\_http\_port | Define the HTTP port for the Route53 availability check | `number` | `80` | no |
 | monitoring\_route53\_availability\_https\_port | Define the HTTPS port for the Route53 availability check | `number` | `443` | no |
 | monitoring\_enable\_availability\_tests | Enable Route 53 availability tests and alarms | `bool` | `true` | no |
-| monitoring\_al\_cpu\_utilization\_threshold | Alarm threshold for Cloudwatch CPU Utilization alarm | `number` | `80` | no |
-| monitoring\_al\_memory\_utilization\_threshold | Alarm threshold for Cloudwatch Memory Utilization alarm | `number` | `80` | no |
+| monitoring\_cpu\_utilization\_threshold | Alarm threshold for Cloudwatch CPU Utilization | `number` | `80` | no |
+| monitoring\_memory\_utilization\_threshold | Alarm threshold for GraphDB Memory Utilization | `number` | `80` | no |
 | graphdb\_properties\_path | Path to a local file containing GraphDB properties (graphdb.properties) that would be appended to the default in the VM. | `string` | `null` | no |
 | graphdb\_java\_options | GraphDB options to pass to GraphDB with GRAPHDB\_JAVA\_OPTS environment variable. | `string` | `null` | no |
 | deploy\_logging\_module | Enable or disable logging module | `bool` | `false` | no |
