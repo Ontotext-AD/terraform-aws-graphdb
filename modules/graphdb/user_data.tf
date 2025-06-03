@@ -23,6 +23,7 @@ data "cloudinit_config" "graphdb_user_data" {
     content_type = "text/x-shellscript"
     content = templatefile("${path.module}/templates/00_functions.sh", {
       name : var.resource_name_prefix
+      enable_asg_wait = var.enable_asg_wait
     })
   }
 
@@ -31,6 +32,7 @@ data "cloudinit_config" "graphdb_user_data" {
     content = templatefile("${path.module}/templates/01_wait_node_count.sh.tpl", {
       name : var.resource_name_prefix
       node_count : var.graphdb_node_count
+      enable_asg_wait : var.enable_asg_wait
     })
   }
 

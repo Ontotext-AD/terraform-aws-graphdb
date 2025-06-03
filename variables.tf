@@ -633,6 +633,12 @@ variable "graphdb_user_supplied_templates" {
   default = []
 }
 
+variable "enable_asg_wait" {
+  description = "Whether to enable waiting for ASG node readiness"
+  type        = string
+  default     = "true"
+}
+
 # S3 bucket encryption
 
 variable "create_s3_kms_key" {
