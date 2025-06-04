@@ -163,6 +163,8 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | monitoring\_route53\_availability\_http\_port | Define the HTTP port for the Route53 availability check | `number` | `80` | no |
 | monitoring\_route53\_availability\_https\_port | Define the HTTPS port for the Route53 availability check | `number` | `443` | no |
 | monitoring\_enable\_availability\_tests | Enable Route 53 availability tests and alarms | `bool` | `true` | no |
+| monitoring\_cpu\_utilization\_threshold | Alarm threshold for Cloudwatch CPU Utilization | `number` | `80` | no |
+| monitoring\_memory\_utilization\_threshold | Alarm threshold for GraphDB Memory Utilization | `number` | `80` | no |
 | graphdb\_properties\_path | Path to a local file containing GraphDB properties (graphdb.properties) that would be appended to the default in the VM. | `string` | `null` | no |
 | graphdb\_java\_options | GraphDB options to pass to GraphDB with GRAPHDB\_JAVA\_OPTS environment variable. | `string` | `null` | no |
 | deploy\_logging\_module | Enable or disable logging module | `bool` | `false` | no |
@@ -187,6 +189,7 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | graphdb\_user\_supplied\_scripts | A list of paths to user-supplied shell scripts (local files) to be injected as additional parts in the EC2 user\_data. | `list(string)` | `[]` | no |
 | graphdb\_user\_supplied\_rendered\_templates | A list of strings containing pre-rendered shell script content to be added as parts in EC2 user\_data. | `list(string)` | `[]` | no |
 | graphdb\_user\_supplied\_templates | A list of maps where each map contains a 'path' to the template file and a 'variables' map used to render it. | ```list(object({ path = string variables = map(any) }))``` | `[]` | no |
+| enable\_asg\_wait | Whether to enable waiting for ASG node readiness | `string` | `"true"` | no |
 | create\_s3\_kms\_key | Enable creation of KMS key for S3 bucket encryption | `bool` | `false` | no |
 | s3\_kms\_key\_admin\_arn | ARN of the role or user granted administrative access to the S3 KMS key. | `string` | `""` | no |
 | s3\_key\_rotation\_enabled | Specifies whether key rotation is enabled. | `bool` | `true` | no |
@@ -229,6 +232,7 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | sns\_key\_spec | Specification of the Key. | `string` | `"SYMMETRIC_DEFAULT"` | no |
 | sns\_key\_enabled | Specifies whether the key is enabled. | `bool` | `true` | no |
 | sns\_rotation\_enabled | Specifies whether key rotation is enabled. | `bool` | `true` | no |
+| iam\_admin\_group | Define IAM group that should have access to the KMS keys and other resources | `string` | `""` | no |
 <!-- END_TF_DOCS -->
 
 ## Usage
@@ -340,6 +344,23 @@ To enable deployment of the monitoring module, you need to enable the following 
 
 ```hcl
 deploy_monitoring = true
+```
+
+**ASG_WAIT**
+
+That will wait for the termination process to finish to continue attaching the existing volume.
+This is a considerably slow, but necessary operation.
+For testing purposes this operation can be skipped by configuring the following variable:
+
+```hcl
+enable_asg_wait = false
+```
+
+Changing CPU utilization and Memory Utiliziation Alarm threshold (the values are in %):
+
+```hcl
+monitoring_cpu_utilization_threshold = 80
+monitoring_memory_utilization_threshold = 80
 ```
 
 **Note**: In order for the Cloudwatch Alarms to be able to publish alarms in SNS you should use [CMK key](https://repost.aws/knowledge-center/cloudwatch-configure-alarm-sns).
@@ -512,6 +533,14 @@ sns_key_admin_arn             = "arn:aws:iam::123456789012:user/john.doh@example
 app_name                      = "example_app"
 environment_name              = "env_name"
 ```
+
+If you want to grant all users in a specific IAM group administrative access to the KMS keys, you can configure the module like this:
+
+```hcl
+iam_admin_group = "Your_Iam_Group_Name"
+```
+
+The module will automatically resolve the ARNs of the users in the specified group and use them as KMS key administrators.
 
 #### Replication
 

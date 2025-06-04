@@ -420,3 +420,8 @@ variable "additional_policy_arns" {
   type        = list(string)
   default     = []
 }
+
+variable "enable_asg_wait" {
+  description = "Whether to enable waiting for ASG node readiness"
+  type        = string
+}

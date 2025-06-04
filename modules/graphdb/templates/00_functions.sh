@@ -5,6 +5,8 @@ log_with_timestamp() {
   echo "$(date '+%Y-%m-%d %H:%M:%S'): $1"
 }
 
+ENABLE_ASG_WAIT=${enable_asg_wait}
+
 # Function to check ASG node counts
 wait_for_asg_nodes() {
   local ASG_NAME="$1"

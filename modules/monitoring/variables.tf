@@ -68,12 +68,6 @@ variable "cloudwatch_log_group_retention_in_days" {
   type        = number
 }
 
-variable "cloudwatch_al_low_memory_warning_threshold" {
-  description = "Percentage of available used heap memory to monitor for"
-  type        = number
-  default     = 90
-}
-
 variable "route53_availability_port" {
   description = "Which HTTP port to use for the web availability tests"
   type        = number
@@ -201,4 +195,14 @@ variable "lb_dns_name" {
 variable "enable_availability_tests" {
   description = "Enable Route 53 availability tests and alarms"
   type        = bool
+}
+
+variable "cloudwatch_cpu_utilization_threshold" {
+  description = "Alarm threshold for Cloudwatch CPU Utilization"
+  type        = number
+}
+
+variable "graphdb_memory_utilization_threshold" {
+  description = "Alarm threshold for GraphDB Memory Utilization"
+  type        = number
 }

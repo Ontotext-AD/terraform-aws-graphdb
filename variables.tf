@@ -468,6 +468,18 @@ variable "monitoring_enable_availability_tests" {
   default     = true
 }
 
+variable "monitoring_cpu_utilization_threshold" {
+  description = "Alarm threshold for Cloudwatch CPU Utilization"
+  type        = number
+  default     = 80
+}
+
+variable "monitoring_memory_utilization_threshold" {
+  description = "Alarm threshold for GraphDB Memory Utilization"
+  type        = number
+  default     = 80
+}
+
 # GraphDB overrides
 
 variable "graphdb_properties_path" {
@@ -619,6 +631,12 @@ variable "graphdb_user_supplied_templates" {
     variables = map(any)
   }))
   default = []
+}
+
+variable "enable_asg_wait" {
+  description = "Whether to enable waiting for ASG node readiness"
+  type        = string
+  default     = "true"
 }
 
 # S3 bucket encryption
@@ -881,3 +899,8 @@ variable "sns_rotation_enabled" {
   default     = true
 }
 
+variable "iam_admin_group" {
+  description = "Define IAM group that should have access to the KMS keys and other resources"
+  type        = string
+  default     = ""
+}

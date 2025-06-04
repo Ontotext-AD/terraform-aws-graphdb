@@ -58,7 +58,7 @@ resource "aws_kms_key_policy" "ebs_cmk_policy" {
         "Sid" : "Allow access to the key for Key Administrators",
         "Effect" : "Allow",
         "Principal" : {
-          "AWS" : var.ebs_key_admin_arn != "" ? var.ebs_key_admin_arn : "${aws_iam_role.ebs_key_admin_role.arn}"
+          "AWS" = length(trimspace(var.ebs_key_admin_arn)) > 0 ? split(",", var.ebs_key_admin_arn) : [aws_iam_role.ebs_key_admin_role.arn]
         },
         "Action" : [
           "kms:Create*",
