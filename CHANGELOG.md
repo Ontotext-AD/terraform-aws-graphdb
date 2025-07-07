@@ -1,5 +1,9 @@
 # GraphDB AWS Terraform Module Changelog
 
+## 2.2.1
+
+* Updated GraphDB default version to [11.0.2](https://graphdb.ontotext.com/documentation/11.0/release-notes.html#graphdb-11-0-2)
+
 ## 2.2.0
 * Added variables to change CPU Utilization and Memory utilization alarms threshold
 * Added support for deriving KMS key administrators from an IAM group, making it easier to manage multi-user access.
