@@ -25,15 +25,17 @@ AZ=$(curl -Ss -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" 169.254.169.254/latest/
 ASG_NAME=${name}
 GRAPHDB_NODE_COUNT=${node_count}
 
-# Only run the wait_asg_nodes function if graphdb_node_count is more than 1 and ENABLE_ASG_WAIT = true
-if [ "$GRAPHDB_NODE_COUNT" -gt 1 ] && [ "$ENABLE_ASG_WAIT" = "true" ]; then
-  log_with_timestamp "GraphDB node count is greater than 1 and ENABLE_ASG_WAIT is true. Running wait_for_asg_nodes for $ASG_NAME..."
+# Run wait_asg_nodes only if ENABLE_ASG_WAIT=true
+if [ "$ENABLE_ASG_WAIT" = "true" ]; then
+  log_with_timestamp "ENABLE_ASG_WAIT is true. Running wait_for_asg_nodes for $ASG_NAME..."
   wait_for_asg_nodes "$ASG_NAME"
 else
-  log_with_timestamp "Skipping wait_for_asg_nodes: GraphDB node count is $GRAPHDB_NODE_COUNT and ENABLE_ASG_WAIT is $ENABLE_ASG_WAIT."
-  if [ "$GRAPHDB_NODE_COUNT" -eq 1 ]; then
-    hostnamectl set-hostname "node-1"
-  fi
+  log_with_timestamp "Skipping wait_for_asg_nodes: ENABLE_ASG_WAIT is $ENABLE_ASG_WAIT."
+fi
+
+# If node count = 1, always set hostname
+if [ "$GRAPHDB_NODE_COUNT" -eq 1 ]; then
+  hostnamectl set-hostname "node-1"
 fi
 
 instance_refresh_status=$(aws autoscaling describe-instance-refreshes --auto-scaling-group-name "$ASG_NAME" --query 'InstanceRefreshes[?Status==`InProgress`]' --output json)
