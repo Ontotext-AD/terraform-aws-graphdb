@@ -6,6 +6,18 @@ variable "deployment_restriction_tag" {
   default     = "deploymentTag"
 }
 
+variable "environment_name" {
+  description = "Environment name used to generate the environment"
+  type        = string
+  default     = ""
+}
+
+variable "app_name" {
+  description = "Application name used to generate the environment"
+  type        = string
+  default     = ""
+}
+
 variable "common_tags" {
   description = "(Optional) Map of common tags for all taggable AWS resources."
   type        = map(string)
@@ -96,6 +108,17 @@ variable "lb_internal" {
   default     = false
 }
 
+variable "lb_type" {
+  description = "Type of load balancer to create. Supported: 'network' or 'application'"
+  type        = string
+  default     = "network"
+
+  validation {
+    condition     = contains(["network", "application"], var.lb_type)
+    error_message = "lb_type must be either 'network' or 'application'."
+  }
+}
+
 variable "lb_deregistration_delay" {
   description = "Amount time, in seconds, for GraphDB LB target group to wait before changing the state of a deregistering target from draining to unused."
   type        = string
@@ -118,6 +141,24 @@ variable "lb_tls_certificate_arn" {
   description = "ARN of the TLS certificate, imported in ACM, which will be used for the TLS listener on the load balancer."
   type        = string
   default     = ""
+}
+
+variable "lb_idle_timeout" {
+  description = "(Optional) The time in seconds that the connection is allowed to be idle."
+  type        = number
+  default     = 4000
+}
+
+variable "lb_client_keep_alive_timeout" {
+  description = "(Optional) The time in seconds that the client connection is allowed to be idle."
+  type        = number
+  default     = 604800 # 7 Days
+}
+
+variable "alb_enable_http2" {
+  description = "Enable HTTP/2 on the load balancer."
+  type        = bool
+  default     = true
 }
 
 variable "lb_tls_policy" {
@@ -434,12 +475,6 @@ variable "monitoring_route53_measure_latency" {
   default     = false
 }
 
-variable "monitoring_actions_enabled" {
-  description = "Enable or disable actions on alarms"
-  type        = bool
-  default     = false
-}
-
 variable "monitoring_sns_topic_endpoint" {
   description = "Define an SNS endpoint which will be receiving the alerts via email"
   type        = string
@@ -492,6 +527,18 @@ variable "monitoring_enable_availability_tests" {
   description = "Enable Route 53 availability tests and alarms"
   type        = bool
   default     = true
+}
+
+variable "monitoring_cpu_utilization_threshold" {
+  description = "Alarm threshold for Cloudwatch CPU Utilization"
+  type        = number
+  default     = 80
+}
+
+variable "monitoring_memory_utilization_threshold" {
+  description = "Alarm threshold for GraphDB Memory Utilization"
+  type        = number
+  default     = 80
 }
 
 # GraphDB overrides
@@ -570,6 +617,30 @@ variable "s3_enable_replication_rule" {
   default     = "Disabled"
 }
 
+variable "existing_lb_arn" {
+  description = "(Optional) ARN of an existing Load Balancer. If provided, the module will not create a new LB."
+  type        = string
+  default     = ""
+}
+
+variable "existing_lb_dns_name" {
+  description = " (Optional) Use the DNS Name of an existing Load Balancer."
+  type        = string
+  default     = ""
+}
+
+variable "existing_lb_subnets" {
+  description = "(Optional) Provide the subnet/s of the existing Load Balancer"
+  type        = list(string)
+  default     = []
+}
+
+variable "existing_lb_target_group_arns" {
+  description = "(Optional) Provide existing LB target group ARNs to attach to the Load Balancer"
+  type        = list(string)
+  default     = []
+}
+
 variable "lb_access_logs_lifecycle_rule_status" {
   description = "Define status of the S3 lifecycle rule. Possible options are enabled or disabled."
   type        = string
@@ -621,6 +692,12 @@ variable "graphdb_user_supplied_templates" {
     variables = map(any)
   }))
   default = []
+}
+
+variable "enable_asg_wait" {
+  description = "Whether to enable waiting for ASG node readiness"
+  type        = string
+  default     = "true"
 }
 
 # S3 bucket encryption
@@ -883,3 +960,8 @@ variable "sns_rotation_enabled" {
   default     = true
 }
 
+variable "iam_admin_group" {
+  description = "Define IAM group that should have access to the KMS keys and other resources"
+  type        = string
+  default     = ""
+}
