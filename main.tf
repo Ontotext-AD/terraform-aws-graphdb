@@ -154,6 +154,16 @@ module "vpc" {
     module.logging[0].graphdb_logging_bucket_arn
   ) : null
   graphdb_node_count = var.graphdb_node_count
+
+  tgw_id                       = var.tgw_id != "" ? var.tgw_id : null
+  tgw_subnet_cidrs             = var.tgw_id != "" ? var.tgw_subnet_cidrs : []
+  tgw_client_cidrs             = var.tgw_id != "" ? var.tgw_client_cidrs : []
+  tgw_dns_support              = var.tgw_dns_support
+  tgw_ipv6_support             = var.tgw_ipv6_support
+  tgw_appliance_mode_support   = var.tgw_appliance_mode_support
+  tgw_route_table_id           = var.tgw_id != "" ? var.tgw_route_table_id : null
+  tgw_associate_to_route_table = var.tgw_id != "" ? var.tgw_associate_to_route_table : false
+  tgw_enable_propagation       = var.tgw_id != "" ? var.tgw_enable_propagation : false
 }
 
 module "backup" {
@@ -188,14 +198,11 @@ module "logging" {
 
   resource_name_prefix = var.resource_name_prefix
   lb_access_logs_expiration_days = var.deploy_logging_module && var.lb_enable_access_logs ? (
-    var.lb_access_logs_expiration_days
-  ) : null
+  var.lb_access_logs_expiration_days) : null
   lb_access_logs_lifecycle_rule_status = var.deploy_logging_module && var.lb_enable_access_logs ? (
-    var.lb_access_logs_lifecycle_rule_status
-  ) : "Disabled"
+  var.lb_access_logs_lifecycle_rule_status) : "Disabled"
   s3_access_logs_expiration_days = var.deploy_logging_module && var.s3_enable_access_logs ? (
-    var.s3_access_logs_expiration_days
-  ) : null
+  var.s3_access_logs_expiration_days) : null
   s3_access_logs_lifecycle_rule_status = var.deploy_logging_module && var.s3_enable_access_logs ? (
     var.s3_access_logs_lifecycle_rule_status
   ) : "Disabled"

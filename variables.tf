@@ -296,6 +296,67 @@ variable "vpc_flow_logs_expiration_days" {
   default     = 7
 }
 
+variable "tgw_id" {
+  type        = string
+  description = "Transit Gateway ID. If null, no TGW attachment will be created."
+  default     = null
+}
+
+variable "tgw_subnet_ids" {
+  type        = list(string)
+  description = "List of subnet IDs to use for TGW attachment ENIs (typically private subnets)."
+  default     = []
+}
+
+variable "tgw_subnet_cidrs" {
+  type        = list(string)
+  description = "List of subnet CIDRs to use for TGW attachment."
+  default     = []
+}
+
+variable "tgw_client_cidrs" {
+  type        = list(string)
+  description = "CIDRs of client networks reachable via TGW. Adds routes in private route tables."
+  default     = []
+}
+
+variable "tgw_dns_support" {
+  description = "Enable or disable DNS support for the TGW attachment"
+  type        = string
+  default     = "enable"
+}
+
+variable "tgw_ipv6_support" {
+  description = "Enable or disable IPv6 support for the TGW attachment"
+  type        = string
+  default     = "disable"
+}
+
+variable "tgw_appliance_mode_support" {
+  description = "Enable or disable appliance mode support for the TGW attachment"
+  type        = string
+  default     = "disable"
+}
+
+variable "tgw_route_table_id" {
+  description = "TGW route table to associate this VPC attachment with (client-provided). If null, no association is created."
+  type        = string
+  default     = null
+}
+
+variable "tgw_associate_to_route_table" {
+  description = "Whether to associate the TGW attachment to tgw_route_table_id."
+  type        = bool
+  default     = null
+
+}
+
+variable "tgw_enable_propagation" {
+  description = "Whether to enable propagation of this attachment into tgw_route_table_id."
+  type        = bool
+  default     = null
+}
+
 variable "lb_enable_private_access" {
   description = "Enable or disable the private access via PrivateLink to the GraphDB Cluster"
   type        = bool
