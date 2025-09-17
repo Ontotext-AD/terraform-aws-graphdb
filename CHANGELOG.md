@@ -1,8 +1,11 @@
 # GraphDB AWS Terraform Module Changelog
 
+## 2.3.1
+* Updated GraphDB default version to [11.1.1](https://graphdb.ontotext.com/documentation/11.1/release-notes.html#graphdb-11-1-1)
+
 ## 2.3.0
 * Enabled ASG_WAIT check for single node deployments.
-* Updated GraphDB version to 11.1.0
+* Updated GraphDB default version to [11.1.0](https://graphdb.ontotext.com/documentation/11.1/release-notes.html#graphdb-11-1-0)
 
 ## 2.2.1
 
