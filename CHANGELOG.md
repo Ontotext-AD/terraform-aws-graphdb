@@ -1,5 +1,8 @@
 # GraphDB AWS Terraform Module Changelog
 
+## 2.4.0
+* Added support for Transit Gateway Attachments, Subnets and TGW Route table rules.
+
 ## 2.3.1
 * Updated GraphDB default version to [11.1.1](https://graphdb.ontotext.com/documentation/11.1/release-notes.html#graphdb-11-1-1)
 

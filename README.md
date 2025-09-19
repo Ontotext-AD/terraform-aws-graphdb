@@ -136,6 +136,16 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | vpc\_enable\_flow\_logs | Enable or disable VPC Flow logs | `bool` | `false` | no |
 | vpc\_flow\_logs\_lifecycle\_rule\_status | Define status of the S3 lifecycle rule. Possible options are enabled or disabled. | `string` | `"Disabled"` | no |
 | vpc\_flow\_logs\_expiration\_days | Define the days after which the VPC flow logs should be deleted | `number` | `7` | no |
+| tgw\_id | Transit Gateway ID. If null, no TGW attachment will be created. | `string` | `null` | no |
+| tgw\_subnet\_ids | List of subnet IDs to use for TGW attachment ENIs (typically private subnets). | `list(string)` | `[]` | no |
+| tgw\_subnet\_cidrs | List of subnet CIDRs to use for TGW attachment. | `list(string)` | `[]` | no |
+| tgw\_client\_cidrs | CIDRs of client networks reachable via TGW. Adds routes in private route tables. | `list(string)` | `[]` | no |
+| tgw\_dns\_support | Enable or disable DNS support for the TGW attachment | `string` | `"enable"` | no |
+| tgw\_ipv6\_support | Enable or disable IPv6 support for the TGW attachment | `string` | `"disable"` | no |
+| tgw\_appliance\_mode\_support | Enable or disable appliance mode support for the TGW attachment | `string` | `"disable"` | no |
+| tgw\_route\_table\_id | TGW route table to associate this VPC attachment with (client-provided). If null, no association is created. | `string` | `null` | no |
+| tgw\_associate\_to\_route\_table | Whether to associate the TGW attachment to tgw\_route\_table\_id. | `bool` | `null` | no |
+| tgw\_enable\_propagation | Whether to enable propagation of this attachment into tgw\_route\_table\_id. | `bool` | `null` | no |
 | lb\_enable\_private\_access | Enable or disable the private access via PrivateLink to the GraphDB Cluster | `bool` | `false` | no |
 | ami\_id | (Optional) User-provided AMI ID to use with GraphDB instances. If you provide this value, please ensure it will work with the default userdata script (assumes latest version of Ubuntu LTS). Otherwise, please provide your own userdata script using the user\_supplied\_userdata\_path variable. | `string` | `null` | no |
 | graphdb\_version | GraphDB version | `string` | `"11.1.1"` | no |
@@ -680,6 +690,28 @@ lb_type = "application"
 ```
 
 💡 Note: ALBs support idle timeouts of up to [7 days](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/edit-load-balancer-attributes.html#http-client-keep-alive-duration), which is ideal for persistent connections and long-running operations over HTTP/HTTPS.
+
+#### Transit Gateway Attachments
+
+When a `tgw_id` is provided, the module will:
+  * Create dedicated Transit Gateway(TGW) subnets in the VPC (or use provided subnet IDs).
+  * Create a Transit Gateway(TGW) VPC attachment connecting the database VPC to the specified Transit Gateway.
+  * Add routes in the private route tables to forward traffic destined for tgw_client_cidrs via the TGW.
+  * Attach the Transit Gateway Attachment to custom route table.
+
+If no `tgw_id` is specified, no Transit Gateway(TGW) resources will be created.
+
+```hcl
+tgw_id = "tgw-0123456789abcdef0"
+# Provide tgw_client_cidrs or tgw_subnet_ids
+tgw_client_cidrs = ["10.0.0.0/8"]
+tgw_subnet_ids = ["subnet-0123456789abcdef0"]
+tgw_subnet_cidrs = ["10.0.100.0/25"]
+# If you want to attach different route table than the default one, you can have only one route table attached.
+tgw_route_table_id = ""
+tgw_enable_propagation = true
+tgw_associate_to_route_table = true
+```
 
 ## Single Node Deployment
 
