@@ -136,13 +136,16 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | vpc\_enable\_flow\_logs | Enable or disable VPC Flow logs | `bool` | `false` | no |
 | vpc\_flow\_logs\_lifecycle\_rule\_status | Define status of the S3 lifecycle rule. Possible options are enabled or disabled. | `string` | `"Disabled"` | no |
 | vpc\_flow\_logs\_expiration\_days | Define the days after which the VPC flow logs should be deleted | `number` | `7` | no |
-| tgw\_id | Transit Gateway ID. If null, no TGW attachment will be created. | `string` | n/a | yes |
+| tgw\_id | Transit Gateway ID. If null, no TGW attachment will be created. | `string` | `null` | no |
 | tgw\_subnet\_ids | List of subnet IDs to use for TGW attachment ENIs (typically private subnets). | `list(string)` | `[]` | no |
-| tgw\_subnet\_cidrs | List of subnet CIDRs to use for TGW attachment. | `list(string)` | n/a | yes |
+| tgw\_subnet\_cidrs | List of subnet CIDRs to use for TGW attachment. | `list(string)` | `[]` | no |
 | tgw\_client\_cidrs | CIDRs of client networks reachable via TGW. Adds routes in private route tables. | `list(string)` | `[]` | no |
 | tgw\_dns\_support | Enable or disable DNS support for the TGW attachment | `string` | `"enable"` | no |
 | tgw\_ipv6\_support | Enable or disable IPv6 support for the TGW attachment | `string` | `"disable"` | no |
 | tgw\_appliance\_mode\_support | Enable or disable appliance mode support for the TGW attachment | `string` | `"disable"` | no |
+| tgw\_route\_table\_id | TGW route table to associate this VPC attachment with (client-provided). If null, no association is created. | `string` | `null` | no |
+| tgw\_associate\_to\_route\_table | Whether to associate the TGW attachment to tgw\_route\_table\_id. | `bool` | `null` | no |
+| tgw\_enable\_propagation | Whether to enable propagation of this attachment into tgw\_route\_table\_id. | `bool` | `null` | no |
 | lb\_enable\_private\_access | Enable or disable the private access via PrivateLink to the GraphDB Cluster | `bool` | `false` | no |
 | ami\_id | (Optional) User-provided AMI ID to use with GraphDB instances. If you provide this value, please ensure it will work with the default userdata script (assumes latest version of Ubuntu LTS). Otherwise, please provide your own userdata script using the user\_supplied\_userdata\_path variable. | `string` | `null` | no |
 | graphdb\_version | GraphDB version | `string` | `"11.1.1"` | no |
