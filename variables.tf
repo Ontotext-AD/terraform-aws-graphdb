@@ -307,7 +307,6 @@ variable "tgw_associate_to_route_table" {
   description = "Whether to associate the TGW attachment to tgw_route_table_id."
   type        = bool
   default     = null
-
 }
 
 variable "tgw_enable_propagation" {
@@ -331,7 +330,7 @@ variable "ami_id" {
 variable "graphdb_version" {
   description = "GraphDB version"
   type        = string
-  default     = "10.8.10"
+  default     = "10.8.11"
   nullable    = false
 }
 

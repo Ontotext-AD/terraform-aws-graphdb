@@ -1,5 +1,4 @@
 # Fetch availability zones for the current region
-
 data "aws_availability_zones" "available" {}
 
 locals {
@@ -76,7 +75,8 @@ resource "aws_eip" "graphdb_eip" {
 }
 
 resource "aws_nat_gateway" "graphdb_nat_gateway" {
-  count         = local.nat_gateway_count
+  count = local.nat_gateway_count
+
   subnet_id     = var.single_nat_gateway ? aws_subnet.graphdb_public_subnet[0].id : aws_subnet.graphdb_public_subnet[count.index].id
   allocation_id = aws_eip.graphdb_eip[var.single_nat_gateway ? 0 : count.index].id
 }

@@ -164,8 +164,7 @@ module "vpc" {
   tgw_route_table_id           = var.tgw_id != "" ? var.tgw_route_table_id : null
   tgw_associate_to_route_table = var.tgw_id != "" ? var.tgw_associate_to_route_table : false
   tgw_enable_propagation       = var.tgw_id != "" ? var.tgw_enable_propagation : false
-  vpc_flow_log_bucket_arn                         = var.vpc_enable_flow_logs && var.deploy_logging_module ? module.logging[0].graphdb_logging_bucket_arn : null
-  graphdb_node_count                              = var.graphdb_node_count
+
 }
 
 module "backup" {
