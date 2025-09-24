@@ -62,7 +62,6 @@ versions. The next table shows the version compatability between GraphDB, and th
 | [Version 1.x.x](https://github.com/Ontotext-AD/terraform-aws-graphdb/releases) | [Version 10.6.x](https://graphdb.ontotext.com/documentation/10.6/release-notes.html)  |
 | [Version 1.2.x](https://github.com/Ontotext-AD/terraform-aws-graphdb/releases) | [Version 10.7.x](https://graphdb.ontotext.com/documentation/10.7/release-notes.html)  |
 | [Version 1.3.x](https://github.com/Ontotext-AD/terraform-aws-graphdb/releases) | [Version 10.8.x](https://graphdb.ontotext.com/documentation/10.8/release-notes.html)  |
-| [Version 2.x.x](https://github.com/Ontotext-AD/terraform-aws-graphdb/releases) | [Version 11.x.x](https://graphdb.ontotext.com/documentation/11.0/release-notes.html)  |
 
 You can track the particular version updates of GraphDB in the [changelog](CHANGELOG.md).
 
