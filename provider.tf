@@ -4,7 +4,7 @@ provider "aws" {
     tags = merge(
       {
         Release_Name = var.resource_name_prefix
-        Name         = "${var.resource_name_prefix}"
+        Name         = var.resource_name_prefix
       },
       var.common_tags
     )
@@ -27,7 +27,7 @@ provider "aws" {
     tags = merge(
       {
         Release_Name = var.resource_name_prefix
-        Name         = "${var.resource_name_prefix}"
+        Name         = var.resource_name_prefix
         Environment  = var.environment_name
         App_Name     = var.app_name
       },
@@ -51,7 +51,7 @@ provider "aws" {
     tags = merge(
       {
         Release_Name = var.resource_name_prefix
-        Name         = "${var.resource_name_prefix}"
+        Name         = var.resource_name_prefix
       },
       var.common_tags
     )

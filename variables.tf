@@ -965,3 +965,106 @@ variable "iam_admin_group" {
   type        = string
   default     = ""
 }
+
+# External DNS Records
+
+variable "external_dns_records_zone_name" {
+  description = "If non-empty, deploy the external DNS records module. Example: example.com"
+  type        = string
+  default     = null
+}
+
+variable "external_dns_records_name" {
+  description = "External DNS record name to create within the zone. Use '@' for apex."
+  type        = string
+  default     = "@"
+}
+
+variable "external_dns_records_private_zone" {
+  description = "Whether to create a private or public hosted zone."
+  type        = bool
+  default     = false
+}
+
+variable "external_dns_records_force_destroy" {
+  description = "If true, destroy the hosted zone even if it contains records (deletes all records first)."
+  type        = bool
+  default     = false
+}
+
+variable "external_dns_records_existing_zone_id" {
+  description = "If set, use an existing hosted zone instead of creating a new one."
+  type        = string
+  default     = null
+}
+
+variable "external_dns_records_vpc_id" {
+  description = "VPC ID to associate with the private hosted zone (required if private_zone is true and vpc_associations is not set)."
+  type        = string
+  default     = null
+}
+
+variable "external_dns_records_vpc_associations" {
+  description = "List of VPCs to associate with the private hosted zone (required if private_zone is true). Each item should be an object with vpc_id and optional vpc_region."
+  type = list(object({
+    vpc_id     = string
+    vpc_region = optional(string) # Optional, defaults to the provider region if not set
+  }))
+  default = []
+}
+
+variable "external_dns_records_vpc_region" {
+  description = "(Optional) Region of the VPC to associate with the private hosted zone (required if private_zone is true and vpc_associations is not set)."
+  type        = string
+  default     = null
+}
+
+variable "external_dns_records_a_records_list" {
+  description = "A/AAAA records. Use alias for ALB/NLB/etc."
+  type = list(object({
+    name    = string
+    type    = optional(string, "A")  # "A" or "AAAA"
+    ttl     = optional(number)       # ignored if alias is set
+    records = optional(list(string)) # when not alias
+    alias = optional(object({
+      name                   = string # target DNS, e.g. ALB DNS
+      zone_id                = string # target hosted zone id
+      evaluate_target_health = optional(bool, false)
+    }))
+  }))
+  default = []
+}
+
+variable "external_dns_records_cname_records_list" {
+  description = "CNAME records (note: not valid for apex)."
+  type = list(object({
+    name   = string
+    ttl    = number
+    record = string
+  }))
+  default = []
+}
+
+variable "external_dns_records_ttl" {
+  description = "Default TTL for records (if not individually set)."
+  type        = number
+  default     = 300
+}
+
+variable "external_dns_records_allow_overwrite" {
+  description = "Allow overwriting existing records with the same name/type."
+  type        = bool
+  default     = false
+}
+
+variable "external_dns_records_alb_dns_name_override" {
+  description = "(Optional) Use the DNS Name of an existing Application Load Balancer."
+  type        = string
+  default     = null
+}
+
+variable "external_dns_records_alb_zone_id_override" {
+  description = "(Optional) Use the Hosted Zone ID of an existing Application Load Balancer."
+  type        = string
+  default     = null
+}

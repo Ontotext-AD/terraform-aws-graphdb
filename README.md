@@ -764,6 +764,101 @@ Note that the EC2 instances won't be automatically updated to the latest model, 
 Make sure the instances are recreated one by one, allowing them time to rejoin the cluster, to avoid downtime and
 unexpected behavior.
 
+###  External DNS Records Management
+
+This Terraform module manages **Route 53 hosted zones** and DNS records (A/AAAA and CNAME).
+It supports creating a new hosted zone or reusing an existing one, and lets you define DNS records declaratively.
+
+#### Usage
+
+##### Create records automatically
+
+```hcl
+external_dns_records_zone_name = "example.com"
+```
+
+##### Creating a new hosted zone with records
+
+```hcl
+  zone_name       = "example.com"
+  private_zone    = false
+  force_destroy   = true
+  allow_overwrite = true
+
+  a_records_list = [
+    {
+      name    = "@"
+      type    = "A"
+      ttl     = 300
+      records = ["1.2.3.4"]
+    },
+    {
+      name    = "app"
+      type    = "A"
+      ttl     = 300
+      records = ["5.6.7.8"]
+    }
+  ]
+
+  cname_records_list = [
+    {
+      name   = "www"
+      ttl    = 300
+      record = "example.com"
+    }
+  ]
+```
+
+##### Reusing an existing hosted zone
+
+```hcl
+existing_zone_id = "Z1234567890ABC"
+allow_overwrite  = true
+
+  a_records_list = [
+    {
+      name    = "graphdb"
+      type    = "A"
+      ttl     = 60
+      records = ["203.0.113.25"]
+    }
+  ]
+```
+
+##### Creating a private hosted zone with VPC associations
+
+```hcl
+zone_name       = "example.com.com"
+private_zone    = true
+force_destroy   = true
+allow_overwrite = true
+
+  vpc_associations = [
+    {
+      vpc_id     = "vpc-0123456789abcdef0"
+      vpc_region = "eu-central-1"
+    }
+  ]
+
+  a_records_list = [
+    {
+      name    = "graphdb"
+      type    = "A"
+      ttl     = 60
+      records = ["10.0.1.25"]
+    }
+  ]
+
+  cname_records_list = [
+    {
+      name   = "www"
+      ttl    = 60
+      record = "graphdb.example.com"
+    }
+  ]
+
+```
+
 ## Local Development
 
 Instead of using the module dependency, you can create a local variables file named `terraform.tfvars` and provide
@@ -773,15 +868,10 @@ Here's an example of a `terraform.tfvars` file:
 ### terraform.tfvars
 
 ```hcl
-
 aws_region = "us-east-1"
-
 resource_name_prefix = "my-prefix"
-
 graphdb_license_path = "/path/to/your/license.license"
-
 ec2_instance_type = "c5a.2xlarge"
-
 allowed_inbound_cidrs_lb = ["0.0.0.0/0"]
 ```
 

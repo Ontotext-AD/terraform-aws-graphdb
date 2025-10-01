@@ -1,5 +1,9 @@
 # GraphDB AWS Terraform Module Changelog
 
+## 2.5.0
+
+* Added support for managing Route 53 hosted zones and DNS records via external_dns_records module.
+
 ## 2.4.0
 * Added support for Transit Gateway Attachments, Subnets and TGW Route table rules.
 
