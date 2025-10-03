@@ -243,6 +243,20 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | sns\_key\_enabled | Specifies whether the key is enabled. | `bool` | `true` | no |
 | sns\_rotation\_enabled | Specifies whether key rotation is enabled. | `bool` | `true` | no |
 | iam\_admin\_group | Define IAM group that should have access to the KMS keys and other resources | `string` | `""` | no |
+| external\_dns\_records\_zone\_name | If non-empty, deploy the external DNS records module. Example: example.com | `string` | `null` | no |
+| external\_dns\_records\_name | External DNS record name to create within the zone. Use '@' for apex. | `string` | `"@"` | no |
+| external\_dns\_records\_private\_zone | Whether to create a private or public hosted zone. | `bool` | `false` | no |
+| external\_dns\_records\_force\_destroy | If true, destroy the hosted zone even if it contains records (deletes all records first). | `bool` | `false` | no |
+| external\_dns\_records\_existing\_zone\_id | If set, use an existing hosted zone instead of creating a new one. | `string` | `null` | no |
+| external\_dns\_records\_vpc\_id | VPC ID to associate with the private hosted zone (required if private\_zone is true and vpc\_associations is not set). | `string` | `null` | no |
+| external\_dns\_records\_vpc\_associations | List of VPCs to associate with the private hosted zone (required if private\_zone is true). Each item should be an object with vpc\_id and optional vpc\_region. | ```list(object({ vpc_id = string vpc_region = optional(string) # Optional, defaults to the provider region if not set }))``` | `[]` | no |
+| external\_dns\_records\_vpc\_region | (Optional) Region of the VPC to associate with the private hosted zone (required if private\_zone is true and vpc\_associations is not set). | `string` | `null` | no |
+| external\_dns\_records\_a\_records\_list | A/AAAA records. Use alias for ALB/NLB/etc. | ```list(object({ name = string type = optional(string, "A")  # "A" or "AAAA" ttl = optional(number)       # ignored if alias is set records = optional(list(string)) # when not alias alias = optional(object({ name = string # target DNS, e.g. ALB DNS zone_id = string # target hosted zone id evaluate_target_health = optional(bool, false) })) }))``` | `[]` | no |
+| external\_dns\_records\_cname\_records\_list | CNAME records (note: not valid for apex). | ```list(object({ name = string ttl = number record = string }))``` | `[]` | no |
+| external\_dns\_records\_ttl | Default TTL for records (if not individually set). | `number` | `300` | no |
+| external\_dns\_records\_allow\_overwrite | Allow overwriting existing records with the same name/type. | `bool` | `false` | no |
+| external\_dns\_records\_alb\_dns\_name\_override | (Optional) Use the DNS Name of an existing Application Load Balancer. | `string` | `null` | no |
+| external\_dns\_records\_alb\_zone\_id\_override | (Optional) Use the Hosted Zone ID of an existing Application Load Balancer. | `string` | `null` | no |
 <!-- END_TF_DOCS -->
 
 ## Usage
