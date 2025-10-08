@@ -7,131 +7,6 @@ data "aws_iam_group" "iam_admin_group" {
   group_name = var.iam_admin_group
 }
 
-data "aws_iam_user" "admin_users" {
-  for_each = var.iam_admin_group != "" && length(data.aws_iam_group.iam_admin_group) > 0 ? {
-  for user in data.aws_iam_group.iam_admin_group[0].users : user.user_name => user } : tomap({})
-
-  user_name = each.value.user_name
-}
-
-locals {
-  # KMS Key ARNs
-  calculated_parameter_store_kms_key_arn = var.create_parameter_store_kms_key ? (
-    var.parameter_store_external_kms_key != "" ? var.parameter_store_external_kms_key :
-    module.graphdb.parameter_store_cmk_arn != "" ? module.graphdb.parameter_store_cmk_arn :
-    var.parameter_store_default_key
-  ) : var.parameter_store_default_key
-
-  calculated_ebs_kms_key_arn = var.create_ebs_kms_key ? (
-    var.ebs_external_kms_key != "" ? var.ebs_external_kms_key :
-    module.graphdb.ebs_kms_key_arn != "" ? module.graphdb.ebs_kms_key_arn :
-    var.ebs_default_kms_key
-  ) : var.ebs_default_kms_key
-
-  calculated_s3_kms_key_arn = var.create_s3_kms_key ? (
-    var.s3_external_kms_key_arn != "" ? var.s3_external_kms_key_arn :
-    module.backup[0].s3_cmk_arn != "" ? module.backup[0].s3_cmk_arn :
-    var.s3_kms_default_key
-  ) : var.s3_kms_default_key
-
-  calculated_sns_kms_key_arn = var.create_sns_kms_key ? (
-    var.sns_external_kms_key != "" ? var.sns_external_kms_key :
-    module.monitoring[0].sns_cmk_arn != "" ? module.monitoring[0].sns_cmk_arn :
-    var.sns_default_kms_key
-  ) : var.sns_default_kms_key
-
-  cmk_key_alias = var.deploy_monitoring ? (
-    var.app_name != "" && var.environment_name != ""
-    ? "alias/${var.app_name}-${var.environment_name}-graphdb-sns-cmk-alias"
-    : var.sns_cmk_key_alias
-  ) : null
-
-  # TLS & Protocol
-  lb_tls_enabled      = var.lb_tls_certificate_arn != "" ? true : false
-  calculated_protocol = local.lb_tls_enabled ? "https" : "http"
-
-  # Subnet CIDR lists
-  effective_private_subnet_cidrs = var.graphdb_node_count == 1 ? [var.vpc_private_subnet_cidrs[0]] : var.vpc_private_subnet_cidrs
-
-  effective_public_subnet_cidrs = var.graphdb_node_count == 1 ? [var.vpc_public_subnet_cidrs[0]] : var.vpc_public_subnet_cidrs
-
-  lb_subnets = var.existing_lb_arn != "" ? var.existing_lb_subnets : (
-    var.graphdb_node_count == 1 ? (
-      var.vpc_id == "" ? (
-        var.lb_internal ? [module.vpc[0].private_subnet_ids[0]] : [module.vpc[0].public_subnet_ids[0]]
-        ) : (
-        var.lb_internal ? [var.vpc_private_subnet_ids[0]] : [var.vpc_public_subnet_ids[0]]
-      )
-      ) : (
-      var.vpc_id == "" ? (
-        var.lb_internal ? module.vpc[0].private_subnet_ids : module.vpc[0].public_subnet_ids
-        ) : (
-        var.lb_internal ? var.vpc_private_subnet_ids : var.vpc_public_subnet_ids
-      )
-    )
-  )
-
-  graphdb_subnets = var.graphdb_node_count == 1 ? [(var.vpc_id != "" ? var.vpc_private_subnet_ids
-    : module.vpc[0].private_subnet_ids)[0]] : (var.vpc_id != "" ? var.vpc_private_subnet_ids
-  : module.vpc[0].private_subnet_ids)
-
-  # Load Balancer ARNs & DNS
-  lb_arn_list = var.existing_lb_arn != "" ? [var.existing_lb_arn] : module.load_balancer[*].lb_arn
-
-  lb_tg_arn_list = (
-    var.existing_lb_target_group_arns != null &&
-    length(var.existing_lb_target_group_arns) > 0
-  ) ? var.existing_lb_target_group_arns : module.load_balancer[*].lb_target_group_arn
-
-  lb_dns = var.existing_lb_dns_name != "" ? var.existing_lb_dns_name : (
-    var.graphdb_external_dns != "" ? var.graphdb_external_dns :
-    try(module.load_balancer[0].lb_dns_name, "")
-  )
-
-  # Admin ARNs from IAM group
-  admin_user_arns = var.iam_admin_group != "" && length(data.aws_iam_group.iam_admin_group[0].users) > 0 ? [
-  for user in data.aws_iam_group.iam_admin_group[0].users : user.arn] : []
-
-  # Key Admin Logic
-  ebs_key_admin_arn = (
-    length(local.admin_user_arns) > 0
-    ? local.admin_user_arns
-    : can(tolist(var.ebs_key_admin_arn))
-    ? tolist(var.ebs_key_admin_arn)
-    : [var.ebs_key_admin_arn]
-  )
-
-  s3_key_admin_arn = (
-    length(local.admin_user_arns) > 0
-    ? local.admin_user_arns
-    : can(tolist(var.s3_kms_key_admin_arn))
-    ? tolist(var.s3_kms_key_admin_arn)
-    : [var.s3_kms_key_admin_arn]
-  )
-
-  sns_key_admin_arn = (
-    length(local.admin_user_arns) > 0
-    ? local.admin_user_arns
-    : can(tolist(var.sns_key_admin_arn))
-    ? tolist(var.sns_key_admin_arn)
-    : [var.sns_key_admin_arn]
-  )
-
-  parameter_store_key_admin_arn = (
-    length(local.admin_user_arns) > 0
-    ? local.admin_user_arns
-    : can(tolist(var.parameter_store_key_admin_arn))
-    ? tolist(var.parameter_store_key_admin_arn)
-    : [var.parameter_store_key_admin_arn]
-  )
-
-  # Comma-joined ARNs for modules expecting string input
-  ebs_key_admin_arn_joined             = join(",", local.ebs_key_admin_arn)
-  s3_key_admin_arn_joined              = join(",", local.s3_key_admin_arn)
-  sns_key_admin_arn_joined             = join(",", local.sns_key_admin_arn)
-  parameter_store_key_admin_arn_joined = join(",", local.parameter_store_key_admin_arn)
-}
-
 module "vpc" {
   source = "./modules/vpc"
 
@@ -157,6 +32,7 @@ module "vpc" {
 
   tgw_id                       = var.tgw_id != "" ? var.tgw_id : null
   tgw_subnet_cidrs             = var.tgw_id != "" ? var.tgw_subnet_cidrs : []
+  tgw_subnet_ids               = var.tgw_id != "" ? var.tgw_subnet_ids : []
   tgw_client_cidrs             = var.tgw_id != "" ? var.tgw_client_cidrs : []
   tgw_dns_support              = var.tgw_dns_support
   tgw_ipv6_support             = var.tgw_ipv6_support
@@ -313,6 +189,8 @@ module "monitoring" {
   route53_availability_measure_latency  = var.graphdb_node_count > 1 ? var.monitoring_route53_measure_latency : false
   route53_availability_http_string_type = upper(local.calculated_protocol)
   route53_zone_dns_name                 = var.graphdb_node_count > 1 ? var.route53_zone_dns_name : null
+  route53_availability_http_port        = var.monitoring_route53_availability_http_port
+  route53_availability_https_port       = var.monitoring_route53_availability_https_port
 
   sns_kms_key_arn    = local.calculated_sns_kms_key_arn
   graphdb_node_count = var.graphdb_node_count
@@ -449,4 +327,22 @@ module "graphdb" {
   parameter_store_key_deletion_window_in_days = var.parameter_store_key_deletion_window_in_days
   parameter_store_external_kms_key            = var.parameter_store_external_kms_key
   parameter_store_key_arn                     = local.calculated_parameter_store_kms_key_arn
+}
+
+module "external_dns" {
+  source = "./modules/external_dns_records"
+
+  count = local.deploy_external_dns_records
+
+  zone_name        = var.external_dns_records_zone_name
+  private_zone     = var.external_dns_records_private_zone
+  vpc_associations = var.external_dns_records_private_zone ? var.external_dns_records_vpc_associations : []
+  vpc_id           = var.external_dns_records_vpc_id
+  vpc_region       = var.external_dns_records_vpc_region
+  existing_zone_id = var.external_dns_records_existing_zone_id
+  force_destroy    = var.external_dns_records_force_destroy
+  allow_overwrite  = var.external_dns_records_allow_overwrite
+
+  a_records_list     = local.aws_a_records_effective
+  cname_records_list = local.aws_cname_records_effective
 }
