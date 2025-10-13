@@ -541,6 +541,12 @@ variable "monitoring_memory_utilization_threshold" {
   default     = 80
 }
 
+variable "cmk_availability_key_alias" {
+  description = "CMK Key Alias for the availability SNS topic"
+  type        = string
+  default     = "alias/graphdb-availability-sns-cmk-key-alias"
+}
+
 # GraphDB overrides
 
 variable "graphdb_properties_path" {
