@@ -180,6 +180,7 @@ module "monitoring" {
   key_spec                               = var.sns_key_spec
   sns_default_kms_key                    = var.sns_default_kms_key
   cmk_key_alias                          = local.cmk_key_alias
+  cmk_availability_key_alias             = local.cmk_availability_key_alias
   parameter_store_kms_key_arn            = local.calculated_parameter_store_kms_key_arn
   cloudwatch_log_group_retention_in_days = var.monitoring_log_group_retention_in_days
   enable_availability_tests              = var.monitoring_enable_availability_tests

@@ -7,7 +7,7 @@ resource "aws_sns_topic" "graphdb_route53_sns_topic" {
 
   provider          = aws.useast1
   name              = "${var.resource_name_prefix}-route53-sns-notifications"
-  kms_master_key_id = var.sns_external_kms_key != "" ? var.sns_external_kms_key : (var.enable_sns_kms_key ? aws_kms_key.sns_cmk[0].arn : var.sns_default_kms_key)
+  kms_master_key_id = var.sns_external_kms_key != "" ? var.sns_external_kms_key : (var.enable_sns_kms_key ? aws_kms_key.sns_availability_topic_key[0].arn : var.sns_default_kms_key)
 }
 
 resource "aws_sns_topic_subscription" "graphdb_route53_sns_topic_subscription" {
@@ -18,6 +18,42 @@ resource "aws_sns_topic_subscription" "graphdb_route53_sns_topic_subscription" {
   protocol               = var.sns_protocol
   endpoint               = var.sns_topic_endpoint
   endpoint_auto_confirms = var.sns_endpoint_auto_confirms
+}
+
+resource "aws_sns_topic_policy" "graphdb_route53_sns_topic_policy" {
+  count = var.enable_availability_tests ? 1 : 0
+
+  provider = aws.useast1
+  arn      = aws_sns_topic.graphdb_route53_sns_topic[0].arn
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Sid : "AllowCloudWatchToPublish",
+        Effect : "Allow",
+        Principal : {
+          Service : "cloudwatch.amazonaws.com"
+        },
+        Action : [
+          "SNS:Publish",
+          "SNS:GetTopicAttributes",
+          "SNS:SetTopicAttributes",
+          "SNS:AddPermission",
+          "SNS:RemovePermission",
+          "SNS:DeleteTopic",
+          "SNS:Subscribe",
+          "SNS:ListSubscriptionsByTopic"
+        ]
+        Resource : aws_sns_topic.graphdb_route53_sns_topic[0].arn,
+        Condition : {
+          StringEquals : {
+            "aws:SourceAccount" : data.aws_caller_identity.current.account_id
+          }
+        }
+      }
+    ]
+  })
 }
 
 # Route 53 Availability Check

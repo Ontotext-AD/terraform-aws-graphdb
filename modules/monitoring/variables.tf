@@ -206,3 +206,8 @@ variable "graphdb_memory_utilization_threshold" {
   description = "Alarm threshold for GraphDB Memory Utilization"
   type        = number
 }
+
+variable "cmk_availability_key_alias" {
+  description = "CMK Key Alias for the availability SNS topic"
+  type        = string
+}

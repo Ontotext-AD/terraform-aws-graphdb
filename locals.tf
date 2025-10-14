@@ -31,6 +31,12 @@ locals {
     : var.sns_cmk_key_alias
   ) : null
 
+  cmk_availability_key_alias = var.deploy_monitoring ? (
+    var.app_name != "" && var.environment_name != ""
+    ? "alias/${var.app_name}-${var.environment_name}-graphdb-availability-sns-cmk-alias"
+    : var.cmk_availability_key_alias
+  ) : null
+
   # TLS & Protocol
   lb_tls_enabled      = var.lb_tls_certificate_arn != "" ? true : false
   calculated_protocol = local.lb_tls_enabled ? "https" : "http"
