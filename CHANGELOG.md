@@ -1,7 +1,10 @@
 # GraphDB AWS Terraform Module Changelog
 
 ## 2.6.0
-
+* Added support for monitoring the disk_free_percent for the root ebs volume via Cloudwatch alarm per ASG and mem_used_percent alarm per ASG
+* Added support for alarms when transitioning from in alarm state to ok state.
+* Changed the comparison operator to use GreaterThanOrEqualToThreshold for most of the alarms.
+* Added treat a missing data option for all alarms and set it based on the type of the alarm.
 * Added support for changing the volume size of the instance root EBS volume.
 
 ## 2.5.0

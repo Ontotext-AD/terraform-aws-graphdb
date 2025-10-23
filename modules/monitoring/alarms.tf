@@ -1,6 +1,7 @@
 # Alarms
 
 # Attempting to recover metric filter
+
 resource "aws_cloudwatch_log_metric_filter" "graphdb_attempting_to_recover_metric_filter" {
   count = var.graphdb_node_count > 1 ? 1 : 0
 
@@ -33,6 +34,8 @@ resource "aws_cloudwatch_metric_alarm" "graphdb_attempting_to_recover_alarm" {
   evaluation_periods  = var.cloudwatch_evaluation_periods
   threshold           = "0"
   alarm_actions       = [aws_sns_topic.graphdb_sns_topic.arn]
+  ok_actions          = [aws_sns_topic.graphdb_sns_topic.arn]
+  treat_missing_data  = "missing"
 
   depends_on = [aws_cloudwatch_log_metric_filter.graphdb_attempting_to_recover_metric_filter[0]]
 }
@@ -40,7 +43,7 @@ resource "aws_cloudwatch_metric_alarm" "graphdb_attempting_to_recover_alarm" {
 # Log filter for low disk space messages in the logs
 
 resource "aws_cloudwatch_log_metric_filter" "graphdb_low_disk_space_metric_filter" {
-  name           = "al-${var.resource_name_prefix}-low-disk-space"
+  name           = "al-${var.resource_name_prefix}-low-disk-space-GraphDB-disk"
   pattern        = "No space left on the device"
   log_group_name = aws_cloudwatch_log_group.graphdb_log_group.name
 
@@ -57,7 +60,7 @@ resource "aws_cloudwatch_log_metric_filter" "graphdb_low_disk_space_metric_filte
 # Alarm based on metric filter for Low Disk Space messages in the logs
 
 resource "aws_cloudwatch_metric_alarm" "graphdb_low_disk_space_alarm" {
-  alarm_name          = "al-${var.resource_name_prefix}-low-disk-space"
+  alarm_name          = "al-${var.resource_name_prefix}-low-disk-space-GraphDB-disk"
   alarm_description   = "Low Disk Space"
   comparison_operator = "GreaterThanThreshold"
   metric_name         = aws_cloudwatch_log_metric_filter.graphdb_low_disk_space_metric_filter.metric_transformation[0].name
@@ -67,12 +70,15 @@ resource "aws_cloudwatch_metric_alarm" "graphdb_low_disk_space_alarm" {
   evaluation_periods  = var.cloudwatch_evaluation_periods
   threshold           = "0"
   alarm_actions       = [aws_sns_topic.graphdb_sns_topic.arn]
+  ok_actions          = [aws_sns_topic.graphdb_sns_topic.arn]
+  treat_missing_data  = "missing"
 
   depends_on = [aws_cloudwatch_log_metric_filter.graphdb_low_disk_space_metric_filter]
 }
 
 locals {
   # Builds a list of instance hostnames
+
   instance_hostnames = [
     for i in range(1, var.graphdb_node_count + 1) :
     var.route53_zone_dns_name != null ?
@@ -86,13 +92,15 @@ resource "aws_cloudwatch_metric_alarm" "heap_usage_alarm" {
 
   alarm_name          = "al-${var.resource_name_prefix}-heap-memory-usage-${each.key}"
   alarm_description   = "Triggers if ${each.key}'s heap usage exceeds threshold of its total memory"
-  comparison_operator = "GreaterThanThreshold"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
   threshold           = var.graphdb_memory_utilization_threshold
   evaluation_periods  = 1
   treat_missing_data  = "missing"
   alarm_actions       = [aws_sns_topic.graphdb_sns_topic.arn]
+  ok_actions          = [aws_sns_topic.graphdb_sns_topic.arn]
 
   # Define the metric query for heap used memory
+
   metric_query {
     id = "m1"
     metric {
@@ -108,6 +116,7 @@ resource "aws_cloudwatch_metric_alarm" "heap_usage_alarm" {
   }
 
   # Defines the metric query for total memory
+
   metric_query {
     id = "m2"
     metric {
@@ -123,6 +132,7 @@ resource "aws_cloudwatch_metric_alarm" "heap_usage_alarm" {
   }
 
   # Defines the expression to calculate heap usage percentage
+
   metric_query {
     id          = "e1"
     expression  = "(m1 / m2) * 100"
@@ -131,21 +141,44 @@ resource "aws_cloudwatch_metric_alarm" "heap_usage_alarm" {
   }
 }
 
-# Alarm for CPU Utilization for Autoscaling Group
+# Alarm for ASG Memory Used Percent
 
-resource "aws_cloudwatch_metric_alarm" "graphdb_cpu_utilization" {
-  alarm_name          = "al-${var.resource_name_prefix}-cpu-utilization"
-  alarm_description   = "Alarm will trigger if CPU utilization is above 80%"
-  comparison_operator = "GreaterThanThreshold"
-  evaluation_periods  = var.cloudwatch_evaluation_periods
+resource "aws_cloudwatch_metric_alarm" "asg_mem_used_percent" {
+  alarm_name          = "al-${var.resource_name_prefix}-asg-mem-used-percent"
+  alarm_description   = "ASG mem_used_percent >= ${var.graphdb_memory_utilization_threshold}%"
+  namespace           = "CWAgent"
+  metric_name         = "mem_used_percent"
+  statistic           = "Average"
+  unit                = "Percent"
   period              = var.cloudwatch_period
-  statistic           = "Maximum"
-  threshold           = var.cloudwatch_cpu_utilization_threshold
+  evaluation_periods  = var.cloudwatch_evaluation_periods
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  threshold           = var.graphdb_memory_utilization_threshold
+  treat_missing_data  = "missing"
   alarm_actions       = [aws_sns_topic.graphdb_sns_topic.arn]
+  ok_actions          = [aws_sns_topic.graphdb_sns_topic.arn]
 
-  metric_name = "CPUUtilization"
-  namespace   = "AWS/EC2"
-  unit        = "Percent"
+  dimensions = {
+    AutoScalingGroupName = var.resource_name_prefix
+  }
+}
+
+# Alarm for ASG CPU Utilization
+
+resource "aws_cloudwatch_metric_alarm" "asg_cpu_utilization" {
+  alarm_name          = "al-${var.resource_name_prefix}-asg-cpu-utilization"
+  alarm_description   = "ASG average CPU >= ${var.cloudwatch_cpu_utilization_threshold}%"
+  namespace           = "AWS/EC2"
+  metric_name         = "CPUUtilization"
+  statistic           = "Average"
+  unit                = "Percent"
+  period              = var.cloudwatch_period
+  evaluation_periods  = var.cloudwatch_evaluation_periods
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  threshold           = var.cloudwatch_cpu_utilization_threshold
+  treat_missing_data  = "missing"
+  alarm_actions       = [aws_sns_topic.graphdb_sns_topic.arn]
+  ok_actions          = [aws_sns_topic.graphdb_sns_topic.arn]
 
   dimensions = {
     AutoScalingGroupName = var.resource_name_prefix
@@ -153,6 +186,7 @@ resource "aws_cloudwatch_metric_alarm" "graphdb_cpu_utilization" {
 }
 
 # Alarm for nodes disconnected
+
 resource "aws_cloudwatch_metric_alarm" "graphdb_nodes_disconnected" {
   count = var.graphdb_node_count > 1 ? 1 : 0
 
@@ -165,6 +199,7 @@ resource "aws_cloudwatch_metric_alarm" "graphdb_nodes_disconnected" {
   comparison_operator = "GreaterThanThreshold"
   treat_missing_data  = "missing"
   alarm_actions       = [aws_sns_topic.graphdb_sns_topic.arn]
+  ok_actions          = [aws_sns_topic.graphdb_sns_topic.arn]
 
   metric_query {
     id          = "q1"
@@ -172,5 +207,27 @@ resource "aws_cloudwatch_metric_alarm" "graphdb_nodes_disconnected" {
     return_data = true
     expression  = "SELECT MAX(graphdb_nodes_disconnected) FROM SCHEMA(\"${var.resource_name_prefix}\", host)"
     period      = var.cloudwatch_period
+  }
+}
+
+# Alarm for ASG Root Disk Used Percent
+
+resource "aws_cloudwatch_metric_alarm" "asg_root_disk_used_percent" {
+  alarm_name          = "al-${var.resource_name_prefix}-asg-root-disk-used-percent"
+  alarm_description   = "ASG disk_used_percent on / >= 80%"
+  namespace           = "CWAgent"
+  metric_name         = "disk_used_percent"
+  statistic           = "Average"
+  unit                = "Percent"
+  period              = var.cloudwatch_period
+  evaluation_periods  = var.cloudwatch_evaluation_periods
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  threshold           = 80
+  treat_missing_data  = "missing"
+  alarm_actions       = [aws_sns_topic.graphdb_sns_topic.arn]
+  ok_actions          = [aws_sns_topic.graphdb_sns_topic.arn]
+
+  dimensions = {
+    AutoScalingGroupName = var.resource_name_prefix
   }
 }
