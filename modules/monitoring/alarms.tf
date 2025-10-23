@@ -25,7 +25,7 @@ resource "aws_cloudwatch_metric_alarm" "graphdb_attempting_to_recover_alarm" {
 
   alarm_name          = "al-${var.resource_name_prefix}-attempting-recover"
   alarm_description   = "Attempting to recover through snapshot replication"
-  comparison_operator = "GreaterThanThreshold"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
   metric_name         = aws_cloudwatch_log_metric_filter.graphdb_attempting_to_recover_metric_filter[0].metric_transformation[0].name
   namespace           = aws_cloudwatch_log_metric_filter.graphdb_attempting_to_recover_metric_filter[0].metric_transformation[0].namespace
   period              = var.cloudwatch_period
@@ -33,6 +33,7 @@ resource "aws_cloudwatch_metric_alarm" "graphdb_attempting_to_recover_alarm" {
   evaluation_periods  = var.cloudwatch_evaluation_periods
   threshold           = "0"
   alarm_actions       = [aws_sns_topic.graphdb_sns_topic.arn]
+  ok_actions = [aws_sns_topic.graphdb_sns_topic.arn]
 
   depends_on = [aws_cloudwatch_log_metric_filter.graphdb_attempting_to_recover_metric_filter[0]]
 }
@@ -59,7 +60,7 @@ resource "aws_cloudwatch_log_metric_filter" "graphdb_low_disk_space_metric_filte
 resource "aws_cloudwatch_metric_alarm" "graphdb_low_disk_space_alarm" {
   alarm_name          = "al-${var.resource_name_prefix}-low-disk-space"
   alarm_description   = "Low Disk Space"
-  comparison_operator = "GreaterThanThreshold"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
   metric_name         = aws_cloudwatch_log_metric_filter.graphdb_low_disk_space_metric_filter.metric_transformation[0].name
   namespace           = aws_cloudwatch_log_metric_filter.graphdb_low_disk_space_metric_filter.metric_transformation[0].namespace
   period              = var.cloudwatch_period
@@ -67,6 +68,7 @@ resource "aws_cloudwatch_metric_alarm" "graphdb_low_disk_space_alarm" {
   evaluation_periods  = var.cloudwatch_evaluation_periods
   threshold           = "0"
   alarm_actions       = [aws_sns_topic.graphdb_sns_topic.arn]
+  ok_actions = [aws_sns_topic.graphdb_sns_topic.arn]
 
   depends_on = [aws_cloudwatch_log_metric_filter.graphdb_low_disk_space_metric_filter]
 }
@@ -86,11 +88,12 @@ resource "aws_cloudwatch_metric_alarm" "heap_usage_alarm" {
 
   alarm_name          = "al-${var.resource_name_prefix}-heap-memory-usage-${each.key}"
   alarm_description   = "Triggers if ${each.key}'s heap usage exceeds threshold of its total memory"
-  comparison_operator = "GreaterThanThreshold"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
   threshold           = var.graphdb_memory_utilization_threshold
   evaluation_periods  = 1
   treat_missing_data  = "missing"
   alarm_actions       = [aws_sns_topic.graphdb_sns_topic.arn]
+  ok_actions = [aws_sns_topic.graphdb_sns_topic.arn]
 
   # Define the metric query for heap used memory
   metric_query {
@@ -131,17 +134,40 @@ resource "aws_cloudwatch_metric_alarm" "heap_usage_alarm" {
   }
 }
 
+# Alarm for Memory Used Percent
+
+resource "aws_cloudwatch_metric_alarm" "graphdb_memory_used_percent" {
+    alarm_name = "al-${var.resource_name_prefix}-memory-used-percent"
+    alarm_description = "Alarm will trigger if Memory used percent is above 80%"
+    comparison_operator = "GreaterThanOrEqualToThreshold"
+    evaluation_periods = var.cloudwatch_evaluation_periods
+    period = var.cloudwatch_period
+    statistic = "Maximum"
+    threshold = var.graphdb_memory_utilization_threshold
+    alarm_actions = [aws_sns_topic.graphdb_sns_topic.arn]
+    ok_actions = [aws_sns_topic.graphdb_sns_topic.arn]
+
+    metric_name = "mem_used_percent"
+    namespace = "CWAgent"
+    unit = "Percent"
+
+    dimensions = {
+      AutoScalingGroupName = var.resource_name_prefix
+    }
+}
+
 # Alarm for CPU Utilization for Autoscaling Group
 
 resource "aws_cloudwatch_metric_alarm" "graphdb_cpu_utilization" {
   alarm_name          = "al-${var.resource_name_prefix}-cpu-utilization"
   alarm_description   = "Alarm will trigger if CPU utilization is above 80%"
-  comparison_operator = "GreaterThanThreshold"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
   evaluation_periods  = var.cloudwatch_evaluation_periods
   period              = var.cloudwatch_period
   statistic           = "Maximum"
   threshold           = var.cloudwatch_cpu_utilization_threshold
   alarm_actions       = [aws_sns_topic.graphdb_sns_topic.arn]
+  ok_actions = [aws_sns_topic.graphdb_sns_topic.arn]
 
   metric_name = "CPUUtilization"
   namespace   = "AWS/EC2"
@@ -162,9 +188,10 @@ resource "aws_cloudwatch_metric_alarm" "graphdb_nodes_disconnected" {
   evaluation_periods  = var.cloudwatch_evaluation_periods
   datapoints_to_alarm = 1
   threshold           = 0
-  comparison_operator = "GreaterThanThreshold"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
   treat_missing_data  = "missing"
   alarm_actions       = [aws_sns_topic.graphdb_sns_topic.arn]
+  ok_actions = [aws_sns_topic.graphdb_sns_topic.arn]
 
   metric_query {
     id          = "q1"
