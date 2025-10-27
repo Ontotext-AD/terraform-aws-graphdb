@@ -34,6 +34,7 @@ resource "aws_cloudwatch_metric_alarm" "graphdb_attempting_to_recover_alarm" {
   threshold           = "0"
   alarm_actions       = [aws_sns_topic.graphdb_sns_topic.arn]
   ok_actions          = [aws_sns_topic.graphdb_sns_topic.arn]
+  treat_missing_data  = "notBreaching"
 
   depends_on = [aws_cloudwatch_log_metric_filter.graphdb_attempting_to_recover_metric_filter[0]]
 }
@@ -69,6 +70,7 @@ resource "aws_cloudwatch_metric_alarm" "graphdb_low_disk_space_alarm" {
   threshold           = "0"
   alarm_actions       = [aws_sns_topic.graphdb_sns_topic.arn]
   ok_actions          = [aws_sns_topic.graphdb_sns_topic.arn]
+  treat_missing_data  = "notBreaching"
 
   depends_on = [aws_cloudwatch_log_metric_filter.graphdb_low_disk_space_metric_filter]
 }
@@ -91,7 +93,7 @@ resource "aws_cloudwatch_metric_alarm" "heap_usage_alarm" {
   comparison_operator = "GreaterThanOrEqualToThreshold"
   threshold           = var.graphdb_memory_utilization_threshold
   evaluation_periods  = 1
-  treat_missing_data  = "missing"
+  treat_missing_data  = "notBreaching"
   alarm_actions       = [aws_sns_topic.graphdb_sns_topic.arn]
   ok_actions          = [aws_sns_topic.graphdb_sns_topic.arn]
 
@@ -146,6 +148,7 @@ resource "aws_cloudwatch_metric_alarm" "graphdb_memory_used_percent" {
   threshold           = var.graphdb_memory_utilization_threshold
   alarm_actions       = [aws_sns_topic.graphdb_sns_topic.arn]
   ok_actions          = [aws_sns_topic.graphdb_sns_topic.arn]
+  treat_missing_data  = "notBreaching"
 
   metric_name = "mem_used_percent"
   namespace   = "CWAgent"
@@ -168,6 +171,7 @@ resource "aws_cloudwatch_metric_alarm" "graphdb_cpu_utilization" {
   threshold           = var.cloudwatch_cpu_utilization_threshold
   alarm_actions       = [aws_sns_topic.graphdb_sns_topic.arn]
   ok_actions          = [aws_sns_topic.graphdb_sns_topic.arn]
+  treat_missing_data  = "notBreaching"
 
   metric_name = "CPUUtilization"
   namespace   = "AWS/EC2"
@@ -189,7 +193,7 @@ resource "aws_cloudwatch_metric_alarm" "graphdb_nodes_disconnected" {
   datapoints_to_alarm = 1
   threshold           = 0
   comparison_operator = "GreaterThanOrEqualToThreshold"
-  treat_missing_data  = "missing"
+  treat_missing_data  = "notBreaching"
   alarm_actions       = [aws_sns_topic.graphdb_sns_topic.arn]
   ok_actions          = [aws_sns_topic.graphdb_sns_topic.arn]
 
