@@ -1,5 +1,9 @@
 # GraphDB AWS Terraform Module Changelog
 
+## 2.5.1
+* Added support for monitoring mem_used_percent metric via Cloudwatch alarm and dashboard.
+* Added support for monitoring the disk_used_percent and disk_free metric via Cloudwatch alarm and dashboard.
+
 ## 2.5.0
 * Added support for managing Route 53 hosted zones and DNS records via external_dns_records module.
 * Enhanced KMS key and SNS topic configuration for Route 53 / CloudWatch availability alarms in us-east-1 to support encrypted alert delivery

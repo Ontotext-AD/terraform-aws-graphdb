@@ -205,3 +205,24 @@ resource "aws_cloudwatch_metric_alarm" "graphdb_nodes_disconnected" {
     period      = var.cloudwatch_period
   }
 }
+
+resource "aws_cloudwatch_metric_alarm" "graphdb_root_disk_used_percent" {
+  alarm_name          = "al-${var.resource_name_prefix}-root-disk-used-percent"
+  alarm_description   = "Triggers when root filesystem used percent is above 90%"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  metric_name         = "disk_used_percent"
+  namespace           = "CWAgent"
+  statistic           = "Maximum"
+  period              = var.cloudwatch_period
+  evaluation_periods  = var.cloudwatch_evaluation_periods
+  threshold           = 90
+  unit                = "Percent"
+  alarm_actions       = [aws_sns_topic.graphdb_sns_topic.arn]
+  ok_actions          = [aws_sns_topic.graphdb_sns_topic.arn]
+  treat_missing_data  = "notBreaching"
+
+  dimensions = {
+    AutoScalingGroupName = var.resource_name_prefix
+    path                 = "/"
+  }
+}
