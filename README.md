@@ -355,6 +355,13 @@ the following variables:
 prevent_resource_deletion = false
 ```
 
+** Changing instance root EBS volume size**
+
+By default the root EBS volume size is 30GB. You can change it with the following variable:
+```hcl
+root_ebs_volume_size = 100
+```
+
 **Backup**
 
 To enable deployment of the backup module, you need to enable the following flag:

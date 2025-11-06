@@ -1,6 +1,11 @@
 # GraphDB AWS Terraform Module Changelog
 
+## 2.6.0
+
+* Added support for changing the volume size of the instance root EBS volume.
+
 ## 2.5.0
+
 * Added support for managing Route 53 hosted zones and DNS records via external_dns_records module.
 * Enhanced KMS key and SNS topic configuration for Route 53 / CloudWatch availability alarms in us-east-1 to support encrypted alert delivery
 * Update GraphDB default version to [11.1.2](https://graphdb.ontotext.com/documentation/11.1/release-notes.html#graphdb-11-1-2)

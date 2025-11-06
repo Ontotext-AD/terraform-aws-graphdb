@@ -242,6 +242,7 @@ module "graphdb" {
   graphdb_node_count         = var.graphdb_node_count
   ec2_key_name               = var.ec2_key_name
   enable_detailed_monitoring = var.monitoring_enable_detailed_instance_monitoring
+  root_ebs_volume_size       = var.root_ebs_volume_size
 
   # Backup Configurations
 
