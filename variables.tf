@@ -412,6 +412,12 @@ variable "ebs_default_kms_key" {
   default     = "alias/aws/ebs"
 }
 
+variable "root_ebs_volume_size" {
+  description = "The size of the root EBS volume."
+  type        = number
+  default     = 30
+}
+
 variable "prevent_resource_deletion" {
   description = "Defines if applicable resources should be protected from deletion or not"
   type        = bool

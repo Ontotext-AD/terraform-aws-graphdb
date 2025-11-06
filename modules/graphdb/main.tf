@@ -60,6 +60,16 @@ resource "aws_launch_template" "graphdb" {
     enabled = var.enable_detailed_monitoring
   }
 
+  block_device_mappings {
+    device_name = "/dev/sda1"
+    ebs {
+      volume_size           = var.root_ebs_volume_size
+      volume_type           = "gp3"
+      delete_on_termination = true
+      encrypted             = true
+    }
+  }
+
   vpc_security_group_ids = [
     aws_security_group.graphdb_security_group.id
   ]

@@ -425,3 +425,8 @@ variable "enable_asg_wait" {
   description = "Whether to enable waiting for ASG node readiness"
   type        = string
 }
+
+variable "root_ebs_volume_size" {
+  description = "The size of the root EBS volume."
+  type        = number
+}
