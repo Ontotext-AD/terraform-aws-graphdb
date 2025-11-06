@@ -155,6 +155,7 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | ebs\_volume\_throughput | Throughput for the EBS volumes, used by the GraphDB nodes. | `number` | `250` | no |
 | ebs\_volume\_iops | IOPS for the EBS volumes, used by the GraphDB nodes. | `number` | `8000` | no |
 | ebs\_default\_kms\_key | KMS key used for ebs volume encryption. | `string` | `"alias/aws/ebs"` | no |
+| root\_ebs\_volume\_size | The size of the root EBS volume. | `number` | `30` | no |
 | prevent\_resource\_deletion | Defines if applicable resources should be protected from deletion or not | `bool` | `true` | no |
 | graphdb\_license\_path | Local path to a file, containing a GraphDB Enterprise license. | `string` | `null` | no |
 | graphdb\_admin\_password | Password for the 'admin' user in GraphDB. | `string` | `null` | no |
