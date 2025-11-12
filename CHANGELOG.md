@@ -6,6 +6,7 @@
 * Changed the comparison operator to use GreaterThanOrEqualToThreshold for most of the alarms.
 * Added treat a missing data option for all alarms and set it based on the type of the alarm.
 * Added support for changing the volume size of the instance root EBS volume.
+* Update GraphDB default version to [11.1.3](https://graphdb.ontotext.com/documentation/11.1/release-notes.html#graphdb-11-1-3)
 
 ## 2.5.0
 
