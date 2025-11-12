@@ -121,9 +121,7 @@
             ]
         ],
         "append_dimensions": {
-         "ImageId": "$${aws:ImageId}",
          "InstanceId": "$${aws:InstanceId}",
-         "InstanceType": "$${aws:InstanceType}",
          "AutoScalingGroupName": "$${aws:AutoScalingGroupName}"
         },
         "metrics_collected": {
