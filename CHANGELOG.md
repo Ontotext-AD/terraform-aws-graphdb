@@ -11,6 +11,13 @@
 
 * Updated GraphDB default version to [11.2.0](https://graphdb.ontotext.com/documentation/11.2/release-notes.html#graphdb-11-2-0)
 
+## 2.6.1
+
+* Increased the max retries of cluster setup looking for a leader to allow replication of larger repositories.
+* Improved the cluster rejoin logic to attempt to rejoin the cluster if there are existing
+* Reduced cluster rejoin wait time
+* Fixed issue causing scaling out the cluster to fail with  Target group 'arn:xxxx' is currently in use by a listener or a rule
+
 ## 2.6.0
 
 * Added support for monitoring the disk_free_percent for the root ebs volume via Cloudwatch alarm per ASG and mem_used_percent alarm per ASG

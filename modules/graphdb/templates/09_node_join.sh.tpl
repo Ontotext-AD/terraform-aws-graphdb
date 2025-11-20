@@ -3,7 +3,8 @@
 # This script focuses on the GraphDB node rejoining the cluster if the scale set spawns a new VM instance with a new volume.
 #
 # It performs the following tasks:
-#   * Rejoins the node to the cluster if raft folder is not found or empty
+#   * Rejoins the node to the cluster if raft folder is not found
+#   * Skips automatic join if the cluster appears healthy and complete
 
 set -o errexit
 set -o nounset
@@ -15,7 +16,7 @@ source /var/lib/cloud/instance/scripts/part-002
 NODE_COUNT=$(aws autoscaling describe-auto-scaling-groups --auto-scaling-group-names ${name} --query "AutoScalingGroups[0].DesiredCapacity" --output text)
 
 # Don't attempt to form a cluster if the node count is 1
-if [ "$${NODE_COUNT}" == 1 ]; then
+if [ "$NODE_COUNT" == 1 ]; then
   log_with_timestamp "Single node deployment, skipping node cluster rejoin "
   exit 0
 fi
@@ -38,7 +39,8 @@ get_cluster_state() {
   curl_response=$(curl "http://$${LEADER_NODE}/rest/monitor/cluster" -s -u "admin:$GRAPHDB_ADMIN_PASSWORD")
   nodes_in_cluster=$(echo "$curl_response" | grep -oP 'graphdb_nodes_in_cluster \K\d+')
   nodes_in_sync=$(echo "$curl_response" | grep -oP 'graphdb_nodes_in_sync \K\d+')
-  echo "$nodes_in_cluster $nodes_in_sync"
+  disconnected_nodes=$(echo "$curl_response" | grep -oP 'graphdb_nodes_disconnected \K\d+')
+  echo "$nodes_in_cluster $nodes_in_sync $disconnected_nodes"
 }
 
 # Function to wait until total quorum is achieved
@@ -79,7 +81,7 @@ join_cluster() {
       endpoint="http://$node:7201/rest/cluster/group/status"
       log_with_timestamp "Checking leader status for $node"
 
-      # Gets the address of the node if nodeState is LEADER, grpc port is returned therefore we replace port 7300 to 7200
+      # Gets the address of the node if nodeState is LEADER, grpc port is returned therefore we replace port 7301 to 7201
       LEADER_ADDRESS=$(curl -s "$endpoint" -u "admin:$${GRAPHDB_ADMIN_PASSWORD}" | jq -r '.[] | select(.nodeState == "LEADER") | .address' | sed 's/7301/7201/')
       if [ -n "$${LEADER_ADDRESS}" ]; then
         LEADER_NODE=$LEADER_ADDRESS
@@ -93,6 +95,48 @@ join_cluster() {
     log_with_timestamp "No leader found on any node. Retrying..."
     sleep 5
   done
+
+  #################################################################
+  # Only continue if:
+  #   - graphdb_nodes_disconnected > 0
+  #     OR
+  #   - NODE_COUNT != nodes_in_cluster
+  #################################################################
+  cluster_metrics=$(get_cluster_state)
+  # cluster_metrics is "nodes_in_cluster nodes_in_sync disconnected_nodes"
+  nodes_in_cluster=$(echo "$cluster_metrics" | awk '{print $1}')
+  disconnected_nodes=$(echo "$cluster_metrics" | awk '{print $3}')
+
+  # Fallback / sanity check: if we can't parse, skip automatic join
+  if ! [[ "$disconnected_nodes" =~ ^[0-9]+$ ]]; then
+    log_with_timestamp "Could not parse graphdb_nodes_disconnected from cluster metrics: '$cluster_metrics'. Skipping automatic join."
+    return 0
+  fi
+
+  if ! [[ "$nodes_in_cluster" =~ ^[0-9]+$ ]]; then
+    log_with_timestamp "Could not parse graphdb_nodes_in_cluster from cluster metrics: '$cluster_metrics'. Skipping automatic join."
+    return 0
+  fi
+
+  should_join=false
+
+  # Case 1: there are disconnected nodes
+  if [ "$disconnected_nodes" -gt 0 ]; then
+    log_with_timestamp "graphdb_nodes_disconnected=$disconnected_nodes (> 0). Will try to join $${CURRENT_NODE_NAME}."
+    should_join=true
+  fi
+
+  # Case 2: cluster size is not what we expect from the ASG desired capacity
+  if [[ "$NODE_COUNT" =~ ^[0-9]+$ ]] && [ "$nodes_in_cluster" -ne "$NODE_COUNT" ]; then
+    log_with_timestamp "nodes_in_cluster=$nodes_in_cluster differs from NODE_COUNT=$NODE_COUNT. Will try to join $${CURRENT_NODE_NAME}."
+    should_join=true
+  fi
+
+  # If neither condition is true, don't touch the cluster
+  if [ "$should_join" = false ]; then
+    log_with_timestamp "No disconnected nodes (graphdb_nodes_disconnected=$disconnected_nodes) and nodes_in_cluster=$nodes_in_cluster matches NODE_COUNT=$NODE_COUNT. Skipping join_cluster for $${CURRENT_NODE_NAME}."
+    return 0
+  fi
 
   log_with_timestamp "Trying to delete $CURRENT_NODE_NAME"
   # Removes node if already present in the cluster config
@@ -147,33 +191,18 @@ join_cluster() {
     log_with_timestamp "Node $${CURRENT_NODE_NAME} failed to join the cluster after $max_retries attempts, check the logs!"
   fi
 }
-# Check if the Raft directory exists
+
+# - If Raft dir is missing -> attempt automatic join
+# - If Raft dir exists but is empty -> warn and require manual intervention
 if [ ! -d "$RAFT_DIR" ]; then
-  log_with_timestamp "$RAFT_DIR folder is missing, waiting..."
-
-  # The initial provisioning of scale set in AWS may take a while
-  # therefore we need to be sure that this is not triggered before the first cluster initialization.
-  # Wait for 150 seconds, break if the folder appears (Handles cluster initialization).
-
-  for i in {1..30}; do
-    if [ ! -d "$RAFT_DIR" ]; then
-      log_with_timestamp "Raft directory not found yet. Waiting (attempt $i of 30)..."
-      sleep 5
-      if [ $i == 30 ]; then
-        log_with_timestamp "$RAFT_DIR folder is not found, joining node to cluster"
-        join_cluster
-      fi
-    else
-      log_with_timestamp "Found Raft directory"
-      if [ -z "$(ls -A $RAFT_DIR)" ]; then
-        # TODO check if the data folder is empty as well, otherwise this will fail.
-        log_with_timestamp "$RAFT_DIR folder is empty, joining node to cluster"
-        join_cluster
-      else
-        break
-      fi
-    fi
-  done
+  log_with_timestamp "Raft directory $RAFT_DIR not found, will attempt to join the current node to the cluster"
+  join_cluster
+else
+  log_with_timestamp "Found Raft directory"
+  if [ -z "$(ls -A "$RAFT_DIR")" ]; then
+    log_with_timestamp "Found $RAFT_DIR folder, but it is empty, will attempt to join the current node to the cluster"
+    join_cluster
+  fi
 fi
 
 echo "###########################"
