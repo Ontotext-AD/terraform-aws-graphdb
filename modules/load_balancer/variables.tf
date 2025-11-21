@@ -120,3 +120,8 @@ variable "lb_enable_http2" {
   description = "Enable HTTP/2 on the load balancer."
   type        = bool
 }
+
+variable "alb_context_path" {
+  description = "The context path to use for ALB routing."
+  type        = string
+}

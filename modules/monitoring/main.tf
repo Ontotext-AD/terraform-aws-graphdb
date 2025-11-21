@@ -17,6 +17,16 @@ locals {
       16
     )
   }
+
+  lb_hostname = element(split(var.lb_dns_name, "/"), 0)
+
+  route53_healthcheck_fqdn = local.lb_hostname
+
+  context_path_normalized = trim(var.context_path, "/")
+
+  base_healthcheck_path = var.graphdb_node_count == 1 ? "/protocol" : "/rest/cluster/node/status"
+
+  healthcheck_path = local.context_path_normalized == "" ? local.base_healthcheck_path : "/${local.context_path_normalized}${local.base_healthcheck_path}"
 }
 
 # Cloudwatch log group which hosts the logs

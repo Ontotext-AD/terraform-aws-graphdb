@@ -5,7 +5,10 @@ output "lb_arn" {
 
 output "lb_dns_name" {
   description = "DNS name of the GraphDB load balancer"
-  value       = var.lb_type == "application" ? aws_lb.graphdb_alb[0].dns_name : aws_lb.graphdb_nlb[0].dns_name
+  value = var.lb_type == "application" ? (
+    local.context_path_enabled ? "${aws_lb.graphdb_alb[0].dns_name}/${local.context_path_normalized}"
+    : aws_lb.graphdb_alb[0].dns_name
+  ) : aws_lb.graphdb_nlb[0].dns_name
 }
 
 output "lb_zone_id" {

@@ -80,9 +80,43 @@ resource "aws_lb_listener" "graphdb_alb_http" {
   port              = 80
   protocol          = "HTTP"
 
-  default_action {
+  dynamic "default_action" {
+    for_each = local.context_path_enabled ? [] : [1]
+    content {
+      type             = "forward"
+      target_group_arn = aws_lb_target_group.graphdb_alb_tg[0].arn
+    }
+  }
+
+  dynamic "default_action" {
+    for_each = local.context_path_enabled ? [1] : []
+    content {
+      type = "fixed-response"
+
+      fixed_response {
+        content_type = "text/plain"
+        message_body = "Not Found"
+        status_code  = "404"
+      }
+    }
+  }
+}
+
+resource "aws_lb_listener_rule" "graphdb_alb_http_context" {
+  count = local.context_path_enabled && !var.lb_tls_enabled ? 1 : 0
+
+  listener_arn = aws_lb_listener.graphdb_alb_http[0].arn
+  priority     = 10
+
+  action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.graphdb_alb_tg[0].arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["/${local.context_path_normalized}/*"]
+    }
   }
 }
 
@@ -95,9 +129,45 @@ resource "aws_lb_listener" "graphdb_alb_https" {
   certificate_arn   = var.lb_tls_certificate_arn
   ssl_policy        = var.lb_tls_policy
 
-  default_action {
+  dynamic "default_action" {
+    for_each = local.context_path_enabled ? [] : [1]
+
+    content {
+      type             = "forward"
+      target_group_arn = aws_lb_target_group.graphdb_alb_tg[0].arn
+    }
+  }
+
+  dynamic "default_action" {
+    for_each = local.context_path_enabled ? [1] : []
+
+    content {
+      type = "fixed-response"
+
+      fixed_response {
+        content_type = "text/plain"
+        message_body = "Not Found"
+        status_code  = "404"
+      }
+    }
+  }
+}
+
+resource "aws_lb_listener_rule" "graphdb_alb_https_context" {
+  count = local.context_path_enabled && var.lb_tls_enabled ? 1 : 0
+
+  listener_arn = aws_lb_listener.graphdb_alb_https[0].arn
+  priority     = 10
+
+  action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.graphdb_alb_tg[0].arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["/${local.context_path_normalized}/*"]
+    }
   }
 }
 

@@ -430,3 +430,8 @@ variable "root_ebs_volume_size" {
   description = "The size of the root EBS volume."
   type        = number
 }
+
+variable "context_path" {
+  description = "The context path to use for ALB routing."
+  type        = string
+}

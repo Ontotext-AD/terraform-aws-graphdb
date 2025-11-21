@@ -4,6 +4,9 @@ locals {
 
   lb_name           = var.resource_name_prefix
   target_group_name = "${var.resource_name_prefix}-tg-${random_id.tg_name_suffix.hex}"
+
+  context_path_normalized = trim(var.alb_context_path, "/")
+  context_path_enabled    = local.is_alb && local.context_path_normalized != ""
 }
 
 # This creates a random suffix for the target group name

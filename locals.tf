@@ -42,22 +42,15 @@ locals {
   calculated_protocol = local.lb_tls_enabled ? "https" : "http"
 
   # Subnet CIDR lists
-  effective_private_subnet_cidrs = var.graphdb_node_count == 1 ? [var.vpc_private_subnet_cidrs[0]] : var.vpc_private_subnet_cidrs
+  effective_private_subnet_cidrs = var.vpc_private_subnet_cidrs
 
-  effective_public_subnet_cidrs = var.graphdb_node_count == 1 ? [var.vpc_public_subnet_cidrs[0]] : var.vpc_public_subnet_cidrs
+  effective_public_subnet_cidrs = var.vpc_public_subnet_cidrs
 
   lb_subnets = var.existing_lb_arn != "" ? var.existing_lb_subnets : (
-    var.graphdb_node_count == 1 ? (
-      var.vpc_id == "" ? (
-        var.lb_internal ? [module.vpc[0].private_subnet_ids[0]] : [module.vpc[0].public_subnet_ids[0]]
-        ) : (
-        var.lb_internal ? [var.vpc_private_subnet_ids[0]] : [var.vpc_public_subnet_ids[0]]
-      )
+    var.vpc_id == "" ? (
+      var.lb_internal ? module.vpc[0].private_subnet_ids : module.vpc[0].public_subnet_ids
       ) : (
-      var.vpc_id == "" ? (
-        var.lb_internal ? module.vpc[0].private_subnet_ids : module.vpc[0].public_subnet_ids) : (
-        var.lb_internal ? var.vpc_private_subnet_ids : var.vpc_public_subnet_ids
-      )
+      var.lb_internal ? var.vpc_private_subnet_ids : var.vpc_public_subnet_ids
     )
   )
 

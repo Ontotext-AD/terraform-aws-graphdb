@@ -211,3 +211,8 @@ variable "cmk_availability_key_alias" {
   description = "CMK Key Alias for the availability SNS topic"
   type        = string
 }
+
+variable "context_path" {
+  description = "The context path to use for ALB routing."
+  type        = string
+}

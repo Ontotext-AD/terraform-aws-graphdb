@@ -154,6 +154,7 @@ module "load_balancer" {
   lb_idle_timeout               = var.lb_idle_timeout
   lb_client_keep_alive_timeout  = var.lb_client_keep_alive_timeout
   lb_enable_http2               = var.alb_enable_http2
+  alb_context_path              = var.alb_context_path
 }
 
 module "monitoring" {
@@ -202,6 +203,7 @@ module "monitoring" {
   # Alarms Threshold
   cloudwatch_cpu_utilization_threshold = var.monitoring_cpu_utilization_threshold
   graphdb_memory_utilization_threshold = var.monitoring_memory_utilization_threshold
+  context_path = var.alb_context_path
 }
 
 module "graphdb" {
@@ -291,6 +293,7 @@ module "graphdb" {
 
   deploy_monitoring         = var.deploy_monitoring
   external_address_protocol = local.calculated_protocol
+  context_path = var.alb_context_path
 
   # S3 Replication Logging bucket Policy
 

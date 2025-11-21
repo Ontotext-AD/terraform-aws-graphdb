@@ -119,6 +119,12 @@ variable "lb_type" {
   }
 }
 
+variable "alb_context_path" {
+  description = "The context path to use for ALB routing."
+  type        = string
+  default     = "/"
+}
+
 variable "lb_deregistration_delay" {
   description = "Amount time, in seconds, for GraphDB LB target group to wait before changing the state of a deregistering target from draining to unused."
   type        = string
