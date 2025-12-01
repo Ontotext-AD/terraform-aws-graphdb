@@ -430,3 +430,13 @@ variable "root_ebs_volume_size" {
   description = "The size of the root EBS volume."
   type        = number
 }
+
+variable "lb_type" {
+  description = "Type of load balancer to create. Supported: 'network' or 'application'"
+  type        = string
+}
+
+variable "lb_internal" {
+  description = "(Optional) Whether the load balancer will be internal or internet-facing."
+  type        = bool
+}

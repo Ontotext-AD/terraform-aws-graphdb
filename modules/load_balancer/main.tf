@@ -2,8 +2,9 @@ locals {
   is_alb = var.lb_type == "application"
   is_nlb = var.lb_type == "network"
 
-  lb_name           = var.resource_name_prefix
-  target_group_name = "${var.resource_name_prefix}-tg-${random_id.tg_name_suffix.hex}"
+  lb_name           = "${var.resource_name_prefix}-${local.lb_flavor}"
+  lb_flavor         = local.is_alb ? "alb" : "nlb"
+  target_group_name = "${var.resource_name_prefix}-tg-${local.lb_flavor}-${random_id.tg_name_suffix.hex}"
 }
 
 # This creates a random suffix for the target group name

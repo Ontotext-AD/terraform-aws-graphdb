@@ -65,14 +65,14 @@ resource "aws_security_group_rule" "graphdb_network_lb_ingress" {
 }
 
 resource "aws_security_group_rule" "graphdb_lb_healthchecks" {
-  # Since it creates duplicated rule if lb_internal is true we need to have a toggle to enable/disable this rule based on the type of the access to the LB
-  count = var.lb_enable_private_access ? 0 : 1
+  count = (var.lb_type == "network" && var.lb_internal == false) ? 1 : 0
 
-  description       = "Allow the load balancer to healthcheck the GraphDB nodes and access the proxies."
+  description       = "Allow public NLB to healthcheck the GraphDB nodes."
   security_group_id = aws_security_group.graphdb_security_group.id
   type              = "ingress"
   from_port         = local.calculated_graphdb_port
-  to_port           = 7201
+  to_port           = local.calculated_graphdb_port
   protocol          = "tcp"
-  cidr_blocks       = local.lb_subnet_cidr_blocks
+
+  cidr_blocks = local.lb_subnet_cidr_blocks
 }

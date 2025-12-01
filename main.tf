@@ -227,6 +227,8 @@ module "graphdb" {
   lb_enable_private_access = var.lb_internal ? var.lb_enable_private_access : false
   lb_subnets               = local.lb_subnets
   graphdb_lb_dns_name      = local.lb_dns
+  lb_internal              = var.lb_internal
+  lb_type                  = var.lb_type
 
   # GraphDB Configurations
 

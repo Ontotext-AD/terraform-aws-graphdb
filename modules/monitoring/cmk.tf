@@ -55,7 +55,8 @@ resource "aws_kms_key_policy" "sns_cmk_policy" {
           "kms:ListResourceTags",
           "kms:ScheduleKeyDeletion",
           "kms:DisableKeyRotation",
-          "kms:GenerateDataKey"
+          "kms:GenerateDataKey",
+          "kms:GetKeyRotationStatus"
         ],
         "Resource" : "*"
       },

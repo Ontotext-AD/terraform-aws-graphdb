@@ -74,15 +74,40 @@ resource "aws_lb_target_group" "graphdb_alb_tg" {
 }
 
 resource "aws_lb_listener" "graphdb_alb_http" {
-  count = local.is_alb && !var.lb_tls_enabled ? 1 : 0
+  count = local.is_alb ? 1 : 0
 
   load_balancer_arn = aws_lb.graphdb_alb[0].arn
   port              = 80
   protocol          = "HTTP"
 
-  default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.graphdb_alb_tg[0].arn
+  dynamic "default_action" {
+    for_each = var.lb_tls_enabled ? ["redirect"] : ["forward"]
+
+    content {
+      type = default_action.value == "redirect" ? "redirect" : "forward"
+
+      dynamic "redirect" {
+        for_each = default_action.value == "redirect" ? [1] : []
+        content {
+          port        = "443"
+          protocol    = "HTTPS"
+          status_code = "HTTP_301"
+          host        = "#{host}"
+          path        = "/#{path}"
+          query       = "#{query}"
+        }
+      }
+
+      dynamic "forward" {
+        for_each = default_action.value == "forward" ? [1] : []
+        content {
+          target_group {
+            arn    = aws_lb_target_group.graphdb_alb_tg[0].arn
+            weight = 1
+          }
+        }
+      }
+    }
   }
 }
 

@@ -73,7 +73,8 @@ resource "aws_kms_key_policy" "ebs_cmk_policy" {
           "kms:Delete*",
           "kms:ListResourceTags",
           "kms:ScheduleKeyDeletion",
-          "kms:CancelKeyDeletion"
+          "kms:CancelKeyDeletion",
+          "kms:GetKeyRotationStatus"
         ],
         "Resource" : aws_kms_key.ebs_cmk[0].arn
       },
