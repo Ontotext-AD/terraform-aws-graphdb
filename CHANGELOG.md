@@ -1,6 +1,10 @@
 # GraphDB AWS Terraform Module Changelog
 
+## 2.7.0
+* Updated GraphDB default version to [11.2.0](https://graphdb.ontotext.com/documentation/11.2/release-notes.html#graphdb-11-2-0)
+
 ## 2.6.0
+
 * Added support for monitoring the disk_free_percent for the root ebs volume via Cloudwatch alarm per ASG and mem_used_percent alarm per ASG
 * Added support for alarms when transitioning from in alarm state to ok state.
 * Changed the comparison operator to use GreaterThanOrEqualToThreshold for most of the alarms.
