@@ -440,3 +440,10 @@ variable "lb_internal" {
   description = "(Optional) Whether the load balancer will be internal or internet-facing."
   type        = bool
 }
+
+# EC2 Memory settings
+
+variable "ec2_jvm_memory_ratio" {
+  description = "The total percentage of the memory which will be allocated to the heap in the EC2 instance"
+  type        = number
+}
