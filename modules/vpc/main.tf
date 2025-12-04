@@ -3,9 +3,14 @@
 data "aws_availability_zones" "available" {}
 
 locals {
-  azs                = var.graphdb_node_count == 1 ? slice(data.aws_availability_zones.available.names, 0, 1) : slice(data.aws_availability_zones.available.names, 0, 3)
-  len_public_subnets = max(length(var.vpc_private_subnet_cidrs))
-  max_subnet_length  = max(local.len_public_subnets)
+  azs         = var.graphdb_node_count == 1 ? slice(data.aws_availability_zones.available.names, 0, 1) : slice(data.aws_availability_zones.available.names, 0, 3)
+  public_azs  = slice(data.aws_availability_zones.available.names, 0, length(var.vpc_public_subnet_cidrs))
+  private_azs = slice(data.aws_availability_zones.available.names, 0, length(var.vpc_private_subnet_cidrs))
+  nat_gateway_count = var.enable_nat_gateway ? (
+    var.single_nat_gateway
+    ? 1
+    : length(var.vpc_public_subnet_cidrs)
+  ) : 0
 }
 
 # GraphDB VPC
@@ -27,11 +32,11 @@ resource "aws_internet_gateway" "graphdb_internet_gateway" {
 # GraphDB Public Subnet
 
 resource "aws_subnet" "graphdb_public_subnet" {
-  count = length(local.azs)
+  count = length(var.vpc_public_subnet_cidrs)
 
   vpc_id            = aws_vpc.graphdb_vpc.id
   cidr_block        = var.vpc_public_subnet_cidrs[count.index]
-  availability_zone = local.azs[count.index]
+  availability_zone = local.public_azs[count.index]
 
   tags = {
     Name = "${var.resource_name_prefix}-public-subnet-${count.index}"
@@ -41,11 +46,11 @@ resource "aws_subnet" "graphdb_public_subnet" {
 # GraphDB Private Subnet
 
 resource "aws_subnet" "graphdb_private_subnet" {
-  count = length(local.azs)
+  count = length(var.vpc_private_subnet_cidrs)
 
   vpc_id            = aws_vpc.graphdb_vpc.id
   cidr_block        = var.vpc_private_subnet_cidrs[count.index]
-  availability_zone = local.azs[count.index]
+  availability_zone = local.private_azs[count.index]
 
   tags = {
     Name = "${var.resource_name_prefix}-private-subnet-${count.index}"
@@ -67,17 +72,13 @@ resource "aws_subnet" "graphdb_tgw_subnet" {
 
 # NAT Gateway
 
-locals {
-  nat_gateway_count = var.enable_nat_gateway ? (var.single_nat_gateway ? 1 : local.max_subnet_length) : 0
-}
-
 resource "aws_eip" "graphdb_eip" {
   count = local.nat_gateway_count
 }
 
 resource "aws_nat_gateway" "graphdb_nat_gateway" {
   count         = local.nat_gateway_count
-  subnet_id     = var.single_nat_gateway ? aws_subnet.graphdb_public_subnet[0].id : aws_subnet.graphdb_public_subnet[count.index].id
+  subnet_id     = aws_subnet.graphdb_public_subnet[var.single_nat_gateway ? 0 : count.index].id
   allocation_id = aws_eip.graphdb_eip[var.single_nat_gateway ? 0 : count.index].id
 }
 
