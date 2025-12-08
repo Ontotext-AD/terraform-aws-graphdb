@@ -61,13 +61,14 @@ fi
 
 mkdir -p /etc/systemd/system/graphdb.service.d/
 
-log_with_timestamp "Calculating 85 percent of total memory"
+JVM_MEMORY_RATIO="${JVM_MEMORY_RATIO}"
+log_with_timestamp "Calculating ${JVM_MEMORY_RATIO} percent of total memory"
 # Get total memory in kilobytes
 TOTAL_MEMORY_KB=$(grep -i "MemTotal" /proc/meminfo | awk '{print $2}')
 # Convert total memory to gigabytes
 TOTAL_MEMORY_GB=$(echo "scale=2; $TOTAL_MEMORY_KB / 1024 / 1024" | bc)
-# Calculate 85% of total VM memory
-JVM_MAX_MEMORY=$(echo "$TOTAL_MEMORY_GB * 0.85" | bc | cut -d'.' -f1)
+# Calculate JVM memory as PERCENT% of total VM memory
+JVM_MAX_MEMORY=$(echo "scale=2; $TOTAL_MEMORY_GB * $JVM_MEMORY_RATIO / 100" | bc | cut -d'.' -f1)
 
 cat << EOF > /etc/systemd/system/graphdb.service.d/overrides.conf
 [Service]

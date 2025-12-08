@@ -1080,3 +1080,16 @@ variable "external_dns_records_alb_zone_id_override" {
   type        = string
   default     = null
 }
+
+# EC2 Memory Settings
+
+variable "ec2_jvm_memory_ratio" {
+  description = "The total percentage of the memory which will be allocated to the heap in the EC2 instance"
+  type        = number
+  default     = 85
+
+  validation {
+    condition     = var.ec2_jvm_memory_ratio <= 100 && var.ec2_jvm_memory_ratio >= 60
+    error_message = "ec2_jvm_memory_ratio must be between 60 and 100 (inclusive)."
+  }
+}

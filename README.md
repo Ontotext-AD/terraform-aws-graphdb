@@ -261,6 +261,7 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | external\_dns\_records\_allow\_overwrite | Allow overwriting existing records with the same name/type. | `bool` | `false` | no |
 | external\_dns\_records\_alb\_dns\_name\_override | (Optional) Use the DNS Name of an existing Application Load Balancer. | `string` | `null` | no |
 | external\_dns\_records\_alb\_zone\_id\_override | (Optional) Use the Hosted Zone ID of an existing Application Load Balancer. | `string` | `null` | no |
+| ec2\_jvm\_memory\_ratio | The total percentage of the memory which will be allocated to the heap in the EC2 instance | `number` | `85` | no |
 <!-- END_TF_DOCS -->
 
 ## Usage

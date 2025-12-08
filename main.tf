@@ -240,6 +240,7 @@ module "graphdb" {
 
   # VMs
 
+  ec2_jvm_memory_ratio       = var.ec2_jvm_memory_ratio
   ec2_instance_type          = var.ec2_instance_type
   graphdb_node_count         = var.graphdb_node_count
   ec2_key_name               = var.ec2_key_name

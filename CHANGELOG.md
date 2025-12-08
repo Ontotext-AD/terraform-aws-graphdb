@@ -1,6 +1,14 @@
 # GraphDB AWS Terraform Module Changelog
 
+## 2.8.0
+
+* Made the calculation of the heap memory of the EC2 instances configurable, by introducing `ec2_jvm_memory_ratio` variable.
+* Fixed the logic of the VPC subnets because of the need for the deployments that use ALB to have at least 2 AZs available
+* Fixed CMK IAM permissions for the monitoring module due to an issue when updating the key.
+* Made a redirect from http to https when using ALB and using an SSL certificate
+
 ## 2.7.0
+
 * Updated GraphDB default version to [11.2.0](https://graphdb.ontotext.com/documentation/11.2/release-notes.html#graphdb-11-2-0)
 
 ## 2.6.0
