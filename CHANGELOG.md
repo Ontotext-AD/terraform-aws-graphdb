@@ -13,6 +13,14 @@
 * Improved the cluster rejoin logic to attempt to rejoin the cluster if there are existing
 * Reduced cluster rejoin wait time
 * Fixed issue causing scaling out the cluster to fail with  Target group 'arn:xxxx' is currently in use by a listener or a rule
+* Added support for IAM role ARNs in KMS key policies via new `iam_admin_role_arns` variable
+  * Enables SSO (IAM Identity Center) and cross-account role-based access to KMS keys
+  * Supports SSO roles, administrator roles, and cross-account roles
+  * Legacy `iam_admin_group` behavior remains as optional fallback for backward compatibility
+  * Role ARNs take precedence over IAM group user ARNs when both are provided
+* Updated the KMS module variable descriptions across all modules (backup, monitoring, graphdb) to clarify role-based access support
+* Updated `locals.tf` to prioritize role ARNs over user ARNs from IAM groups, with fallback logic
+* Added comprehensive cross-account deployment documentation in README.md
 
 ## 2.7.0
 
@@ -34,12 +42,15 @@
 * Update GraphDB default version to [11.1.2](https://graphdb.ontotext.com/documentation/11.1/release-notes.html#graphdb-11-1-2)
 
 ## 2.4.0
+
 * Added support for Transit Gateway Attachments, Subnets and TGW Route table rules.
 
 ## 2.3.1
+
 * Updated GraphDB default version to [11.1.1](https://graphdb.ontotext.com/documentation/11.1/release-notes.html#graphdb-11-1-1)
 
 ## 2.3.0
+
 * Enabled ASG_WAIT check for single node deployments.
 * Updated GraphDB default version to [11.1.0](https://graphdb.ontotext.com/documentation/11.1/release-notes.html#graphdb-11-1-0)
 
@@ -48,6 +59,7 @@
 * Updated GraphDB default version to [11.0.2](https://graphdb.ontotext.com/documentation/11.0/release-notes.html#graphdb-11-0-2)
 
 ## 2.2.0
+
 * Added variables to change CPU Utilization and Memory utilization alarms threshold
 * Added support for deriving KMS key administrators from an IAM group, making it easier to manage multi-user access.
 * Introduced new local.admin_user_arns variable to dynamically fetch IAM user ARNs from a group.
@@ -55,6 +67,7 @@
 * Added flag enable_asg_wait to be able to disable the function during tests
 
 ## 2.1.0
+
 * Added ability to use existing Load Balancer for more info check the Existing Load Balancer section in the README.md
 * Added option to choose between Application Load Balancer and Network Load Balancer
 * Resolved an issue in the additional user data script where incorrect handling of AWS CLI permissions (chmod)
@@ -65,9 +78,11 @@
 * Moved the CMK Alias generation in a local variable so it can be dynamically generated.
 
 ## 2.0.1
+
 * Updated GraphDB default version to [11.0.1](https://graphdb.ontotext.com/documentation/11.0/release-notes.html#graphdb-11-0-1)
 
 ## 2.0.0
+
 * Updated GraphDB default version to [11.0.0](https://graphdb.ontotext.com/documentation/11.0/release-notes.html#graphdb-11-0-0)
 * Fixed issue with [write-only arguments][https://developer.hashicorp.com/terraform/language/resources/ephemeral/write-only]
   The SSM Parameter’s write‑only value field was causing endless drift because Terraform kept expecting it back in state,
@@ -75,6 +90,7 @@
   WriteOnly: true—to send the secret only on writes and reapply it when the version is bumped
 
 ## 1.5.0
+
 * Added ability to provide additional ARNs for IAM Policies
 * Added ability to get dynamic http protocol for gdb_conf_overrides based on the lb_certificate_arn
 * Removed the `asg_enable_instance_refresh` property and the instance auto-refresh functionality.

@@ -997,9 +997,15 @@ variable "sns_rotation_enabled" {
 }
 
 variable "iam_admin_group" {
-  description = "Define IAM group that should have access to the KMS keys and other resources"
+  description = "Define IAM group that should have access to the KMS keys and other resources (legacy, use iam_admin_role_arns for SSO/role-based access)"
   type        = string
   default     = ""
+}
+
+variable "iam_admin_role_arns" {
+  description = "List of IAM role ARNs (e.g., SSO roles, administrator roles, cross-account roles) that should have administrative access to the KMS keys. Takes precedence over iam_admin_group."
+  type        = list(string)
+  default     = []
 }
 
 # External DNS Records
