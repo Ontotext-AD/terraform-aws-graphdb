@@ -61,7 +61,7 @@ variable "s3_key_deletion_window_in_days" {
 }
 
 variable "s3_kms_key_admin_arn" {
-  description = "ARN of the role or user granted administrative access to the SNS KMS key."
+  description = "Comma-separated list of IAM role or user ARNs granted administrative access to the S3 KMS key. Supports SSO roles, administrator roles, and cross-account roles. Aligned with AWS best practices for using roles instead of IAM users."
   type        = string
 }
 
