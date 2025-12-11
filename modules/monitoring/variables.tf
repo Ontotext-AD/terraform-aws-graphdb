@@ -134,7 +134,7 @@ variable "enable_sns_kms_key" {
 }
 
 variable "sns_key_admin_arn" {
-  description = "ARN of the role or user who will have administrative access to the SNS KMS key"
+  description = "Comma-separated list of IAM role or user ARNs granted administrative access to the SNS KMS key. Supports SSO roles, administrator roles, and cross-account roles. Aligned with AWS best practices for using roles instead of IAM users."
   type        = string
   default     = ""
 }

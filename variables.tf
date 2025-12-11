@@ -973,9 +973,15 @@ variable "sns_rotation_enabled" {
 }
 
 variable "iam_admin_group" {
-  description = "Define IAM group that should have access to the KMS keys and other resources"
+  description = "Define IAM group that should have access to the KMS keys and other resources (legacy, use iam_admin_role_arns for SSO/role-based access)"
   type        = string
   default     = ""
+}
+
+variable "iam_admin_role_arns" {
+  description = "List of IAM role ARNs (e.g., SSO roles, administrator roles, cross-account roles) that should have administrative access to the KMS keys. Takes precedence over iam_admin_group. Aligned with AWS best practices for using roles instead of IAM users."
+  type        = list(string)
+  default     = ["arn:aws:iam::396296719014:role/aws-reserved/sso.amazonaws.com/eu-central-1/AWSReservedSSO_AWSAdministratorAccess_ff0c063028fb63f2"]
 }
 
 # External DNS Records
