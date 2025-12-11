@@ -127,6 +127,7 @@ data "cloudinit_config" "graphdb_user_data" {
       content = templatefile("${path.module}/templates/09_node_join.sh.tpl", {
         region : var.aws_region
         name : var.resource_name_prefix
+        node_count : var.graphdb_node_count
         route53_zone_id : var.route53_existing_zone_id != "" ? var.route53_existing_zone_id : aws_route53_zone.graphdb_zone[0].id
         route53_zone_dns_name : var.route53_zone_dns_name
       })

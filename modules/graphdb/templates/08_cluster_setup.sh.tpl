@@ -60,7 +60,9 @@ check_all_dns_records "${route53_zone_id}" "${route53_zone_dns_name}" "$RETRY_DE
 # Function which finds the cluster Leader node
 find_leader_node() {
   local retry_count=0
-  local max_retries=120
+  # Max retries 1440 will results in 2hours waiting for a leader to appear,
+  # should be enough for most cases when replicating data.
+  local max_retries=1440
   local leader_node=""
 
   while [ -z "$leader_node" ]; do

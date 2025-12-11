@@ -35,6 +35,10 @@ resource "aws_lb_target_group" "graphdb_nlb_tg" {
     healthy_threshold   = var.lb_healthy_threshold
     unhealthy_threshold = var.lb_unhealthy_threshold
   }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_lb_listener" "graphdb_nlb_tcp" {
@@ -46,6 +50,10 @@ resource "aws_lb_listener" "graphdb_nlb_tcp" {
   default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.graphdb_nlb_tg[0].arn
+  }
+
+  lifecycle {
+    create_before_destroy = true
   }
 }
 
@@ -61,5 +69,9 @@ resource "aws_lb_listener" "graphdb_nlb_tls" {
   default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.graphdb_nlb_tg[0].arn
+  }
+
+  lifecycle {
+    create_before_destroy = true
   }
 }

@@ -71,6 +71,10 @@ resource "aws_lb_target_group" "graphdb_alb_tg" {
     unhealthy_threshold = var.lb_unhealthy_threshold
     path                = var.graphdb_node_count > 1 ? var.lb_health_check_path : "/protocol"
   }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_lb_listener" "graphdb_alb_http" {
@@ -109,6 +113,10 @@ resource "aws_lb_listener" "graphdb_alb_http" {
       }
     }
   }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_lb_listener" "graphdb_alb_https" {
@@ -123,6 +131,10 @@ resource "aws_lb_listener" "graphdb_alb_https" {
   default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.graphdb_alb_tg[0].arn
+  }
+
+  lifecycle {
+    create_before_destroy = true
   }
 }
 
