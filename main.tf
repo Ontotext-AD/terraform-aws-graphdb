@@ -155,6 +155,7 @@ module "load_balancer" {
   lb_idle_timeout               = var.lb_idle_timeout
   lb_client_keep_alive_timeout  = var.lb_client_keep_alive_timeout
   lb_enable_http2               = var.alb_enable_http2
+  lb_context_path               = var.lb_context_path
 }
 
 module "monitoring" {
@@ -199,6 +200,7 @@ module "monitoring" {
 
   lb_tls_certificate_arn = var.lb_tls_certificate_arn
   lb_dns_name            = module.load_balancer[0].lb_dns_name != "" ? module.load_balancer[0].lb_dns_name : null
+  lb_context_path        = var.lb_context_path
 
   # Alarms Threshold
   cloudwatch_cpu_utilization_threshold = var.monitoring_cpu_utilization_threshold
@@ -223,13 +225,14 @@ module "graphdb" {
   graphdb_target_group_arns = local.lb_tg_arn_list
   vpc_id                    = var.vpc_id != "" ? var.vpc_id : module.vpc[0].vpc_id
 
-  # Network Load Balancer
+  # Load Balancer
 
   lb_enable_private_access = var.lb_internal ? var.lb_enable_private_access : false
   lb_subnets               = local.lb_subnets
   graphdb_lb_dns_name      = local.lb_dns
   lb_internal              = var.lb_internal
   lb_type                  = var.lb_type
+  lb_context_path          = var.lb_context_path
 
   # GraphDB Configurations
 

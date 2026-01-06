@@ -66,7 +66,7 @@ resource "aws_route53_health_check" "graphdb_availability_check" {
   port              = var.lb_tls_certificate_arn != "" ? var.route53_availability_https_port : var.route53_availability_http_port
   request_interval  = var.route53_availability_frequency
   regions           = var.route53_availability_regions
-  resource_path     = var.graphdb_node_count == 1 ? "/protocol" : "/rest/cluster/node/status"
+  resource_path     = local.graphdb_availability_resource_path
   type              = var.route53_availability_http_string_type
   measure_latency   = var.route53_availability_measure_latency
 }

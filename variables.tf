@@ -167,6 +167,12 @@ variable "lb_tls_policy" {
   default     = "ELBSecurityPolicy-TLS13-1-2-2021-06"
 }
 
+variable "lb_context_path" {
+  description = "(Optional) Context path for GraphDB (e.g., /graphdb). Leave empty for no context path."
+  type        = string
+  default     = ""
+}
+
 variable "allowed_inbound_cidrs_lb" {
   description = "(Optional) List of CIDR blocks to permit inbound traffic from to load balancer"
   type        = list(string)

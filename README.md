@@ -118,6 +118,7 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | lb\_client\_keep\_alive\_timeout | (Optional) The time in seconds that the client connection is allowed to be idle. | `number` | `604800` | no |
 | alb\_enable\_http2 | Enable HTTP/2 on the load balancer. | `bool` | `true` | no |
 | lb\_tls\_policy | TLS security policy on the listener. | `string` | `"ELBSecurityPolicy-TLS13-1-2-2021-06"` | no |
+| lb\_context\_path | (Optional) Context path for GraphDB (e.g., /graphdb). Leave empty for no context path. | `string` | `""` | no |
 | allowed\_inbound\_cidrs\_lb | (Optional) List of CIDR blocks to permit inbound traffic from to load balancer | `list(string)` | `null` | no |
 | allowed\_inbound\_cidrs\_ssh | (Optional) List of CIDR blocks to permit for SSH to GraphDB nodes | `list(string)` | `null` | no |
 | ec2\_instance\_type | EC2 instance type | `string` | `"r6i.2xlarge"` | no |
@@ -736,7 +737,23 @@ To switch to ALB, set the following variable:
 lb_type = "application"
 ```
 
-💡 Note: ALBs support idle timeouts of up to [7 days](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/edit-load-balancer-attributes.html#http-client-keep-alive-duration), which is ideal for persistent connections and long-running operations over HTTP/HTTPS.
+#### Deploying GraphDB behind context path with Application Load Balancer
+
+If you want GraphDB to be accessible behind a context path (for example `https://example.com/graphdb/`), you can configure a context path on the Application Load Balancer (ALB).
+
+Requirements:
+- `lb_type = "application"`
+- `lb_context_path` must be non-empty (e.g. `"/graphdb"`)
+
+When both are set, the module will configure ALB listener rules so that:
+- Requests to `/<context>` and `/<context>/*` are routed to GraphDB
+
+Example:
+
+```hcl
+lb_type         = "application"
+lb_context_path = "/graphdb"
+```
 
 #### Transit Gateway Attachments
 

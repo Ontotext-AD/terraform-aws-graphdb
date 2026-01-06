@@ -22,6 +22,15 @@ echo "#######################################"
 
 LB_DNS_RECORD=${graphdb_lb_dns_name}
 PROTOCOL=${external_address_protocol}
+CONTEXT_PATH="${lb_context_path}"
+
+# Construct the external URL with context path only if provided
+if [ -n "$CONTEXT_PATH" ]; then
+  EXTERNAL_URL="$${PROTOCOL}://$${LB_DNS_RECORD}$${CONTEXT_PATH}"
+else
+  EXTERNAL_URL="$${PROTOCOL}://$${LB_DNS_RECORD}"
+fi
+
 # Get and store the GraphDB license
 aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/license" --with-decryption | \
   jq -r .Parameter.Value | \
@@ -36,7 +45,7 @@ NODE_COUNT=$(aws autoscaling describe-auto-scaling-groups --auto-scaling-group-n
 if [ "$NODE_COUNT" -eq 1 ]; then
   cat << EOF > /etc/graphdb/graphdb.properties
 graphdb.connector.port=7201
-graphdb.external-url=$${PROTOCOL}://$${LB_DNS_RECORD}
+graphdb.external-url=$${EXTERNAL_URL}
 graphdb.external-url.enforce.transactions=true
 EOF
 else
@@ -46,14 +55,15 @@ else
 graphdb.auth.token.secret=$GRAPHDB_CLUSTER_TOKEN
 graphdb.connector.port=7201
 graphdb.external-url=http://$${NODE_DNS_RECORD}:7201
+graphdb.vhosts=$${EXTERNAL_URL},http://$${NODE_DNS_RECORD}:7201
 graphdb.rpc.address=$${NODE_DNS_RECORD}:7301
 EOF
 
   cat << EOF > /etc/graphdb-cluster-proxy/graphdb.properties
 graphdb.auth.token.secret=$GRAPHDB_CLUSTER_TOKEN
 graphdb.connector.port=7200
-graphdb.external-url=$${PROTOCOL}://$${LB_DNS_RECORD}
-graphdb.vhosts=$${PROTOCOL}://$${LB_DNS_RECORD},http://$${NODE_DNS_RECORD}:7200
+graphdb.external-url=$${EXTERNAL_URL}
+graphdb.vhosts=$${EXTERNAL_URL},http://$${NODE_DNS_RECORD}:7200
 graphdb.rpc.address=$${NODE_DNS_RECORD}:7300
 graphdb.proxy.hosts=$${NODE_DNS_RECORD}:7301
 EOF
