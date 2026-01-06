@@ -6,7 +6,7 @@ resource "aws_cloudwatch_log_metric_filter" "graphdb_attempting_to_recover_metri
   count = var.graphdb_node_count > 1 ? 1 : 0
 
   name           = "mf-${var.resource_name_prefix}-attempting-to-recover"
-  pattern        = "successfully replicated registration will not retry"
+  pattern        = "Attempting to recover through snapshot replication"
   log_group_name = aws_cloudwatch_log_group.graphdb_log_group.name
 
   metric_transformation {
@@ -30,9 +30,9 @@ resource "aws_cloudwatch_metric_alarm" "graphdb_attempting_to_recover_alarm" {
   metric_name         = aws_cloudwatch_log_metric_filter.graphdb_attempting_to_recover_metric_filter[0].metric_transformation[0].name
   namespace           = aws_cloudwatch_log_metric_filter.graphdb_attempting_to_recover_metric_filter[0].metric_transformation[0].namespace
   period              = var.cloudwatch_period
-  statistic           = "SampleCount"
+  statistic           = "Maximum"
   evaluation_periods  = var.cloudwatch_evaluation_periods
-  threshold           = "0"
+  threshold           = "1"
   alarm_actions       = [aws_sns_topic.graphdb_sns_topic.arn]
   ok_actions          = [aws_sns_topic.graphdb_sns_topic.arn]
   treat_missing_data  = "missing"
@@ -68,7 +68,7 @@ resource "aws_cloudwatch_metric_alarm" "graphdb_low_disk_space_alarm" {
   period              = var.cloudwatch_period
   statistic           = "SampleCount"
   evaluation_periods  = var.cloudwatch_evaluation_periods
-  threshold           = "0"
+  threshold           = "1"
   alarm_actions       = [aws_sns_topic.graphdb_sns_topic.arn]
   ok_actions          = [aws_sns_topic.graphdb_sns_topic.arn]
   treat_missing_data  = "missing"
@@ -195,7 +195,7 @@ resource "aws_cloudwatch_metric_alarm" "graphdb_nodes_disconnected" {
   actions_enabled     = true
   evaluation_periods  = var.cloudwatch_evaluation_periods
   datapoints_to_alarm = 1
-  threshold           = 0
+  threshold           = 1
   comparison_operator = "GreaterThanThreshold"
   treat_missing_data  = "missing"
   alarm_actions       = [aws_sns_topic.graphdb_sns_topic.arn]
