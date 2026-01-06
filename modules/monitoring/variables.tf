@@ -211,3 +211,9 @@ variable "cmk_availability_key_alias" {
   description = "CMK Key Alias for the availability SNS topic"
   type        = string
 }
+
+variable "lb_context_path" {
+  description = "(Optional) Context path for GraphDB (e.g., /graphdb). Leave empty for no context path."
+  type        = string
+  default     = ""
+}
