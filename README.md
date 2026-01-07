@@ -44,7 +44,7 @@ across multiple availability zones using EC2 Autoscaling Group. Key features of 
 
 - EC2 Autoscaling Group
 - Network Load Balancer
-- NAT Gateway for outbound connections
+- NAT Gateway for outbound connections (single, per-AZ, or regional)
 - Route53 Private Hosted Zone for internal GraphDB cluster communication
 - IAM Policies and roles
 - VPC
@@ -381,6 +381,26 @@ To enable deployment of the monitoring module, you need to enable the following 
 ```hcl
 deploy_monitoring = true
 ```
+
+### NAT Gateway modes
+
+This module supports multiple NAT Gateway strategies for outbound internet access from private subnets.
+
+#### Modes
+
+- `single` (zonal): Creates **one** NAT Gateway in the first public subnet and routes all private subnets to it.
+- `per_az` (zonal): Creates **one NAT Gateway per public subnet/AZ** and routes each private subnet to its AZ NAT Gateway.
+  - **Note:** For `per_az` mode, the number of public subnets should match the intended AZ count, since the module creates one NAT Gateway per public subnet.
+- `regional`: Creates a **Regional NAT Gateway** for the VPC and routes all private subnets to it.
+
+#### Backward compatibility
+
+The legacy input `single_nat_gateway` is kept for compatibility.
+If `nat_gateway_mode` is not set:
+- `single_nat_gateway = true` → behaves as `nat_gateway_mode = "single"`
+- `single_nat_gateway = false` → behaves as `nat_gateway_mode = "per_az"`
+
+Prefer using `nat_gateway_mode` in new deployments.
 
 **ASG_WAIT**
 

@@ -260,6 +260,24 @@ variable "single_nat_gateway" {
   default     = false
 }
 
+variable "nat_gateway_mode" {
+  description = <<EOT
+NAT Gateway deployment mode:
+- single   : one zonal NAT in the first public subnet
+- per_az   : one zonal NAT per public subnet/AZ
+- regional : one regional NAT per VPC (AWS provider v6.24.0+)
+
+If unset, the value is derived from single_nat_gateway for backward compatibility.
+EOT
+  type        = string
+  default     = null
+
+  validation {
+    condition     = var.nat_gateway_mode == null || contains(["single", "per_az", "regional"], var.nat_gateway_mode)
+    error_message = "nat_gateway_mode must be one of: \"single\", \"per_az\", \"regional\" (or null to derive from single_nat_gateway)."
+  }
+}
+
 variable "enable_nat_gateway" {
   description = "Enable or disable the creation of the NAT Gateway"
   type        = bool

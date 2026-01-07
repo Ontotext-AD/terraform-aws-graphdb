@@ -20,6 +20,7 @@ module "vpc" {
   vpc_cidr_block                                  = var.vpc_cidr_block
   single_nat_gateway                              = var.single_nat_gateway
   enable_nat_gateway                              = var.enable_nat_gateway
+  nat_gateway_mode                                = var.nat_gateway_mode
   lb_enable_private_access                        = var.lb_enable_private_access
   network_load_balancer_arns                      = local.lb_arn_list
   vpc_endpoint_service_allowed_principals         = var.vpc_endpoint_service_allowed_principals
@@ -209,7 +210,7 @@ module "graphdb" {
 
   resource_name_prefix       = var.resource_name_prefix
   deployment_restriction_tag = var.deployment_restriction_tag
-  aws_region                 = data.aws_region.current.name
+  aws_region                 = data.aws_region.current.id
   aws_subscription_id        = data.aws_caller_identity.current.account_id
   assume_role_principal_arn  = var.assume_role_principal_arn
   additional_policy_arns     = var.graphdb_additional_policy_arns
