@@ -1,5 +1,9 @@
 # GraphDB AWS Terraform Module Changelog
 
+## 2.8.1
+
+Fixed AWS Cloudwatch alarm thresholds and metrics
+
 ## 2.8.0
 
 * Made the calculation of the heap memory of the EC2 instances configurable, by introducing `ec2_jvm_memory_ratio` variable.
