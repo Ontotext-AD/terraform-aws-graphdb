@@ -132,6 +132,7 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | vpc\_cidr\_block | CIDR block for VPC | `string` | `"10.0.0.0/16"` | no |
 | vpc\_dns\_support | Enable or disable the support of the DNS service | `bool` | `true` | no |
 | single\_nat\_gateway | Enable or disable the option to have single NAT Gateway. | `bool` | `false` | no |
+| nat\_gateway\_mode | NAT Gateway deployment mode: - single   : one zonal NAT in the first public subnet - per\_az   : one zonal NAT per public subnet/AZ - regional : one regional NAT per VPC (AWS provider v6.24.0+)  If unset, the value is derived from single\_nat\_gateway for backward compatibility. | `string` | `null` | no |
 | enable\_nat\_gateway | Enable or disable the creation of the NAT Gateway | `bool` | `true` | no |
 | vpc\_endpoint\_service\_accept\_connection\_requests | (Required) Whether or not VPC endpoint connection requests to the service must be accepted by the service owner - true or false. | `bool` | `true` | no |
 | vpc\_endpoint\_service\_allowed\_principals | (Optional) The ARNs of one or more principals allowed to discover the endpoint service. | `list(string)` | `null` | no |
