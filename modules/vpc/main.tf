@@ -6,11 +6,19 @@ locals {
   azs         = var.graphdb_node_count == 1 ? slice(data.aws_availability_zones.available.names, 0, 1) : slice(data.aws_availability_zones.available.names, 0, 3)
   public_azs  = slice(data.aws_availability_zones.available.names, 0, length(var.vpc_public_subnet_cidrs))
   private_azs = slice(data.aws_availability_zones.available.names, 0, length(var.vpc_private_subnet_cidrs))
+  effective_nat_gateway_mode = (
+    var.nat_gateway_mode != null
+    ? var.nat_gateway_mode
+    : (var.single_nat_gateway ? "single" : "per_az")
+  )
+
   nat_gateway_count = var.enable_nat_gateway ? (
-    var.single_nat_gateway
-    ? 1
-    : length(var.vpc_public_subnet_cidrs)
+    local.effective_nat_gateway_mode == "regional" ? 1 :
+    local.effective_nat_gateway_mode == "single" ? 1 :
+    length(var.vpc_public_subnet_cidrs)
   ) : 0
+
+  eip = var.enable_nat_gateway && local.effective_nat_gateway_mode != "regional" ? local.nat_gateway_count : 0
 }
 
 # GraphDB VPC
@@ -73,13 +81,25 @@ resource "aws_subnet" "graphdb_tgw_subnet" {
 # NAT Gateway
 
 resource "aws_eip" "graphdb_eip" {
-  count = local.nat_gateway_count
+  count = local.eip
 }
 
 resource "aws_nat_gateway" "graphdb_nat_gateway" {
-  count         = local.nat_gateway_count
-  subnet_id     = aws_subnet.graphdb_public_subnet[var.single_nat_gateway ? 0 : count.index].id
-  allocation_id = aws_eip.graphdb_eip[var.single_nat_gateway ? 0 : count.index].id
+  count = local.nat_gateway_count
+
+  availability_mode = local.effective_nat_gateway_mode == "regional" ? "regional" : "zonal"
+
+  # Regional NAT (no subnet)
+  vpc_id = local.effective_nat_gateway_mode == "regional" ? aws_vpc.graphdb_vpc.id : null
+
+  # Zonal NAT
+  subnet_id = local.effective_nat_gateway_mode == "regional" ? null : aws_subnet.graphdb_public_subnet[
+    local.effective_nat_gateway_mode == "single" ? 0 : count.index
+  ].id
+
+  allocation_id = local.effective_nat_gateway_mode == "regional" ? null : aws_eip.graphdb_eip[
+    local.effective_nat_gateway_mode == "single" ? 0 : count.index
+  ].id
 }
 
 # GraphDB Route Tables
@@ -122,8 +142,17 @@ resource "aws_route_table" "graphdb_private_route_table" {
   dynamic "route" {
     for_each = var.enable_nat_gateway ? [1] : []
     content {
-      cidr_block     = "0.0.0.0/0"
-      nat_gateway_id = var.enable_nat_gateway ? var.single_nat_gateway ? aws_nat_gateway.graphdb_nat_gateway[0].id : aws_nat_gateway.graphdb_nat_gateway[count.index].id : null
+      cidr_block = "0.0.0.0/0"
+
+      nat_gateway_id = (
+        local.effective_nat_gateway_mode == "regional"
+        ? aws_nat_gateway.graphdb_nat_gateway[0].id
+        : (
+          local.effective_nat_gateway_mode == "single"
+          ? aws_nat_gateway.graphdb_nat_gateway[0].id
+          : aws_nat_gateway.graphdb_nat_gateway[count.index].id
+        )
+      )
     }
   }
 }

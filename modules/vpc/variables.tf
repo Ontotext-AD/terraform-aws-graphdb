@@ -34,8 +34,20 @@ variable "single_nat_gateway" {
 }
 
 variable "enable_nat_gateway" {
-  description = "Enalbe or disable the creation of the NAT Gateway"
+  description = "Enable or disable the creation of the NAT Gateway"
   type        = bool
+}
+
+variable "nat_gateway_mode" {
+  description = <<EOT
+NAT Gateway deployment mode:
+- single   : one zonal NAT in the first public subnet
+- per_az   : one zonal NAT per public subnet/AZ
+- regional : one regional NAT per VPC (AWS provider v6.24.0+)
+
+If unset, the value is derived from single_nat_gateway for backward compatibility.
+EOT
+  type        = string
 }
 
 variable "vpc_endpoint_service_accept_connection_requests" {

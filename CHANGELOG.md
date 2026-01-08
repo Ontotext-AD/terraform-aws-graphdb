@@ -1,11 +1,9 @@
 # GraphDB AWS Terraform Module Changelog
 
-## 2.8.1
-
-Fixed AWS Cloudwatch alarm thresholds and metrics
-
-## 2.8.0
-
+## 3.0.0
+* Upgraded terraform provider version to 6.27.0
+* Fixed AWS Cloudwatch alarm pattern and thresholds
+* Added support for deploying Regional NAT Gateway
 * Made the calculation of the heap memory of the EC2 instances configurable, by introducing `ec2_jvm_memory_ratio` variable.
 * Fixed the logic of the VPC subnets because of the need for the deployments that use ALB to have at least 2 AZs available
 * Fixed CMK IAM permissions for the monitoring module due to an issue when updating the key.

@@ -169,7 +169,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "logs_lifecycle_configuration" 
     }
 
     filter {
-      prefix = "AWSLogs/${data.aws_caller_identity.current.account_id}/${data.aws_region.current.name}/vpcflowlogs/"
+      prefix = "AWSLogs/${data.aws_caller_identity.current.account_id}/${data.aws_region.current.id}/vpcflowlogs/"
     }
 
     expiration {
