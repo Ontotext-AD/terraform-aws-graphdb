@@ -118,6 +118,7 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | lb\_client\_keep\_alive\_timeout | (Optional) The time in seconds that the client connection is allowed to be idle. | `number` | `604800` | no |
 | alb\_enable\_http2 | Enable HTTP/2 on the load balancer. | `bool` | `true` | no |
 | lb\_tls\_policy | TLS security policy on the listener. | `string` | `"ELBSecurityPolicy-TLS13-1-2-2021-06"` | no |
+| lb\_context\_path | (Optional) Context path for GraphDB (e.g., /graphdb). Leave empty for no context path. | `string` | `""` | no |
 | allowed\_inbound\_cidrs\_lb | (Optional) List of CIDR blocks to permit inbound traffic from to load balancer | `list(string)` | `null` | no |
 | allowed\_inbound\_cidrs\_ssh | (Optional) List of CIDR blocks to permit for SSH to GraphDB nodes | `list(string)` | `null` | no |
 | ec2\_instance\_type | EC2 instance type | `string` | `"r6i.2xlarge"` | no |
@@ -199,6 +200,7 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | lb\_access\_logs\_lifecycle\_rule\_status | Define status of the S3 lifecycle rule. Possible options are enabled or disabled. | `string` | `"Disabled"` | no |
 | lb\_enable\_access\_logs | Enable or disable access logs for the NLB | `bool` | `false` | no |
 | lb\_access\_logs\_expiration\_days | Define the days after which the LB access logs should be deleted. | `number` | `14` | no |
+| lb\_enable\_context\_path\_rewrite | If true, ALB rewrites context path /* before forwarding to GraphDB. | `bool` | `false` | no |
 | bucket\_replication\_destination\_region | Define in which Region should the bucket be replicated | `string` | `null` | no |
 | graphdb\_enable\_userdata\_scripts\_on\_reboot | (Experimental) Modifies cloud-config to always run user data scripts on EC2 boot | `bool` | `false` | no |
 | graphdb\_user\_supplied\_scripts | A list of paths to user-supplied shell scripts (local files) to be injected as additional parts in the EC2 user\_data. | `list(string)` | `[]` | no |

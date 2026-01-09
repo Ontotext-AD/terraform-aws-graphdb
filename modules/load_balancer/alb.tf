@@ -69,7 +69,8 @@ resource "aws_lb_target_group" "graphdb_alb_tg" {
     interval            = var.lb_health_check_interval
     healthy_threshold   = var.lb_healthy_threshold
     unhealthy_threshold = var.lb_unhealthy_threshold
-    path                = var.graphdb_node_count > 1 ? var.lb_health_check_path : "/protocol"
+    # Prepend context path only if configured
+    path = var.lb_context_path != "" ? "${var.lb_context_path}${var.lb_health_check_path}" : (var.graphdb_node_count > 1 ? var.lb_health_check_path : "/protocol")
   }
 
   lifecycle {
@@ -85,10 +86,10 @@ resource "aws_lb_listener" "graphdb_alb_http" {
   protocol          = "HTTP"
 
   dynamic "default_action" {
-    for_each = var.lb_tls_enabled ? ["redirect"] : ["forward"]
+    for_each = var.lb_tls_enabled ? ["redirect"] : (var.lb_context_path != "" ? ["fixed-response"] : ["forward"])
 
     content {
-      type = default_action.value == "redirect" ? "redirect" : "forward"
+      type = default_action.value == "redirect" ? "redirect" : (default_action.value == "fixed-response" ? "fixed-response" : "forward")
 
       dynamic "redirect" {
         for_each = default_action.value == "redirect" ? [1] : []
@@ -99,6 +100,15 @@ resource "aws_lb_listener" "graphdb_alb_http" {
           host        = "#{host}"
           path        = "/#{path}"
           query       = "#{query}"
+        }
+      }
+
+      dynamic "fixed_response" {
+        for_each = default_action.value == "fixed-response" ? [1] : []
+        content {
+          content_type = "text/plain"
+          message_body = "Not Found"
+          status_code  = "404"
         }
       }
 
@@ -119,6 +129,38 @@ resource "aws_lb_listener" "graphdb_alb_http" {
   }
 }
 
+resource "aws_lb_listener_rule" "graphdb_path_based_http" {
+  count = local.is_alb && !var.lb_tls_enabled && var.lb_context_path != "" ? 1 : 0
+
+  listener_arn = aws_lb_listener.graphdb_alb_http[0].arn
+  priority     = 100
+
+  dynamic "transform" {
+    for_each = var.lb_enable_context_path_rewrite ? [1] : []
+    content {
+      type = "url-rewrite"
+
+      url_rewrite {
+        rewrites = [
+          { regex = "^${var.lb_context_path}/(.*)$", replace = "/$1" },
+          { regex = "^${var.lb_context_path}$",      replace = "/" }
+        ]
+      }
+    }
+  }
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.graphdb_alb_tg[0].arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["${var.lb_context_path}/*", var.lb_context_path]
+    }
+  }
+}
+
 resource "aws_lb_listener" "graphdb_alb_https" {
   count = local.is_alb && var.lb_tls_enabled ? 1 : 0
 
@@ -128,13 +170,42 @@ resource "aws_lb_listener" "graphdb_alb_https" {
   certificate_arn   = var.lb_tls_certificate_arn
   ssl_policy        = var.lb_tls_policy
 
+
   default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.graphdb_alb_tg[0].arn
+    type = var.lb_context_path != "" ? "fixed-response" : "forward"
+
+    dynamic "fixed_response" {
+      for_each = var.lb_context_path != "" ? [1] : []
+      content {
+        content_type = "text/plain"
+        message_body = "Not Found"
+        status_code  = "404"
+      }
+    }
+
+    target_group_arn = var.lb_context_path == "" ? aws_lb_target_group.graphdb_alb_tg[0].arn : null
   }
 
   lifecycle {
     create_before_destroy = true
+  }
+}
+
+resource "aws_lb_listener_rule" "graphdb_path_based_https" {
+  count = local.is_alb && var.lb_tls_enabled && var.lb_context_path != "" ? 1 : 0
+
+  listener_arn = aws_lb_listener.graphdb_alb_https[0].arn
+  priority     = 100
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.graphdb_alb_tg[0].arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["${var.lb_context_path}/*", var.lb_context_path]
+    }
   }
 }
 

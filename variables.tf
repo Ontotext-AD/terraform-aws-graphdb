@@ -167,6 +167,12 @@ variable "lb_tls_policy" {
   default     = "ELBSecurityPolicy-TLS13-1-2-2021-06"
 }
 
+variable "lb_context_path" {
+  description = "(Optional) Context path for GraphDB (e.g., /graphdb). Leave empty for no context path."
+  type        = string
+  default     = ""
+}
+
 variable "allowed_inbound_cidrs_lb" {
   description = "(Optional) List of CIDR blocks to permit inbound traffic from to load balancer"
   type        = list(string)
@@ -687,6 +693,12 @@ variable "lb_access_logs_expiration_days" {
   description = "Define the days after which the LB access logs should be deleted."
   type        = number
   default     = 14
+}
+
+variable "lb_enable_context_path_rewrite" {
+  description = "If true, ALB rewrites context path /* before forwarding to GraphDB."
+  type        = bool
+  default = false
 }
 
 variable "bucket_replication_destination_region" {

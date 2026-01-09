@@ -5,6 +5,9 @@ locals {
   lb_name           = "${var.resource_name_prefix}-${local.lb_flavor}"
   lb_flavor         = local.is_alb ? "alb" : "nlb"
   target_group_name = "${var.resource_name_prefix}-tg-${local.lb_flavor}-${random_id.tg_name_suffix.hex}"
+  graphdb_backend_health_path = var.graphdb_node_count > 1 ? var.lb_health_check_path : "/protocol"
+
+  effective_health_check_path = (var.lb_context_path != "" && var.lb_enable_context_path_rewrite) ? local.graphdb_backend_health_path : (var.lb_context_path != "" ? "${var.lb_context_path}${local.graphdb_backend_health_path}" : local.graphdb_backend_health_path)
 }
 
 # This creates a random suffix for the target group name
