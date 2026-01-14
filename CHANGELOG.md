@@ -1,6 +1,7 @@
 # GraphDB AWS Terraform Module Changelog
 
 ## 3.0.0
+* Added context path support. Now you can set a custom context path for GraphDB using the `lb_context_path` variable.
 * Upgraded terraform provider version to 6.27.0
 * Fixed AWS Cloudwatch alarm pattern and thresholds
 * Added support for deploying Regional NAT Gateway

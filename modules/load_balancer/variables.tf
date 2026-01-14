@@ -120,3 +120,8 @@ variable "lb_enable_http2" {
   description = "Enable HTTP/2 on the load balancer."
   type        = bool
 }
+
+variable "lb_context_path" {
+  description = "(Optional) Context path for GraphDB (e.g., /graphdb). Leave empty for no context path."
+  type        = string
+}

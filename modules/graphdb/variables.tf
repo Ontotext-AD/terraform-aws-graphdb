@@ -441,6 +441,11 @@ variable "lb_internal" {
   type        = bool
 }
 
+variable "lb_context_path" {
+  description = "(Optional) Context path for GraphDB (e.g., /graphdb). Leave empty for no context path."
+  type        = string
+}
+
 # EC2 Memory settings
 
 variable "ec2_jvm_memory_ratio" {

@@ -17,6 +17,10 @@ locals {
       16
     )
   }
+
+  graphdb_availability_base_path     = var.graphdb_node_count == 1 ? "/protocol" : "/rest/cluster/node/status"
+  graphdb_context_prefix             = var.lb_context_path != "" ? "/${trim(var.lb_context_path, "/")}" : ""
+  graphdb_availability_resource_path = "${local.graphdb_context_prefix}${local.graphdb_availability_base_path}"
 }
 
 # Cloudwatch log group which hosts the logs

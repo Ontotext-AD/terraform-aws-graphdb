@@ -45,7 +45,6 @@ resource "aws_lb" "graphdb_alb" {
 
   dynamic "access_logs" {
     for_each = var.lb_enable_access_logs ? [1] : []
-
     content {
       bucket  = var.lb_access_logs_bucket_name
       enabled = true
@@ -69,7 +68,9 @@ resource "aws_lb_target_group" "graphdb_alb_tg" {
     interval            = var.lb_health_check_interval
     healthy_threshold   = var.lb_healthy_threshold
     unhealthy_threshold = var.lb_unhealthy_threshold
-    path                = var.graphdb_node_count > 1 ? var.lb_health_check_path : "/protocol"
+
+    # Prepend context path only if configured
+    path = local.lb_context_path_clean != "" ? "${local.lb_context_path_norm}${local.graphdb_backend_health_path}" : local.graphdb_backend_health_path
   }
 
   lifecycle {
@@ -77,6 +78,9 @@ resource "aws_lb_target_group" "graphdb_alb_tg" {
   }
 }
 
+# -------------------------
+# LISTENER: HTTP 80 (always default 404)
+# -------------------------
 resource "aws_lb_listener" "graphdb_alb_http" {
   count = local.is_alb ? 1 : 0
 
@@ -84,41 +88,103 @@ resource "aws_lb_listener" "graphdb_alb_http" {
   port              = 80
   protocol          = "HTTP"
 
-  dynamic "default_action" {
-    for_each = var.lb_tls_enabled ? ["redirect"] : ["forward"]
+  default_action {
+    type = "fixed-response"
 
-    content {
-      type = default_action.value == "redirect" ? "redirect" : "forward"
+    fixed_response {
+      content_type = "text/plain"
+      message_body = "Not Found"
+      status_code  = "404"
+    }
+  }
+}
 
-      dynamic "redirect" {
-        for_each = default_action.value == "redirect" ? [1] : []
-        content {
-          port        = "443"
-          protocol    = "HTTPS"
-          status_code = "HTTP_301"
-          host        = "#{host}"
-          path        = "/#{path}"
-          query       = "#{query}"
-        }
-      }
+# -------------------------
+# RULE: HTTP -> HTTPS redirect (only when TLS enabled)
+# Must be the top priority rule on HTTP listener
+# -------------------------
+resource "aws_lb_listener_rule" "http_to_https_redirect_all" {
+  count = local.is_alb && var.lb_tls_enabled ? 1 : 0
 
-      dynamic "forward" {
-        for_each = default_action.value == "forward" ? [1] : []
-        content {
-          target_group {
-            arn    = aws_lb_target_group.graphdb_alb_tg[0].arn
-            weight = 1
-          }
-        }
+  listener_arn = aws_lb_listener.graphdb_alb_http[0].arn
+  priority     = 1
+
+  action {
+    type = "redirect"
+    redirect {
+      protocol    = "HTTPS"
+      port        = "443"
+      status_code = "HTTP_301"
+      host        = "#{host}"
+      path        = local.lb_context_path_clean != "" ? "${local.lb_context_path_norm}#{path}" : "/#{path}"
+      query       = "#{query}"
+    }
+  }
+
+  condition {
+    path_pattern { values = ["/*"] }
+  }
+}
+
+# -------------------------
+# RULE: HTTP forward-all when NO TLS and NO context path
+# (otherwise, context-path rules handle forwarding)
+# -------------------------
+resource "aws_lb_listener_rule" "http_forward_all_no_context" {
+  count = local.is_alb && !var.lb_tls_enabled && local.lb_context_path_clean == "" ? 1 : 0
+
+  listener_arn = aws_lb_listener.graphdb_alb_http[0].arn
+  priority     = 2
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.graphdb_alb_tg[0].arn
+  }
+
+  condition {
+    path_pattern { values = ["/*"] }
+  }
+}
+
+# -------------------------
+# HTTP (no TLS) context path rule
+# -------------------------
+resource "aws_lb_listener_rule" "graphdb_path_based_http" {
+  count = local.is_alb && !var.lb_tls_enabled && local.lb_context_path_clean != "" ? 1 : 0
+
+  listener_arn = aws_lb_listener.graphdb_alb_http[0].arn
+  priority     = 100
+
+  transform {
+    type = "url-rewrite"
+
+    url_rewrite_config {
+      rewrite {
+        regex   = "^${local.lb_context_path_norm}(/(.*))?$"
+        replace = "/$2"
       }
     }
   }
 
-  lifecycle {
-    create_before_destroy = true
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.graphdb_alb_tg[0].arn
+  }
+
+  condition {
+    path_pattern {
+      values = [
+        "${local.lb_context_path_norm}/*",
+        local.lb_context_path_norm,
+        "${local.lb_context_path_norm}/",
+      ]
+    }
   }
 }
 
+# -------------------------
+# LISTENER: HTTPS 443 (always default 404)
+# -------------------------
 resource "aws_lb_listener" "graphdb_alb_https" {
   count = local.is_alb && var.lb_tls_enabled ? 1 : 0
 
@@ -129,12 +195,68 @@ resource "aws_lb_listener" "graphdb_alb_https" {
   ssl_policy        = var.lb_tls_policy
 
   default_action {
+    type = "fixed-response"
+
+    fixed_response {
+      content_type = "text/plain"
+      message_body = "Not Found"
+      status_code  = "404"
+    }
+  }
+}
+
+# -------------------------
+# RULE: HTTPS forward-all when NO context path
+# -------------------------
+resource "aws_lb_listener_rule" "https_forward_all_no_context" {
+  count = local.is_alb && var.lb_tls_enabled && local.lb_context_path_clean == "" ? 1 : 0
+
+  listener_arn = aws_lb_listener.graphdb_alb_https[0].arn
+  priority     = 2
+
+  action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.graphdb_alb_tg[0].arn
   }
 
-  lifecycle {
-    create_before_destroy = true
+  condition {
+    path_pattern { values = ["/*"] }
+  }
+}
+
+# -------------------------
+# HTTPS context path rule
+# -------------------------
+resource "aws_lb_listener_rule" "graphdb_path_based_https" {
+  count = local.is_alb && var.lb_tls_enabled && local.lb_context_path_clean != "" ? 1 : 0
+
+  listener_arn = aws_lb_listener.graphdb_alb_https[0].arn
+  priority     = 100
+
+  transform {
+    type = "url-rewrite"
+
+    url_rewrite_config {
+      rewrite {
+        regex   = "^${local.lb_context_path_norm}(/(.*))?$"
+        replace = "/$2"
+      }
+    }
+  }
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.graphdb_alb_tg[0].arn
+  }
+
+  condition {
+    path_pattern {
+      values = [
+        "${local.lb_context_path_norm}/*",
+        local.lb_context_path_norm,
+        "${local.lb_context_path_norm}/",
+      ]
+    }
   }
 }
 

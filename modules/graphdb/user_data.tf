@@ -71,6 +71,7 @@ data "cloudinit_config" "graphdb_user_data" {
       region : var.aws_region
       external_address_protocol : var.external_address_protocol
       graphdb_lb_dns_name : var.graphdb_lb_dns_name
+      lb_context_path : var.lb_context_path
       JVM_MEMORY_RATIO : var.ec2_jvm_memory_ratio
     })
   }
