@@ -248,7 +248,8 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | sns\_key\_spec | Specification of the Key. | `string` | `"SYMMETRIC_DEFAULT"` | no |
 | sns\_key\_enabled | Specifies whether the key is enabled. | `bool` | `true` | no |
 | sns\_rotation\_enabled | Specifies whether key rotation is enabled. | `bool` | `true` | no |
-| iam\_admin\_group | Define IAM group that should have access to the KMS keys and other resources | `string` | `""` | no |
+| iam\_admin\_group | Define IAM group that should have access to the KMS keys and other resources (legacy, use iam\_admin\_role\_arns for SSO/role-based access) | `string` | `""` | no |
+| iam\_admin\_role\_arns | List of IAM role ARNs (e.g., SSO roles, administrator roles, cross-account roles) that should have administrative access to the KMS keys. Takes precedence over iam\_admin\_group. | `list(string)` | `[]` | no |
 | external\_dns\_records\_zone\_name | If non-empty, deploy the external DNS records module. Example: example.com | `string` | `null` | no |
 | external\_dns\_records\_name | External DNS record name to create within the zone. Use '@' for apex. | `string` | `"@"` | no |
 | external\_dns\_records\_private\_zone | Whether to create a private or public hosted zone. | `bool` | `false` | no |
@@ -592,13 +593,39 @@ app_name                      = "example_app"
 environment_name              = "env_name"
 ```
 
-If you want to grant all users in a specific IAM group administrative access to the KMS keys, you can configure the module like this:
+#### KMS Key Administrator Access
+
+You can grant administrative access to KMS keys using either IAM roles (recommended) or IAM groups (legacy).
+
+**Recommended: Using IAM Role ARNs (SSO/Cross-Account)**
+
+For environments using AWS SSO (IAM Identity Center) or cross-account deployments, use `iam_admin_role_arns` to specify role ARNs:
+
+```hcl
+iam_admin_role_arns = [
+  "arn:aws:iam::123456789012:role/AWSReservedSSO_AdministratorAccess_abc123",
+  "arn:aws:iam::123456789012:role/cross-account-admin-role",
+  "arn:aws:iam::987654321098:role/ExternalAccountAdmin"
+]
+```
+
+This approach:
+- Aligns with AWS best practices (use roles instead of IAM users)
+- Supports SSO roles from IAM Identity Center
+- Supports cross-account role ARNs
+- Works with temporary credentials (no long-term access keys needed)
+
+**Legacy: Using IAM Groups**
+
+For environments still using IAM groups, you can configure the module like this:
 
 ```hcl
 iam_admin_group = "Your_Iam_Group_Name"
 ```
 
 The module will automatically resolve the ARNs of the users in the specified group and use them as KMS key administrators.
+
+**Note:** If both `iam_admin_role_arns` and `iam_admin_group` are provided, role ARNs take precedence and can be combined with user ARNs from the group for backward compatibility.
 
 #### Replication
 
@@ -621,15 +648,274 @@ vpc_public_subnet_ids = ["subnet-123456","subnet-234567","subnet-345678"]
 vpc_private_subnet_ids = ["subnet-456789","subnet-567891","subnet-678912"]
 ```
 
-### AWS Provider Assume Role Configuration
+### Cross-Account Deployment
 
-This module allows you to configure the AWS provider to assume a role in another account for cross-account management. You can configure the following variables to control the assume_role behavior:
+This module supports deploying from a jump account (or any source account) to target AWS accounts. This is particularly useful for:
+- Centralized infrastructure management
+- AWS SSO (IAM Identity Center) environments
+- Multi-account AWS Organizations setups
+- DevOps pipelines with cross-account access
+
+#### AWS Provider Assume Role Configuration
+
+Configure the Terraform AWS provider to assume a role in the target account:
 
 ```hcl
-assume_role_arn           = "arn:aws:iam::accountID:role/rolename"
-assume_role_external_id = "exampleId"
-assume_role_session_name = "session"
+# Assume role in target account for deployment
+assume_role_arn         = "arn:aws:iam::TARGET_ACCOUNT_ID:role/TerraformDeploymentRole"
+assume_role_session_name = "graphdb-deployment"
+assume_role_external_id  = "unique-external-id"  # Optional, but recommended for security
 ```
+
+**Prerequisites:**
+1. The target account role must have a trust policy allowing the source account (or SSO identity) to assume it
+2. The assumed role must have sufficient permissions to create/modify resources in the target account
+3. If using External ID, ensure it matches between the trust policy and this configuration
+
+#### KMS Key Access for Cross-Account Deployments
+
+When deploying cross-account, you'll want to grant KMS key administrative access to roles from your jump account or other accounts.
+Use `iam_admin_role_arns` to specify these roles.
+
+**Important:** The roles you include depend on your access pattern. See the use cases below to determine which roles you need.
+
+#### Determining Which Role ARNs to Include
+
+The roles in `iam_admin_role_arns` must match the **actual role that will be used** when managing KMS keys.
+
+Here are common scenarios:
+
+**Use Case 1: SSO → Assume Role in Target Account (Most Common)**
+
+```
+User → SSO Login → SSO Role (Jump Account) → Assume Role → Target Account Role → Manage KMS Keys
+```
+
+In this case, you only need the **target account role** because that's the role making the KMS API calls:
+
+```hcl
+# Deploying to target account 222222222222
+assume_role_arn = "arn:aws:iam::222222222222:role/TerraformDeploymentRole"
+
+# Only include the role that will actually manage KMS keys
+iam_admin_role_arns = [
+  "arn:aws:iam::222222222222:role/cross-account-admin-role"  # Target account role
+]
+```
+
+**Why:** The SSO role assumes the target account role, and it's the target account role that performs KMS operations.
+The SSO role doesn't need direct KMS access.
+
+**Use Case 2: Direct Cross-Account Access (Less Common)**
+
+If your SSO role directly accesses resources in the target account without assuming an intermediate role:
+
+```
+User → SSO Login → SSO Role (Jump Account) → Directly Manage KMS Keys (Cross-Account)
+```
+
+In this case, you need the **SSO role from the jump account**:
+
+```hcl
+iam_admin_role_arns = [
+  "arn:aws:iam::111111111111:role/AWSReservedSSO_AdministratorAccess_abc123"  # Jump account SSO role
+]
+```
+
+**Why:** The SSO role is making direct cross-account KMS API calls, so it needs to be in the key policy.
+
+**Use Case 3: Multiple Access Patterns**
+
+If you have multiple ways to access the account (e.g., some users assume roles, others have direct access):
+
+```hcl
+iam_admin_role_arns = [
+  # For users who assume roles in target account
+  "arn:aws:iam::222222222222:role/cross-account-admin-role",
+
+  # For users with direct cross-account access
+  "arn:aws:iam::111111111111:role/AWSReservedSSO_AdministratorAccess_abc123",
+
+  # For local admins in target account
+  "arn:aws:iam::222222222222:role/LocalAdminRole"
+]
+```
+
+**Use Case 4: Same-Account Deployment**
+
+When deploying in the same account where you authenticate (no cross-account):
+
+```hcl
+# No assume_role_arn needed
+assume_role_arn = null
+
+# Include the role you use to authenticate (SSO role or IAM role)
+iam_admin_role_arns = [
+  "arn:aws:iam::123456789012:role/AWSReservedSSO_AdministratorAccess_abc123"
+]
+```
+
+#### Quick Decision Guide
+
+Ask yourself: **"Which role's credentials are used when someone runs `aws kms describe-key` in the target account?"**
+
+- If answer is: **"The role assumed in the target account"** → Only include the target account role
+- If answer is: **"The SSO role directly"** → Only include the SSO role
+- If answer is: **"Both, depending on the user"** → Include both roles
+- If answer is: **"A local IAM role in the target account"** → Include that role
+
+**Best Practice:** For Option 3 (SSO → assume role pattern), you typically only need the target account role. This follows the principle of least privilege.
+
+#### Complete Cross-Account Deployment Example
+
+**Cross-Account Deployment Example**
+
+Complete example configuration for deploying from a jump account to a target account:
+
+```hcl
+# ============================================
+# Cross-Account Deployment Configuration
+# ============================================
+# Deploying from Jump Account (111111111111) to Target Account (222222222222)
+
+# Terraform Provider Configuration - Assume role in target account
+assume_role_arn         = "arn:aws:iam::222222222222:role/TerraformDeploymentRole"
+assume_role_session_name = "graphdb-deployment"
+assume_role_external_id  = "graphdb-deployment-external-id-2024"
+
+# KMS Key Administrators - See "Determining Which Role ARNs to Include" section above
+# For most deployments (SSO → assume role pattern), you only need the target account role
+iam_admin_role_arns = [
+  # Target account role that will be assumed and used to manage KMS keys (REQUIRED for Use Case 1)
+  "arn:aws:iam::222222222222:role/GraphDBAdminRole",
+
+  # SSO role from jump account - only include if you have direct cross-account access (Use Case 2)
+  # "arn:aws:iam::111111111111:role/AWSReservedSSO_AdministratorAccess_abc123def456",
+
+  # Cross-account role from security/audit account (optional - Use Case 3)
+  # "arn:aws:iam::333333333333:role/SecurityAuditRole"
+]
+
+# ============================================
+# Basic Configuration
+# ============================================
+resource_name_prefix = "prod-graphdb"
+aws_region           = "us-east-1"
+environment_name     = "production"
+app_name             = "graphdb"
+
+# ============================================
+# GraphDB Configuration
+# ============================================
+graphdb_version        = "11.2.0"
+graphdb_node_count     = 3
+ec2_instance_type      = "r6i.2xlarge"
+graphdb_admin_password = "your-secure-password"  # Use secrets manager in production
+graphdb_cluster_token  = "your-cluster-token"    # Use secrets manager in production
+
+# ============================================
+# Networking
+# ============================================
+# Use existing VPC or let module create one
+vpc_id = ""  # Empty to create new VPC, or specify existing VPC ID
+
+# If using existing VPC, specify subnets:
+# vpc_private_subnet_ids = ["subnet-xxx", "subnet-yyy", "subnet-zzz"]
+# vpc_public_subnet_ids  = ["subnet-aaa", "subnet-bbb", "subnet-ccc"]
+
+# Load Balancer
+lb_type                = "network"
+lb_internal            = false
+lb_tls_certificate_arn = "arn:aws:acm:us-east-1:222222222222:certificate/xxxx-xxxx-xxxx"
+
+# ============================================
+# Storage & Encryption
+# ============================================
+# EBS Configuration
+ebs_volume_size = 500
+ebs_volume_type = "gp3"
+
+# KMS Keys - Create customer-managed keys
+create_ebs_kms_key               = true
+create_parameter_store_kms_key   = true
+create_s3_kms_key                = true
+create_sns_kms_key               = true
+
+# ============================================
+# Backup & Logging
+# ============================================
+deploy_backup        = true
+backup_schedule      = "0 2 * * *"  # Daily at 2 AM
+backup_retention_count = 30
+
+deploy_logging_module = true
+
+# ============================================
+# Monitoring
+# ============================================
+deploy_monitoring = true
+monitoring_sns_topic_endpoint = "admin@example.com"
+monitoring_cpu_utilization_threshold = 80
+monitoring_memory_utilization_threshold = 80
+
+# ============================================
+# Security & Tags
+# ============================================
+prevent_resource_deletion = true
+
+common_tags = {
+  Environment         = "production"
+  Project             = "GraphDB"
+  ManagedBy           = "Terraform"
+  CostCenter          = "Engineering"
+  ownerOrganizationId = "OrgID"
+}
+```
+
+**Prerequisites for Cross-Account Deployment:**
+
+1. **Target Account Role Trust Policy** - The role `TerraformDeploymentRole` in the target account must trust your jump account:
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::111111111111:root"
+      },
+      "Action": "sts:AssumeRole",
+      "Condition": {
+        "StringEquals": {
+          "sts:ExternalId": "graphdb-deployment-external-id-2024"
+        }
+      }
+    }
+  ]
+}
+```
+
+2. **Target Account Role Permissions** - The assumed role needs permissions to:
+- Create/modify VPC, EC2, KMS, S3, IAM resources
+- Create CloudWatch logs and alarms
+- Create Route53 records (if using DNS)
+
+3. **SSO Role Access** - Ensure your SSO role has permissions to assume roles in target accounts
+
+#### How Cross-Account Deployment Works
+
+1. **Terraform Execution**: Terraform assumes the role specified in `assume_role_arn` in the target account
+2. **Resource Creation**: All resources (VPC, EC2, KMS keys, etc.) are created in the target account using the assumed role's permissions
+3. **KMS Key Policies**: The roles specified in `iam_admin_role_arns` are added to KMS key policies, allowing those roles to manage the keys
+4. **Access Management**: Administrators can use their SSO roles (or other specified roles) to manage KMS keys without needing IAM users in the target account
+
+#### Security Best Practices
+
+- **Use External ID**: Always use `assume_role_external_id` when possible to prevent confused deputy attacks
+- **Least Privilege**: Grant only necessary permissions to the assumed role
+- **Role-Based Access**: Prefer `iam_admin_role_arns` over `iam_admin_group` to avoid creating IAM users
+- **Audit Trail**: Use CloudTrail to monitor cross-account role assumptions
+- **Trust Policies**: Ensure trust policies are restrictive and only allow necessary principals
 
 ### Deploying in an existing Route53 Private Hosted Zone
 
@@ -652,8 +938,8 @@ Each file should be a valid shell script.
 
 ```hcl
 user_supplied_scripts = [
-"${path.module}/scripts/init.sh",
-"${path.module}/scripts/configure.sh"
+  "${path.module}/scripts/init.sh",
+  "${path.module}/scripts/configure.sh"
 ]
 ```
 - Providing user_supplied_rendered_templates
@@ -703,14 +989,14 @@ graphdb_additional_policy_arns = [
 To deploy the GraphDB module with an existing Load Balancer, configure the module with the ARN, DNS name,
 subnets, and target group ARNs of a pre-existing NLB, along with the VPC and subnet IDs.
 
- PREREQUISITES:
+PREREQUISITES:
 
- * Create your VPC (with the public & private subnets).
- * Provision a  Load Balancer in those public subnets.
- * Create a Target Group (initially empty) whose:
-   * Protocol = TCP
-   * Port     = 7201 for single-node, or 7200 for multi-node clusters
-   * Health-check protocol = TCP, same port as above
+* Create your VPC (with the public & private subnets).
+* Provision a  Load Balancer in those public subnets.
+* Create a Target Group (initially empty) whose:
+  * Protocol = TCP
+  * Port     = 7201 for single-node, or 7200 for multi-node clusters
+  * Health-check protocol = TCP, same port as above
 
 
 Configure the module by specifying the following variables:
@@ -758,10 +1044,10 @@ lb_context_path = "/graphdb"
 #### Transit Gateway Attachments
 
 When a `tgw_id` is provided, the module will:
-  * Create dedicated Transit Gateway(TGW) subnets in the VPC (or use provided subnet IDs).
-  * Create a Transit Gateway(TGW) VPC attachment connecting the database VPC to the specified Transit Gateway.
-  * Add routes in the private route tables to forward traffic destined for tgw_client_cidrs via the TGW.
-  * Attach the Transit Gateway Attachment to custom route table.
+* Create dedicated Transit Gateway(TGW) subnets in the VPC (or use provided subnet IDs).
+* Create a Transit Gateway(TGW) VPC attachment connecting the database VPC to the specified Transit Gateway.
+* Add routes in the private route tables to forward traffic destined for tgw_client_cidrs via the TGW.
+* Attach the Transit Gateway Attachment to custom route table.
 
 If no `tgw_id` is specified, no Transit Gateway(TGW) resources will be created.
 
@@ -806,11 +1092,11 @@ When faced with scenarios such as an expired license, or the need to modify the 
 GraphDB-related configurations, you can apply changes via `terraform apply` and then you can either:
 
 - Manually terminate instances one by one, beginning with the follower nodes and concluding with the leader node
-as the last instance to be terminated.
+  as the last instance to be terminated.
 - Scale in the number of instances in the scale set to zero and then scale back up to the original number of nodes.
 - Set the graphdb_enable_userdata_scripts_on_reboot variable to true. This ensures that user data scripts are executed
-on each reboot, allowing you to update the configuration of each node.
-The reboot option would essentially achieve the same outcome as the termination and replacement approach, but it is still experimental.
+  on each reboot, allowing you to update the configuration of each node.
+  The reboot option would essentially achieve the same outcome as the termination and replacement approach, but it is still experimental.
 
 ```text
 Please note that the scale in and up option will result in greater downtime than the other options, where the downtime should be less.
@@ -844,33 +1130,33 @@ external_dns_records_zone_name = "example.com"
 ##### Creating a new hosted zone with records
 
 ```hcl
-  zone_name       = "example.com"
-  private_zone    = false
-  force_destroy   = true
-  allow_overwrite = true
+zone_name       = "example.com"
+private_zone    = false
+force_destroy   = true
+allow_overwrite = true
 
-  a_records_list = [
-    {
-      name    = "@"
-      type    = "A"
-      ttl     = 300
-      records = ["1.2.3.4"]
-    },
-    {
-      name    = "app"
-      type    = "A"
-      ttl     = 300
-      records = ["5.6.7.8"]
-    }
-  ]
+a_records_list = [
+  {
+    name    = "@"
+    type    = "A"
+    ttl     = 300
+    records = ["1.2.3.4"]
+  },
+  {
+    name    = "app"
+    type    = "A"
+    ttl     = 300
+    records = ["5.6.7.8"]
+  }
+]
 
-  cname_records_list = [
-    {
-      name   = "www"
-      ttl    = 300
-      record = "example.com"
-    }
-  ]
+cname_records_list = [
+  {
+    name   = "www"
+    ttl    = 300
+    record = "example.com"
+  }
+]
 ```
 
 ##### Reusing an existing hosted zone
@@ -879,14 +1165,14 @@ external_dns_records_zone_name = "example.com"
 existing_zone_id = "Z1234567890ABC"
 allow_overwrite  = true
 
-  a_records_list = [
-    {
-      name    = "graphdb"
-      type    = "A"
-      ttl     = 60
-      records = ["203.0.113.25"]
-    }
-  ]
+a_records_list = [
+  {
+    name    = "graphdb"
+    type    = "A"
+    ttl     = 60
+    records = ["203.0.113.25"]
+  }
+]
 ```
 
 ##### Creating a private hosted zone with VPC associations
@@ -897,30 +1183,29 @@ private_zone    = true
 force_destroy   = true
 allow_overwrite = true
 
-  vpc_associations = [
-    {
-      vpc_id     = "vpc-0123456789abcdef0"
-      vpc_region = "eu-central-1"
-    }
-  ]
+vpc_associations = [
+  {
+    vpc_id     = "vpc-0123456789abcdef0"
+    vpc_region = "eu-central-1"
+  }
+]
 
-  a_records_list = [
-    {
-      name    = "graphdb"
-      type    = "A"
-      ttl     = 60
-      records = ["10.0.1.25"]
-    }
-  ]
+a_records_list = [
+  {
+    name    = "graphdb"
+    type    = "A"
+    ttl     = 60
+    records = ["10.0.1.25"]
+  }
+]
 
-  cname_records_list = [
-    {
-      name   = "www"
-      ttl    = 60
-      record = "graphdb.example.com"
-    }
-  ]
-
+cname_records_list = [
+  {
+    name   = "www"
+    ttl    = 60
+    record = "graphdb.example.com"
+  }
+]
 ```
 
 ## Local Development

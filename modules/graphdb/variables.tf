@@ -271,7 +271,7 @@ variable "backup_enable_replication" {
 # KMS encryption parameters
 
 variable "parameter_store_key_admin_arn" {
-  description = "ARN of the key administrator role for Parameter Store"
+  description = "Comma-separated list of IAM role or user ARNs granted administrative access to the Parameter Store KMS key. Supports SSO roles, administrator roles, and cross-account roles. Aligned with AWS best practices for using roles instead of IAM users."
   type        = string
 }
 
@@ -333,7 +333,7 @@ variable "parameter_store_default_key" {
 # EBS (KMS)
 
 variable "ebs_key_admin_arn" {
-  description = "ARN of the key administrator role for EBS"
+  description = "Comma-separated list of IAM role or user ARNs granted administrative access to the EBS KMS key. Supports SSO roles, administrator roles, and cross-account roles. Aligned with AWS best practices for using roles instead of IAM users."
   type        = string
 }
 

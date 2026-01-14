@@ -100,41 +100,54 @@ locals {
     try(module.load_balancer[0].lb_dns_name, "")
   )
 
-  # Admin ARNs from IAM group
+  # Admin ARNs from IAM roles (preferred - AWS best practice)
+  admin_role_arns = var.iam_admin_role_arns != null ? var.iam_admin_role_arns : []
+
+  # Admin ARNs from IAM group (legacy fallback)
   admin_user_arns = var.iam_admin_group != "" && length(data.aws_iam_group.iam_admin_group[0].users) > 0 ? [
   for user in data.aws_iam_group.iam_admin_group[0].users : user.arn] : []
 
+  # Combined admin ARNs: roles take precedence, but users from group can be combined
+  # If roles are provided, use them (optionally combined with users for backward compatibility)
+  # Otherwise, fall back to users from group, then individual key admin ARN variables
+  combined_admin_arns = length(local.admin_role_arns) > 0 ? (
+    length(local.admin_user_arns) > 0 ? concat(local.admin_role_arns, local.admin_user_arns) : local.admin_role_arns
+    ) : (
+    length(local.admin_user_arns) > 0 ? local.admin_user_arns : []
+  )
+
   # Key Admin Logic
+  # Priority: 1) Combined roles+users, 2) Individual key admin ARN variables (filtering empty strings)
   ebs_key_admin_arn = (
-    length(local.admin_user_arns) > 0
-    ? local.admin_user_arns
-    : can(tolist(var.ebs_key_admin_arn))
-    ? tolist(var.ebs_key_admin_arn)
-    : [var.ebs_key_admin_arn]
+    length(local.combined_admin_arns) > 0
+    ? local.combined_admin_arns
+    : trimspace(var.ebs_key_admin_arn) != ""
+    ? (can(tolist(var.ebs_key_admin_arn)) ? tolist(var.ebs_key_admin_arn) : [var.ebs_key_admin_arn])
+    : []
   )
 
   s3_key_admin_arn = (
-    length(local.admin_user_arns) > 0
-    ? local.admin_user_arns
-    : can(tolist(var.s3_kms_key_admin_arn))
-    ? tolist(var.s3_kms_key_admin_arn)
-    : [var.s3_kms_key_admin_arn]
+    length(local.combined_admin_arns) > 0
+    ? local.combined_admin_arns
+    : trimspace(var.s3_kms_key_admin_arn) != ""
+    ? (can(tolist(var.s3_kms_key_admin_arn)) ? tolist(var.s3_kms_key_admin_arn) : [var.s3_kms_key_admin_arn])
+    : []
   )
 
   sns_key_admin_arn = (
-    length(local.admin_user_arns) > 0
-    ? local.admin_user_arns
-    : can(tolist(var.sns_key_admin_arn))
-    ? tolist(var.sns_key_admin_arn)
-    : [var.sns_key_admin_arn]
+    length(local.combined_admin_arns) > 0
+    ? local.combined_admin_arns
+    : trimspace(var.sns_key_admin_arn) != ""
+    ? (can(tolist(var.sns_key_admin_arn)) ? tolist(var.sns_key_admin_arn) : [var.sns_key_admin_arn])
+    : []
   )
 
   parameter_store_key_admin_arn = (
-    length(local.admin_user_arns) > 0
-    ? local.admin_user_arns
-    : can(tolist(var.parameter_store_key_admin_arn))
-    ? tolist(var.parameter_store_key_admin_arn)
-    : [var.parameter_store_key_admin_arn]
+    length(local.combined_admin_arns) > 0
+    ? local.combined_admin_arns
+    : trimspace(var.parameter_store_key_admin_arn) != ""
+    ? (can(tolist(var.parameter_store_key_admin_arn)) ? tolist(var.parameter_store_key_admin_arn) : [var.parameter_store_key_admin_arn])
+    : []
   )
 
   # Comma-joined ARNs for modules expecting string input
