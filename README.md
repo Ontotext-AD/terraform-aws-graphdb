@@ -248,7 +248,8 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | sns\_key\_spec | Specification of the Key. | `string` | `"SYMMETRIC_DEFAULT"` | no |
 | sns\_key\_enabled | Specifies whether the key is enabled. | `bool` | `true` | no |
 | sns\_rotation\_enabled | Specifies whether key rotation is enabled. | `bool` | `true` | no |
-| iam\_admin\_group | Define IAM group that should have access to the KMS keys and other resources | `string` | `""` | no |
+| iam\_admin\_group | Define IAM group that should have access to the KMS keys and other resources (legacy, use iam\_admin\_role\_arns for SSO/role-based access) | `string` | `""` | no |
+| iam\_admin\_role\_arns | List of IAM role ARNs (e.g., SSO roles, administrator roles, cross-account roles) that should have administrative access to the KMS keys. Takes precedence over iam\_admin\_group. | `list(string)` | `[]` | no |
 | external\_dns\_records\_zone\_name | If non-empty, deploy the external DNS records module. Example: example.com | `string` | `null` | no |
 | external\_dns\_records\_name | External DNS record name to create within the zone. Use '@' for apex. | `string` | `"@"` | no |
 | external\_dns\_records\_private\_zone | Whether to create a private or public hosted zone. | `bool` | `false` | no |
