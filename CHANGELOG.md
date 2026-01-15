@@ -1,5 +1,8 @@
 # GraphDB AWS Terraform Module Changelog
 
+## 3.0.1
+* Fixed route53 health check availability url
+
 ## 3.0.0
 * Added context path support. Now you can set a custom context path for GraphDB using the `lb_context_path` variable.
 * Upgraded terraform provider version to 6.27.0
