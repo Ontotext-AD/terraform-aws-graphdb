@@ -188,7 +188,7 @@ module "monitoring" {
   enable_availability_tests              = var.monitoring_enable_availability_tests
 
   route53_availability_check_region     = var.monitoring_route53_health_check_aws_region
-  route53_availability_request_url      = var.graphdb_node_count > 1 ? var.graphdb_external_dns : module.load_balancer[0].lb_dns_name
+  route53_availability_request_url      = local.route53_availability_request_url
   route53_availability_measure_latency  = var.graphdb_node_count > 1 ? var.monitoring_route53_measure_latency : false
   route53_availability_http_string_type = upper(local.calculated_protocol)
   route53_zone_dns_name                 = var.graphdb_node_count > 1 ? var.route53_zone_dns_name : null

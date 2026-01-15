@@ -204,4 +204,6 @@ locals {
       record = local.aws_apex_fqdn
     }] : [])
   )
+
+  route53_availability_request_url = trimspace(var.graphdb_external_dns) != "" ? var.graphdb_external_dns : module.load_balancer[0].lb_dns_name
 }
