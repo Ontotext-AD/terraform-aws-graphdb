@@ -1,9 +1,15 @@
 # GraphDB AWS Terraform Module Changelog
 
+## 3.0.2
+
+* Updated GraphDB default version to [11.2.1](https://graphdb.ontotext.com/documentation/11.2/release-notes.html#graphdb-11-2-1)
+
 ## 3.0.1
+
 * Fixed route53 health check availability url
 
 ## 3.0.0
+
 * Added context path support. Now you can set a custom context path for GraphDB using the `lb_context_path` variable.
 * Upgraded terraform provider version to 6.27.0
 * Fixed AWS Cloudwatch alarm pattern and thresholds
