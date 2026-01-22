@@ -15,6 +15,8 @@ echo "#################################"
 echo "#    Cloudwatch Provisioning    #"
 echo "#################################"
 
+usermod -aG adm cwagent
+
 # Appends configuration overrides to graphdb.properties
 if [ ${deploy_monitoring} == "true" ]; then
   GRAPHDB_ADMIN_PASSWORD=$(aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/admin_password" --with-decryption --query "Parameter.Value" --output text | base64 -d)
