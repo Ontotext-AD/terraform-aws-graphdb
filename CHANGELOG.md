@@ -1,5 +1,9 @@
 # GraphDB AWS Terraform Module Changelog
 
+## 3.2.0
+
+* Updated GraphDB default version to [11.3.0](https://graphdb.ontotext.com/documentation/11.2/release-notes.html#graphdb-11-3-0)
+
 ## 3.1.0
 
 * Added support for sending system logs to CloudWatch log groups
