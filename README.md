@@ -65,6 +65,7 @@ versions. The next table shows the version compatability between GraphDB, and th
 | [Version 2.x.x](https://github.com/Ontotext-AD/terraform-aws-graphdb/releases) | [Version 11.x.x](https://graphdb.ontotext.com/documentation/11.0/release-notes.html) |
 | [Version 2.3.x](https://github.com/Ontotext-AD/terraform-aws-graphdb/releases) | [Version 11.1.x](https://graphdb.ontotext.com/documentation/11.1/release-notes.html) |
 | [Version 2.7.x](https://github.com/Ontotext-AD/terraform-aws-graphdb/releases) | [Version 11.2.x](https://graphdb.ontotext.com/documentation/11.2/release-notes.html) |
+| [Version 3.2.x](https://github.com/Ontotext-AD/terraform-aws-graphdb/releases) | [Version 11.3.x](https://graphdb.ontotext.com/documentation/11.3/release-notes.html) |
 
 You can track the particular version updates of GraphDB in the [changelog](CHANGELOG.md).
 
@@ -350,7 +351,7 @@ Note: The options mention above will be appended to the ones set in the user dat
 **Customize GraphDB Version**
 
 ```hcl
-graphdb_version = "11.2.1"
+graphdb_version = "11.3.0"
 ```
 
 **Purge Protection**
@@ -807,7 +808,7 @@ app_name             = "graphdb"
 # ============================================
 # GraphDB Configuration
 # ============================================
-graphdb_version        = "11.2.1"
+graphdb_version        = "11.3.0"
 graphdb_node_count     = 3
 ec2_instance_type      = "r6i.2xlarge"
 graphdb_admin_password = "your-secure-password"  # Use secrets manager in production
