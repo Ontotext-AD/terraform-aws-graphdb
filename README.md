@@ -265,6 +265,19 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | external\_dns\_records\_alb\_dns\_name\_override | (Optional) Use the DNS Name of an existing Application Load Balancer. | `string` | `null` | no |
 | external\_dns\_records\_alb\_zone\_id\_override | (Optional) Use the Hosted Zone ID of an existing Application Load Balancer. | `string` | `null` | no |
 | ec2\_jvm\_memory\_ratio | The total percentage of the memory which will be allocated to the heap in the EC2 instance | `number` | `85` | no |
+| openid\_issuer | The OpenID issuer | `string` | `null` | no |
+| openid\_client\_id | The OpenID client ID | `string` | `null` | no |
+| openid\_username\_claim | The OpenID username claim name | `string` | `"graphdb_username"` | no |
+| oauth\_roles\_claim | The Oauth roles claim name | `string` | `"roles"` | no |
+| oauth\_roles\_prefix | The Oauth roles prefix | `string` | `"GDB_"` | no |
+| openid\_auth\_flow | The OpenID authentication flow | `string` | `"code"` | no |
+| openid\_token\_type | The OpenID token type | `string` | `"id"` | no |
+| openid\_auth\_methods | The OpenID authentication methods | `string` | `null` | no |
+| openid\_auth\_database | The OpenID authentication database | `string` | `null` | no |
+| openid\_tenant\_id | The OpenID tenant ID | `string` | `null` | no |
+| m2m\_app\_registration\_client\_id | The M2M App registration client ID | `string` | `null` | no |
+| m2m\_app\_registration\_client\_secret | The M2M App registration client secret | `string` | `null` | no |
+| m2m\_scope | The scope for the M2M application | `string` | `null` | no |
 <!-- END_TF_DOCS -->
 
 ## Usage
