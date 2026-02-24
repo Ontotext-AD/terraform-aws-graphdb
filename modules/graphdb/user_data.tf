@@ -24,6 +24,11 @@ data "cloudinit_config" "graphdb_user_data" {
     content = templatefile("${path.module}/templates/00_functions.sh", {
       name : var.resource_name_prefix
       enable_asg_wait = var.enable_asg_wait
+      m2m_enabled : var.m2m_app_registration_client_secret != null && var.m2m_app_registration_client_secret != "" ? "true" : "false"
+      m2m_client_id : var.m2m_app_registration_client_id != null ? var.m2m_app_registration_client_id : ""
+      m2m_scope : var.m2m_scope != null ? var.m2m_scope : ""
+      openid_tenant_id : var.openid_tenant_id != null ? var.openid_tenant_id : ""
+      region : var.aws_region
     })
   }
 
@@ -73,6 +78,16 @@ data "cloudinit_config" "graphdb_user_data" {
       graphdb_lb_dns_name : var.graphdb_lb_dns_name
       lb_context_path : var.lb_context_path
       JVM_MEMORY_RATIO : var.ec2_jvm_memory_ratio
+      m2m_enabled : var.m2m_app_registration_client_secret != null && var.m2m_app_registration_client_secret != "" ? "true" : "false"
+      openid_issuer : var.openid_issuer != null ? var.openid_issuer : ""
+      openid_client_id : var.openid_client_id != null ? var.openid_client_id : ""
+      openid_username_claim : var.openid_username_claim
+      openid_auth_flow : var.openid_auth_flow
+      openid_token_type : var.openid_token_type
+      openid_auth_methods : var.openid_auth_methods != null ? var.openid_auth_methods : ""
+      openid_auth_database : var.openid_auth_database != null ? var.openid_auth_database : ""
+      oauth_roles_claim : var.oauth_roles_claim
+      oauth_roles_prefix : var.oauth_roles_prefix
     })
   }
 
@@ -88,6 +103,10 @@ data "cloudinit_config" "graphdb_user_data" {
         backup_retention_count : var.backup_retention_count
         backup_bucket_name : var.backup_bucket_name
         deploy_backup : var.deploy_backup
+        m2m_enabled : var.m2m_app_registration_client_secret != null && var.m2m_app_registration_client_secret != "" ? "true" : "false"
+        m2m_client_id : var.m2m_app_registration_client_id != null ? var.m2m_app_registration_client_id : ""
+        m2m_scope : var.m2m_scope != null ? var.m2m_scope : ""
+        openid_tenant_id : var.openid_tenant_id != null ? var.openid_tenant_id : ""
       })
     }
   }

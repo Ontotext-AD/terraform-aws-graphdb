@@ -76,7 +76,7 @@ find_leader_node() {
       log_with_timestamp "Checking leader status for $node"
 
       # Gets the address of the node if nodeState is LEADER.
-      local leader_address=$(curl -s "$endpoint" -u "admin:$${GRAPHDB_ADMIN_PASSWORD}" | jq -r '.[] | select(.nodeState == "LEADER") | .address')
+      local leader_address=$(gdb_curl -s "$endpoint" | jq -r '.[] | select(.nodeState == "LEADER") | .address')
       if [ -n "$${leader_address}" ]; then
         leader_node=$leader_address
         log_with_timestamp "Found leader address $leader_address"
@@ -101,8 +101,7 @@ create_cluster() {
   for ((i = 1; i <= $MAX_RETRIES; i++)); do
     # /rest/monitor/cluster will return 200 only if a cluster exists, 503 if no cluster is set up.
     local is_cluster=$(
-      curl -s -o /dev/null \
-        -u "admin:$${GRAPHDB_ADMIN_PASSWORD}" \
+      gdb_curl -s -o /dev/null \
         -w "%%{http_code}" \
         http://localhost:7201/rest/monitor/cluster
     )
@@ -114,11 +113,10 @@ create_cluster() {
     elif [ "$is_cluster" == 503 ]; then
       # Create the GraphDB cluster configuration if it does not exist.
       local cluster_create=$(
-        curl -X POST -s "http://localhost:7201/rest/cluster/config" \
+        gdb_curl -X POST -s "http://localhost:7201/rest/cluster/config" \
           -o "/dev/null" \
           -w "%%{http_code}" \
           -H 'Content-type: application/json' \
-          -u "admin:$${GRAPHDB_ADMIN_PASSWORD}" \
           -d "{\"nodes\": $CLUSTER_ADDRESS_GRPC}"
       )
       if [[ "$cluster_create" == 201 ]]; then

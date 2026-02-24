@@ -7,6 +7,71 @@ log_with_timestamp() {
 
 ENABLE_ASG_WAIT=${enable_asg_wait}
 
+# M2M / Entra ID configuration
+M2M_ENABLED="${m2m_enabled}"
+%{ if m2m_enabled == "true" ~}
+M2M_CLIENT_ID="${m2m_client_id}"
+M2M_SCOPE="${m2m_scope}"
+OPENID_TENANT_ID="${openid_tenant_id}"
+%{ endif ~}
+
+# Function to get M2M access token from Entra ID
+get_m2m_access_token() {
+  if [ "$M2M_ENABLED" != "true" ]; then
+    log_with_timestamp "M2M is not enabled, cannot get access token"
+    return 1
+  fi
+
+  local M2M_CLIENT_SECRET
+  M2M_CLIENT_SECRET=$(aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/m2m_client_secret" --with-decryption --query "Parameter.Value" --output text | base64 -d)
+
+  local TOKEN_ENDPOINT="https://login.microsoftonline.com/$${OPENID_TENANT_ID}/oauth2/v2.0/token"
+
+  local TOKEN_RESPONSE
+  TOKEN_RESPONSE=$(curl -s -X POST "$TOKEN_ENDPOINT" \
+    -H "Content-Type: application/x-www-form-urlencoded" \
+    -d "client_id=$${M2M_CLIENT_ID}" \
+    -d "client_secret=$${M2M_CLIENT_SECRET}" \
+    -d "scope=$${M2M_SCOPE}" \
+    -d "grant_type=client_credentials")
+
+  local ACCESS_TOKEN
+  ACCESS_TOKEN=$(echo "$TOKEN_RESPONSE" | jq -r '.access_token')
+
+  if [ -z "$ACCESS_TOKEN" ] || [ "$ACCESS_TOKEN" == "null" ]; then
+    log_with_timestamp "Failed to get M2M access token: $(echo "$TOKEN_RESPONSE" | jq -r '.error_description // .error // "Unknown error"')"
+    return 1
+  fi
+
+  echo "$ACCESS_TOKEN"
+}
+
+# Function to get authorization header based on authentication method
+get_auth_header() {
+  if [ "$M2M_ENABLED" == "true" ]; then
+    local ACCESS_TOKEN
+    ACCESS_TOKEN=$(get_m2m_access_token)
+    if [ $? -eq 0 ] && [ -n "$ACCESS_TOKEN" ]; then
+      echo "Authorization: Bearer $ACCESS_TOKEN"
+      return 0
+    else
+      log_with_timestamp "Failed to get M2M token, falling back to basic auth"
+    fi
+  fi
+
+  # Fall back to basic auth
+  local BASIC_AUTH
+  BASIC_AUTH=$(echo -n "admin:$${GRAPHDB_ADMIN_PASSWORD}" | base64)
+  echo "Authorization: Basic $BASIC_AUTH"
+}
+
+# Function to make authenticated curl request
+gdb_curl() {
+  local AUTH_HEADER
+  AUTH_HEADER=$(get_auth_header)
+  curl -H "$AUTH_HEADER" "$@"
+}
+
 # Function to check ASG node counts
 wait_for_asg_nodes() {
   local ASG_NAME="$1"
@@ -95,7 +160,7 @@ check_gdb() {
   fi
 
   local gdb_address="http://$1:7201/rest/monitor/infrastructure"
-  if curl -s --head -u "admin:$${GRAPHDB_ADMIN_PASSWORD}" --fail "$${gdb_address}" >/dev/null; then
+  if gdb_curl -s --head --fail "$${gdb_address}" >/dev/null; then
     log_with_timestamp "Success, GraphDB node $${gdb_address} is available"
     return 0
   else
@@ -137,6 +202,8 @@ configure_graphdb_security() {
   local GRAPHDB_PASSWORD=$1
   local GRAPHDB_URL=$${2:-"http://localhost:7201"}
 
+  # Always use basic auth for initial security setup
+  # M2M/bearer token auth won't work until security is fully enabled
   IS_SECURITY_ENABLED=$(curl -s -X GET \
     --header 'Accept: application/json' \
     -u "admin:$GRAPHDB_PASSWORD" \
@@ -161,6 +228,7 @@ configure_graphdb_security() {
 
     # Enable the security
     ENABLED_SECURITY=$(curl -X POST -s -w "%%{http_code}" \
+      -u "admin:$GRAPHDB_PASSWORD" \
       --header 'Content-Type: application/json' \
       --header 'Accept: */*' \
       -d 'true' "$${GRAPHDB_URL}/rest/security")
@@ -198,7 +266,7 @@ wait_for_local_gdb() {
   local elapsed_time=0
 
   while [ $elapsed_time -lt $max_wait_time ]; do
-    if curl -s --head -u "admin:$${GRAPHDB_ADMIN_PASSWORD}" --fail "$${gdb_address}" >/dev/null; then
+    if gdb_curl -s --head --fail "$${gdb_address}" >/dev/null; then
       log_with_timestamp "Success, GraphDB instance is available at $gdb_address"
       return 0  # Success
     fi

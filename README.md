@@ -265,6 +265,19 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | external\_dns\_records\_alb\_dns\_name\_override | (Optional) Use the DNS Name of an existing Application Load Balancer. | `string` | `null` | no |
 | external\_dns\_records\_alb\_zone\_id\_override | (Optional) Use the Hosted Zone ID of an existing Application Load Balancer. | `string` | `null` | no |
 | ec2\_jvm\_memory\_ratio | The total percentage of the memory which will be allocated to the heap in the EC2 instance | `number` | `85` | no |
+| openid\_issuer | The OpenID issuer | `string` | `null` | no |
+| openid\_client\_id | The OpenID client ID | `string` | `null` | no |
+| openid\_username\_claim | The OpenID username claim name | `string` | `"graphdb_username"` | no |
+| oauth\_roles\_claim | The Oauth roles claim name | `string` | `"roles"` | no |
+| oauth\_roles\_prefix | The Oauth roles prefix | `string` | `"GDB_"` | no |
+| openid\_auth\_flow | The OpenID authentication flow | `string` | `"code"` | no |
+| openid\_token\_type | The OpenID token type | `string` | `"id"` | no |
+| openid\_auth\_methods | The OpenID authentication methods | `string` | `null` | no |
+| openid\_auth\_database | The OpenID authentication database | `string` | `null` | no |
+| openid\_tenant\_id | The OpenID tenant ID | `string` | `null` | no |
+| m2m\_app\_registration\_client\_id | The M2M App registration client ID | `string` | `null` | no |
+| m2m\_app\_registration\_client\_secret | The M2M App registration client secret | `string` | `null` | no |
+| m2m\_scope | The scope for the M2M application | `string` | `null` | no |
 <!-- END_TF_DOCS -->
 
 ## Usage
@@ -384,6 +397,65 @@ To enable deployment of the monitoring module, you need to enable the following 
 ```hcl
 deploy_monitoring = true
 ```
+
+### Microsoft Entra ID (Azure AD) Integration
+
+This module supports Microsoft Entra ID (formerly Azure AD) authentication for GraphDB. When enabled, users can authenticate using their Entra ID credentials, and machine-to-machine (M2M) authentication is used for automated operations like backups and cluster management.
+
+For detailed information about GraphDB authentication methods and access control, see the official [GraphDB Access Control documentation](https://graphdb.ontotext.com/documentation/11.3/access-control.html).
+
+#### Prerequisites
+
+Before enabling Entra ID integration, you need to:
+
+1. **Create an App Registration in Entra ID** for user authentication (OpenID Connect)
+2. **Create a separate App Registration for M2M authentication** (client credentials flow)
+3. **Configure the required API permissions and roles** in your Entra ID tenant
+
+#### Required Variables
+
+To enable Entra ID integration, configure the following variables:
+
+```hcl
+# OpenID Connect configuration for user authentication
+openid_issuer         = "https://login.microsoftonline.com/<tenant-id>/v2.0"
+openid_client_id      = "<app-registration-client-id>"
+openid_tenant_id      = "<tenant-id>"
+openid_auth_methods   = "openid"
+openid_auth_database  = "openid"
+
+# Optional OpenID settings (defaults shown)
+openid_username_claim = "graphdb_username"
+oauth_roles_claim     = "roles"
+oauth_roles_prefix    = "GDB_"
+openid_auth_flow      = "code"
+openid_token_type     = "id"
+
+# M2M authentication for backups and cluster operations (REQUIRED)
+m2m_app_registration_client_id     = "<m2m-app-registration-client-id>"
+m2m_app_registration_client_secret = "<m2m-app-registration-client-secret>"
+m2m_scope                          = "api://<app-registration-client-id>/.default"
+```
+
+#### How It Works
+
+When `m2m_app_registration_client_secret` is provided:
+
+1. **User Authentication**: End users authenticate via OpenID Connect using their Entra ID credentials
+2. **GraphDB Configuration**: OpenID properties are automatically configured in `graphdb.properties`
+3. **Backup Operations**: Automated backups use M2M bearer token authentication instead of basic auth
+4. **Cluster Operations**: Cluster setup, node joining, and health checks use M2M authentication
+
+When `m2m_app_registration_client_secret` is **not** provided:
+- The module falls back to basic authentication using `graphdb_admin_password`
+- No OpenID configuration is applied
+
+#### Security Considerations
+
+- Store `m2m_app_registration_client_secret` securely (e.g., AWS Secrets Manager, environment variables)
+- The M2M client secret is stored in AWS Systems Manager Parameter Store with encryption
+- Initial GraphDB security setup always uses basic authentication before Entra ID becomes active
+- Ensure your Entra ID app registrations have appropriate permissions and role assignments
 
 ### NAT Gateway modes
 
