@@ -48,6 +48,11 @@ locals {
       substr(md5(var.graphdb_java_options), 0, 12),
       16
     ) : 1
+
+    m2m_client_secret = (var.m2m_app_registration_client_secret != null && var.m2m_app_registration_client_secret != "") ? parseint(
+      substr(md5(base64encode(var.m2m_app_registration_client_secret)), 0, 12),
+      16
+    ) : 1
   }
 }
 
@@ -97,5 +102,16 @@ resource "aws_ssm_parameter" "graphdb_java_options" {
   type             = "SecureString"
   value_wo         = var.graphdb_java_options
   value_wo_version = local.graphdb_ssm_versions.java_options
+  key_id           = var.parameter_store_key_arn
+}
+
+resource "aws_ssm_parameter" "graphdb_m2m_client_secret" {
+  count = var.m2m_app_registration_client_secret != null ? 1 : 0
+
+  name             = "/${var.resource_name_prefix}/graphdb/m2m_client_secret"
+  description      = "M2M App registration client secret for Entra ID authentication."
+  type             = "SecureString"
+  value_wo         = base64encode(var.m2m_app_registration_client_secret)
+  value_wo_version = local.graphdb_ssm_versions.m2m_client_secret
   key_id           = var.parameter_store_key_arn
 }

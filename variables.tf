@@ -1123,3 +1123,102 @@ variable "ec2_jvm_memory_ratio" {
     error_message = "ec2_jvm_memory_ratio must be between 60 and 100 (inclusive)."
   }
 }
+
+# GraphDB OpenID configurations
+
+variable "openid_issuer" {
+  description = "The OpenID issuer"
+  type        = string
+  default     = null
+}
+
+variable "openid_client_id" {
+  description = "The OpenID client ID"
+  type        = string
+  default     = null
+}
+
+variable "openid_username_claim" {
+  description = "The OpenID username claim name"
+  type        = string
+  default     = "graphdb_username"
+}
+
+variable "oauth_roles_claim" {
+  description = "The Oauth roles claim name"
+  type        = string
+  default     = "roles"
+}
+
+variable "oauth_roles_prefix" {
+  description = "The Oauth roles prefix"
+  type        = string
+  default     = "GDB_"
+}
+
+variable "openid_auth_flow" {
+  description = "The OpenID authentication flow"
+  type        = string
+  default     = "code"
+}
+
+variable "openid_token_type" {
+  description = "The OpenID token type"
+  type        = string
+  default     = "id"
+}
+
+variable "openid_auth_methods" {
+  description = "The OpenID authentication methods"
+  type        = string
+  default     = null
+}
+
+variable "openid_auth_database" {
+  description = "The OpenID authentication database"
+  type        = string
+  default     = null
+}
+
+variable "openid_tenant_id" {
+  description = "The OpenID tenant ID"
+  type        = string
+  default     = null
+}
+
+# External Entra ID - Required for backup
+
+variable "m2m_app_registration_client_id" {
+  description = "The M2M App registration client ID"
+  type        = string
+  default     = null
+}
+
+variable "m2m_app_registration_client_secret" {
+  description = "The M2M App registration client secret"
+  type        = string
+  default     = null
+  sensitive   = true
+
+  validation {
+    condition = (
+      var.m2m_app_registration_client_secret == null ||
+      trimspace(var.m2m_app_registration_client_secret) == ""
+      ) ? true : (
+      var.openid_issuer != null && trimspace(var.openid_issuer) != "" &&
+      var.openid_client_id != null && trimspace(var.openid_client_id) != "" &&
+      var.openid_auth_methods != null && trimspace(var.openid_auth_methods) != "" &&
+      var.openid_auth_database != null && trimspace(var.openid_auth_database) != "" &&
+      var.openid_tenant_id != null && trimspace(var.openid_tenant_id) != "" &&
+      var.m2m_app_registration_client_id != null && trimspace(var.m2m_app_registration_client_id) != "" &&
+      var.m2m_scope != null && trimspace(var.m2m_scope) != ""
+    )
+    error_message = "When m2m_app_registration_client_secret is set, the GraphDB OpenID and External Entra ID variables must all be set and non-empty: openid_issuer, openid_client_id, openid_auth_methods, openid_auth_database, openid_tenant_id, m2m_app_registration_client_id, m2m_scope."
+  }
+}
+
+variable "m2m_scope" {
+  description = "The scope for the M2M application"
+  type        = string
+  default     = null
+}
