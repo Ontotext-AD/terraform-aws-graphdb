@@ -206,4 +206,6 @@ locals {
   )
 
   route53_availability_request_url = trimspace(var.graphdb_external_dns) != "" ? var.graphdb_external_dns : module.load_balancer[0].lb_dns_name
+
+  replication_region = coalesce(var.bucket_replication_destination_region, var.aws_region, "us-east-1")
 }

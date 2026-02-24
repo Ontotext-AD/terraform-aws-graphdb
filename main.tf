@@ -336,6 +336,22 @@ module "graphdb" {
   parameter_store_key_deletion_window_in_days = var.parameter_store_key_deletion_window_in_days
   parameter_store_external_kms_key            = var.parameter_store_external_kms_key
   parameter_store_key_arn                     = local.calculated_parameter_store_kms_key_arn
+
+  # OpenID / Entra ID Configurations
+
+  openid_issuer                      = var.openid_issuer
+  openid_client_id                   = var.openid_client_id
+  openid_username_claim              = var.openid_username_claim
+  oauth_roles_claim                  = var.oauth_roles_claim
+  oauth_roles_prefix                 = var.oauth_roles_prefix
+  openid_auth_flow                   = var.openid_auth_flow
+  openid_token_type                  = var.openid_token_type
+  openid_auth_methods                = var.openid_auth_methods
+  openid_auth_database               = var.openid_auth_database
+  openid_tenant_id                   = var.openid_tenant_id
+  m2m_app_registration_client_id     = var.m2m_app_registration_client_id
+  m2m_app_registration_client_secret = var.m2m_app_registration_client_secret
+  m2m_scope                          = var.m2m_scope
 }
 
 module "external_dns" {
