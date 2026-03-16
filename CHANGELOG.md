@@ -1,5 +1,10 @@
 # GraphDB AWS Terraform Module Changelog
 
+## 3.2.0
+
+* Added EntraID Support for authentication
+* Edited User data scripts to use M2M authentication for the cluster setup operations and backups.
+
 ## 3.1.0
 
 * Added support for sending system logs to CloudWatch log groups

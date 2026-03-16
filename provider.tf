@@ -45,7 +45,7 @@ provider "aws" {
 }
 
 provider "aws" {
-  region = var.bucket_replication_destination_region
+  region = local.replication_region
   alias  = "bucket_replication_destination_region"
   default_tags {
     tags = merge(

@@ -69,6 +69,23 @@ graphdb.proxy.hosts=$${NODE_DNS_RECORD}:7301
 EOF
 fi
 
+# Configure OpenID/Entra ID authentication if M2M is enabled
+%{ if m2m_enabled == "true" ~}
+log_with_timestamp "Configuring OpenID/Entra ID authentication"
+cat << EOF >> /etc/graphdb/graphdb.properties
+graphdb.auth.methods=${openid_auth_methods}
+graphdb.auth.database=${openid_auth_database}
+graphdb.auth.openid.issuer=${openid_issuer}
+graphdb.auth.openid.client_id=${openid_client_id}
+graphdb.auth.openid.username_claim=${openid_username_claim}
+graphdb.auth.openid.auth_flow=${openid_auth_flow}
+graphdb.auth.openid.token_type=${openid_token_type}
+graphdb.auth.oauth.roles_claim=${oauth_roles_claim}
+graphdb.auth.oauth.roles_prefix=${oauth_roles_prefix}
+EOF
+log_with_timestamp "OpenID/Entra ID configuration completed"
+%{ endif ~}
+
 mkdir -p /etc/systemd/system/graphdb.service.d/
 
 JVM_MEMORY_RATIO="${JVM_MEMORY_RATIO}"

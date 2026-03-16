@@ -452,3 +452,73 @@ variable "ec2_jvm_memory_ratio" {
   description = "The total percentage of the memory which will be allocated to the heap in the EC2 instance"
   type        = number
 }
+
+# GraphDB OpenID configurations
+
+variable "openid_issuer" {
+  description = "The OpenID issuer"
+  type        = string
+}
+
+variable "openid_client_id" {
+  description = "The OpenID client ID"
+  type        = string
+}
+
+variable "openid_username_claim" {
+  description = "The OpenID username claim name"
+  type        = string
+}
+
+variable "oauth_roles_claim" {
+  description = "The Oauth roles claim name"
+  type        = string
+}
+
+variable "oauth_roles_prefix" {
+  description = "The Oauth roles prefix"
+  type        = string
+}
+
+variable "openid_auth_flow" {
+  description = "The OpenID authentication flow"
+  type        = string
+}
+
+variable "openid_token_type" {
+  description = "The OpenID token type"
+  type        = string
+}
+
+variable "openid_auth_methods" {
+  description = "The OpenID authentication methods"
+  type        = string
+}
+
+variable "openid_auth_database" {
+  description = "The OpenID authentication database"
+  type        = string
+}
+
+variable "openid_tenant_id" {
+  description = "The OpenID tenant ID"
+  type        = string
+}
+
+# External Entra ID - Required for backup
+
+variable "m2m_app_registration_client_id" {
+  description = "The M2M App registration client ID"
+  type        = string
+}
+
+variable "m2m_app_registration_client_secret" {
+  description = "The M2M App registration client secret"
+  type        = string
+  sensitive   = true
+}
+
+variable "m2m_scope" {
+  description = "The scope for the M2M application"
+  type        = string
+}

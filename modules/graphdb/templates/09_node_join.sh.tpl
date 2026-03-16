@@ -36,7 +36,7 @@ readarray -t EXISTING_RECORDS_ARRAY <<<"$EXISTING_RECORDS"
 
 # This function should be used only after the Leader node is found
 get_cluster_state() {
-  curl_response=$(curl "http://$${LEADER_NODE}/rest/monitor/cluster" -s -u "admin:$GRAPHDB_ADMIN_PASSWORD")
+  curl_response=$(gdb_curl "http://$${LEADER_NODE}/rest/monitor/cluster" -s)
   nodes_in_cluster=$(echo "$curl_response" | grep -oP 'graphdb_nodes_in_cluster \K\d+')
   nodes_in_sync=$(echo "$curl_response" | grep -oP 'graphdb_nodes_in_sync \K\d+')
   disconnected_nodes=$(echo "$curl_response" | grep -oP 'graphdb_nodes_disconnected \K\d+')
@@ -82,7 +82,7 @@ join_cluster() {
       log_with_timestamp "Checking leader status for $node"
 
       # Gets the address of the node if nodeState is LEADER, grpc port is returned therefore we replace port 7301 to 7201
-      LEADER_ADDRESS=$(curl -s "$endpoint" -u "admin:$${GRAPHDB_ADMIN_PASSWORD}" | jq -r '.[] | select(.nodeState == "LEADER") | .address' | sed 's/7301/7201/')
+      LEADER_ADDRESS=$(gdb_curl -s "$endpoint" | jq -r '.[] | select(.nodeState == "LEADER") | .address' | sed 's/7301/7201/')
       if [ -n "$${LEADER_ADDRESS}" ]; then
         LEADER_NODE=$LEADER_ADDRESS
         log_with_timestamp "Found leader address $LEADER_ADDRESS"
@@ -140,13 +140,12 @@ join_cluster() {
 
   log_with_timestamp "Trying to delete $CURRENT_NODE_NAME"
   # Removes node if already present in the cluster config
-  curl -X DELETE -s \
+  gdb_curl -X DELETE -s \
     --fail-with-body \
     -o "/dev/null" \
     -H 'Content-Type: application/json' \
     -H 'Accept: application/json' \
     -w "%%{http_code}" \
-    -u "admin:$${GRAPHDB_ADMIN_PASSWORD}" \
     -d "{\"nodes\": [\"$${CURRENT_NODE_NAME}:7301\"]}" \
     "http://$${LEADER_NODE}/rest/cluster/config/node" || true
 
@@ -163,13 +162,12 @@ join_cluster() {
     # This operation might take a while depending on the size of the repositories.
     CURL_MAX_REQUEST_TIME=21600 # 6 hours
     ADD_NODE=$(
-      curl -X POST -s \
+      gdb_curl -X POST -s \
         -m $CURL_MAX_REQUEST_TIME \
         -w "%%{http_code}" \
         -o "/dev/null" \
         -H 'Content-Type: application/json' \
         -H 'Accept: application/json' \
-        -u "admin:$${GRAPHDB_ADMIN_PASSWORD}" \
         -d "{\"nodes\": [\"$${CURRENT_NODE_NAME}:7301\"]}" \
         "http://$${LEADER_NODE}/rest/cluster/config/node"
     )
