@@ -2,6 +2,7 @@
 
 ## 3.2.0
 
+* Updated GraphDB default version to [11.3.1](https://graphdb.ontotext.com/documentation/11.3/release-notes.html#graphdb-11-3-1)
 * Added EntraID Support for authentication
 * Edited User data scripts to use M2M authentication for the cluster setup operations and backups.
 
