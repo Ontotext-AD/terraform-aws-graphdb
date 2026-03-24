@@ -36,6 +36,33 @@ data "cloudinit_config" "graphdb_user_data" {
     })
   }
 
+  # Execute additional scripts before the built-in steps
+  dynamic "part" {
+    for_each = var.user_supplied_scripts_pre_userdata
+    content {
+      content_type = "text/x-shellscript"
+      content      = file(part.value)
+    }
+  }
+
+  # Execute additional rendered templates before the built-in steps
+  dynamic "part" {
+    for_each = var.user_supplied_rendered_templates_pre_userdata
+    content {
+      content_type = "text/x-shellscript"
+      content      = part.value
+    }
+  }
+
+  # Execute additional templates before the built-in steps
+  dynamic "part" {
+    for_each = var.user_supplied_templates_pre_userdata
+    content {
+      content_type = "text/x-shellscript"
+      content      = templatefile(part.value["path"], part.value["variables"])
+    }
+  }
+
   part {
     content_type = "text/x-shellscript"
     content = templatefile("${path.module}/templates/01_wait_node_count.sh.tpl", {
@@ -200,27 +227,27 @@ data "cloudinit_config" "graphdb_user_data" {
     }
   }
 
-  # Execute additional scripts
+  # Execute additional scripts after the built-in steps
   dynamic "part" {
-    for_each = var.user_supplied_scripts
+    for_each = var.user_supplied_scripts_post_userdata
     content {
       content_type = "text/x-shellscript"
       content      = file(part.value)
     }
   }
 
-  # Execute additional rendered templates
+  # Execute additional rendered templates after the built-in steps
   dynamic "part" {
-    for_each = var.user_supplied_rendered_templates
+    for_each = var.user_supplied_rendered_templates_post_userdata
     content {
       content_type = "text/x-shellscript"
       content      = part.value
     }
   }
 
-  # Execute additional templates
+  # Execute additional templates after the built-in steps
   dynamic "part" {
-    for_each = var.user_supplied_templates
+    for_each = var.user_supplied_templates_post_userdata
     content {
       content_type = "text/x-shellscript"
       content      = templatefile(part.value["path"], part.value["variables"])
