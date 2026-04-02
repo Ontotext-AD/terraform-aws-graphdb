@@ -203,9 +203,12 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | lb\_access\_logs\_expiration\_days | Define the days after which the LB access logs should be deleted. | `number` | `14` | no |
 | bucket\_replication\_destination\_region | Define in which Region should the bucket be replicated | `string` | `null` | no |
 | graphdb\_enable\_userdata\_scripts\_on\_reboot | (Experimental) Modifies cloud-config to always run user data scripts on EC2 boot | `bool` | `false` | no |
-| graphdb\_user\_supplied\_scripts | A list of paths to user-supplied shell scripts (local files) to be injected as additional parts in the EC2 user\_data. | `list(string)` | `[]` | no |
-| graphdb\_user\_supplied\_rendered\_templates | A list of strings containing pre-rendered shell script content to be added as parts in EC2 user\_data. | `list(string)` | `[]` | no |
-| graphdb\_user\_supplied\_templates | A list of maps where each map contains a 'path' to the template file and a 'variables' map used to render it. | ```list(object({ path = string variables = map(any) }))``` | `[]` | no |
+| graphdb\_user\_supplied\_scripts\_pre\_userdata | A list of paths to user-supplied shell scripts (local files) to be injected as additional parts in the EC2 user\_data before the provisioning scripts. | `list(string)` | `[]` | no |
+| graphdb\_user\_supplied\_rendered\_templates\_pre\_userdata | A list of strings containing pre-rendered shell script content to be added as parts in EC2 user\_data before the provisioning scripts. | `list(string)` | `[]` | no |
+| graphdb\_user\_supplied\_templates\_pre\_userdata | A list of maps where each map contains a 'path' to the template file and a 'variables' map used to render it, injected before the provisioning scripts. | ```list(object({ path = string variables = map(any) }))``` | `[]` | no |
+| graphdb\_user\_supplied\_scripts\_post\_userdata | A list of paths to user-supplied shell scripts (local files) to be injected as additional parts in the EC2 user\_data after the provisioning scripts. | `list(string)` | `[]` | no |
+| graphdb\_user\_supplied\_rendered\_templates\_post\_userdata | A list of strings containing pre-rendered shell script content to be added as parts in EC2 user\_data after the provisioning scripts. | `list(string)` | `[]` | no |
+| graphdb\_user\_supplied\_templates\_post\_userdata | A list of maps where each map contains a 'path' to the template file and a 'variables' map used to render it, injected after the provisioning scripts. | ```list(object({ path = string variables = map(any) }))``` | `[]` | no |
 | enable\_asg\_wait | Whether to enable waiting for ASG node readiness | `string` | `"true"` | no |
 | create\_s3\_kms\_key | Enable creation of KMS key for S3 bucket encryption | `bool` | `false` | no |
 | s3\_kms\_key\_admin\_arn | ARN of the role or user granted administrative access to the S3 KMS key. | `string` | `""` | no |
@@ -1003,24 +1006,24 @@ vpc_private_subnet_ids = ["subnet-456789","subnet-567891","subnet-678912"]
 
 #### User Data Customization
 
-- Providing user_supplied_scripts
+- Providing user_supplied_scripts_post_userdata
 
 Paths to local shell script files that will be injected into the instance user data.
 Each file should be a valid shell script.
 •	Scripts are executed in the order provided.
 
 ```hcl
-user_supplied_scripts = [
+user_supplied_scripts_post_userdata = [
   "${path.module}/scripts/init.sh",
   "${path.module}/scripts/configure.sh"
 ]
 ```
-- Providing user_supplied_rendered_templates
+- Providing user_supplied_rendered_templates_post_userdata
 
 A list of raw shell script strings, already rendered, which will be included directly into the instance user data.
 
 ```hcl
-user_supplied_rendered_templates = [
+user_supplied_rendered_templates_post_userdata = [
   <<-EOT
     #!/bin/bash
     echo "Inline startup task"
@@ -1029,12 +1032,12 @@ user_supplied_rendered_templates = [
 ]
 ```
 
-- Providing user_supplied_templates
+- Providing user_supplied_templates_post_userdata
 
 A list of template files (plus variables) that will be rendered and included into the instance user data.
 
 ```hcl
-graphdb_user_supplied_templates = [
+graphdb_user_supplied_templates_post_userdata = [
   {
     path = "/path/to/yourscript.sh.tpl"
     variables = {

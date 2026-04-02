@@ -316,11 +316,14 @@ module "graphdb" {
 
   # ASG Instance deployment options
 
-  graphdb_enable_userdata_scripts_on_reboot = var.graphdb_enable_userdata_scripts_on_reboot
-  user_supplied_scripts                     = var.graphdb_user_supplied_scripts
-  user_supplied_templates                   = var.graphdb_user_supplied_templates
-  user_supplied_rendered_templates          = var.graphdb_user_supplied_rendered_templates
-  enable_asg_wait                           = var.enable_asg_wait
+  graphdb_enable_userdata_scripts_on_reboot      = var.graphdb_enable_userdata_scripts_on_reboot
+  user_supplied_scripts_pre_userdata             = var.graphdb_user_supplied_scripts_pre_userdata
+  user_supplied_rendered_templates_pre_userdata  = var.graphdb_user_supplied_rendered_templates_pre_userdata
+  user_supplied_templates_pre_userdata           = var.graphdb_user_supplied_templates_pre_userdata
+  user_supplied_scripts_post_userdata            = var.graphdb_user_supplied_scripts_post_userdata
+  user_supplied_templates_post_userdata          = var.graphdb_user_supplied_templates_post_userdata
+  user_supplied_rendered_templates_post_userdata = var.graphdb_user_supplied_rendered_templates_post_userdata
+  enable_asg_wait                                = var.enable_asg_wait
 
   # Parameter Store Encryption
 

@@ -394,20 +394,41 @@ variable "instance_maintenance_policy_max_healthy_percentage" {
   default     = 100
 }
 
-variable "user_supplied_scripts" {
-  description = "A list of paths to user-supplied shell scripts (local files) to be injected as additional parts in the EC2 user_data."
+variable "user_supplied_scripts_pre_userdata" {
+  description = "A list of paths to user-supplied shell scripts (local files) to be injected as additional parts in the EC2 user_data before the provisioning scripts."
   type        = list(string)
   default     = []
 }
 
-variable "user_supplied_rendered_templates" {
-  description = "A list of strings containing pre-rendered shell script content to be added as parts in EC2 user_data."
+variable "user_supplied_rendered_templates_pre_userdata" {
+  description = "A list of strings containing pre-rendered shell script content to be added as parts in EC2 user_data before the provisioning scripts ."
   type        = list(string)
   default     = []
 }
 
-variable "user_supplied_templates" {
-  description = "A list of maps where each map contains a 'path' to the template file and a 'variables' map used to render it."
+variable "user_supplied_templates_pre_userdata" {
+  description = "A list of maps where each map contains a 'path' to the template file and a 'variables' map used to render it, injected before the provisioning scripts."
+  type = list(object({
+    path      = string
+    variables = map(any)
+  }))
+  default = []
+}
+
+variable "user_supplied_scripts_post_userdata" {
+  description = "A list of paths to user-supplied shell scripts (local files) to be injected as additional parts in the EC2 user_data after the provisioning scripts."
+  type        = list(string)
+  default     = []
+}
+
+variable "user_supplied_rendered_templates_post_userdata" {
+  description = "A list of strings containing pre-rendered shell script content to be added as parts in EC2 user_data after the provisioning scripts."
+  type        = list(string)
+  default     = []
+}
+
+variable "user_supplied_templates_post_userdata" {
+  description = "A list of maps where each map contains a 'path' to the template file and a 'variables' map used to render it, injected after the provisioning scripts."
   type = list(object({
     path      = string
     variables = map(any)
