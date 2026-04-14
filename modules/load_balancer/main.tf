@@ -2,9 +2,11 @@ locals {
   is_alb = var.lb_type == "application"
   is_nlb = var.lb_type == "network"
 
-  lb_flavor                   = local.is_alb ? "alb" : "nlb"
-  lb_name                     = "${var.resource_name_prefix}-${local.lb_flavor}"
-  target_group_name           = "${var.resource_name_prefix}-tg-${local.lb_flavor}-${random_id.tg_name_suffix.hex}"
+  lb_flavor = local.is_alb ? "alb" : "nlb"
+  lb_name   = "${var.resource_name_prefix}-${local.lb_flavor}"
+  # AWS target group names are limited to 32 characters. The random_id hex output
+  # is 4 characters for byte_length = 2, so the prefix can use 27 characters.
+  target_group_name           = "${substr(var.resource_name_prefix, 0, min(length(var.resource_name_prefix), 27))}-${random_id.tg_name_suffix.hex}"
   graphdb_backend_health_path = var.graphdb_node_count > 1 ? var.lb_health_check_path : "/protocol"
   lb_context_path_clean       = trim(var.lb_context_path, "/")
   lb_context_path_norm        = local.lb_context_path_clean != "" ? "/${local.lb_context_path_clean}" : ""
@@ -23,5 +25,5 @@ resource "random_id" "tg_name_suffix" {
   keepers = {
     node_count = var.graphdb_node_count
   }
-  byte_length = 4
+  byte_length = 2
 }
