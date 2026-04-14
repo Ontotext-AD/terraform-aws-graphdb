@@ -1,5 +1,9 @@
 # GraphDB AWS Terraform Module Changelog
 
+## 4.0.0
+
+**BREAKING CHANGE**: Target group name format has changed from `{prefix}-tg-{flavor}-{suffix}` to `{prefix}-{suffix}` to stay within AWS's 32-character name limit. The prefix is automatically truncated to 23 characters if longer. Existing deployments will have their target group destroyed and recreated.
+
 ## 3.4.0
 
 * Added support for encryption at rest configuration - see [GraphDB 11.4.0](https://graphdb.ontotext.com/documentation/11.4/encryption.html#encryption-at-rest) documentation
