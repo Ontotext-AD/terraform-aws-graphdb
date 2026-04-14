@@ -4,7 +4,7 @@ locals {
 
   lb_flavor                   = local.is_alb ? "alb" : "nlb"
   lb_name                     = "${var.resource_name_prefix}-${local.lb_flavor}"
-  target_group_name           = "${var.resource_name_prefix}-tg-${local.lb_flavor}-${random_id.tg_name_suffix.hex}"
+  target_group_name           = "${var.resource_name_prefix}-${random_id.tg_name_suffix.hex}"
   graphdb_backend_health_path = var.graphdb_node_count > 1 ? var.lb_health_check_path : "/protocol"
   lb_context_path_clean       = trim(var.lb_context_path, "/")
   lb_context_path_norm        = local.lb_context_path_clean != "" ? "/${local.lb_context_path_clean}" : ""
