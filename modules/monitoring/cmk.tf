@@ -96,8 +96,7 @@ resource "aws_kms_key_policy" "sns_cmk_policy" {
           "Service" : [
             "sns.amazonaws.com",
             "ec2.amazonaws.com",
-            "ssm.amazonaws.com",
-            "cloudwatch.amazonaws.com"
+            "ssm.amazonaws.com"
           ]
         },
         "Action" : [
@@ -105,10 +104,27 @@ resource "aws_kms_key_policy" "sns_cmk_policy" {
           "kms:DescribeKey",
           "kms:GenerateDataKey",
           "kms:Decrypt",
-          "kms:ReEncrypt",
-          "kms:Ecnrypt"
+          "kms:ReEncrypt*",
+          "kms:Encrypt"
         ],
         "Resource" : aws_kms_key.sns_cmk[0].arn
+      },
+      {
+        "Sid" : "AllowCloudWatchAlarmsToUseKey",
+        "Effect" : "Allow",
+        "Principal" : {
+          "Service" : "cloudwatch.amazonaws.com"
+        },
+        "Action" : [
+          "kms:Decrypt",
+          "kms:GenerateDataKey*"
+        ],
+        "Resource" : aws_kms_key.sns_cmk[0].arn,
+        "Condition" : {
+          "StringEquals" : {
+            "aws:SourceAccount" : data.aws_caller_identity.current.account_id
+          }
+        }
       }
     ]
   })

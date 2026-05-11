@@ -1,5 +1,14 @@
 # GraphDB AWS Terraform Module Changelog
 
+## 4.0.0
+
+**BREAKING CHANGE**: The `graphdb_nodes_disconnected` CloudWatch alarm has been changed from a single `count`-based resource to per-node alarms using `for_each` over instance hostnames. Terraform will destroy the existing alarm and recreate one alarm per node. Alarms are now named `al-{prefix}-{hostname}-detected-nodes-disconnected` to clarify that the alarm fires on the node that detected the disconnection, not the node that went down. Any notification subscriptions or dashboards referencing the old alarm name will need to be updated.
+
+* Changed comparison operator for the nodes disconnected alarm from `GreaterThanThreshold` to `GreaterThanOrEqualToThreshold`
+* Added `insufficient_data_actions` to all CloudWatch alarms so that transitions to `INSUFFICIENT_DATA` state (e.g. when a node stops emitting metrics) trigger an SNS notification
+* Fixed typo in KMS key policy: `kms:Ecnrypt` → `kms:Encrypt` and expanded `kms:ReEncrypt` to `kms:ReEncrypt*`
+* Separated CloudWatch alarms KMS permissions into a dedicated policy statement with an `aws:SourceAccount` condition, removing `cloudwatch.amazonaws.com` from the shared SNS service principal block
+
 ## 3.2.2
 
 * Updated GraphDB default version to [11.3.3](https://graphdb.ontotext.com/documentation/11.3/release-notes.html#graphdb-11-3-3)
