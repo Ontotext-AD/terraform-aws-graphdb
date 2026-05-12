@@ -1,5 +1,9 @@
 # GraphDB AWS Terraform Module Changelog
 
+## 4.0.0
+
+**BREAKING CHANGE**: Target group name format has changed from `{prefix}-tg-{flavor}-{suffix}` to `{prefix}-{suffix}` to stay within AWS's 32-character name limit. Existing deployments will have their target group destroyed and recreated.
+
 ## 3.2.2
 
 * Updated GraphDB default version to [11.3.3](https://graphdb.ontotext.com/documentation/11.3/release-notes.html#graphdb-11-3-3)
