@@ -16,10 +16,10 @@ jobs:
       security-events: write
     steps:
       - name: Clone repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Setup Terraform CLI
-        uses: hashicorp/setup-terraform@v2
+        uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
 
       - name: Run Terraform init
         run: terraform init
@@ -31,12 +31,12 @@ jobs:
         run: terraform validate
 
       - name: Run tfsec
-        uses: aquasecurity/tfsec-sarif-action@v0.1.4
+        uses: aquasecurity/tfsec-sarif-action@21ded20e8ca120cd9d3d6ab04ef746477542a608 # v0.1.4
         with:
           config_file: tfsec.yml
           sarif_file: tfsec.sarif
 
       - name: Upload SARIF file
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@bc0b696b4103f5fe60f15749af68a046868d511a #v2.25.4
         with:
           sarif_file: tfsec.sarif
