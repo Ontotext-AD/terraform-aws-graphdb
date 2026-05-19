@@ -461,6 +461,58 @@ When `m2m_app_registration_client_secret` is **not** provided:
 - Initial GraphDB security setup always uses basic authentication before Entra ID becomes active
 - Ensure your Entra ID app registrations have appropriate permissions and role assignments
 
+#### Additional OAuth Token Authentication Methods
+
+When `graphdb.auth.openid.proxy=true`, GraphDB calls the identity provider's token endpoint directly and must authenticate itself as a registered client. This is separate from the end user's authentication. Some identity providers (Azure AD, Keycloak, Okta) require or recommend this.
+
+Configure via a custom `graphdb.properties` file referenced with `graphdb_properties_path`:
+
+```hcl
+graphdb_properties_path = "<path_to_graphdb_properties_file>"
+```
+
+Supported values for `graphdb.auth.openid.client.auth.type`:
+
+| Type | Description |
+|---|---|
+| `none` | No client authentication. Default, preserves existing behavior. |
+| `client_secret_basic` | Client ID and secret sent as HTTP Basic auth header. Most widely supported. |
+| `client_secret_post` | Client secret added to the request body instead of the header. |
+| `client_secret_jwt` | Short-lived JWT signed with the client secret, sent as `client_assertion`. Default signing algorithm: `HS256`. |
+| `private_key_jwt` | JWT signed with a private key from a PKCS12 keystore. Most secure — secret never leaves the server. Default signing algorithm: `RS256`. |
+
+**`client_secret_basic` or `client_secret_post`:**
+
+```properties
+graphdb.auth.openid.client.auth.type=client_secret_basic
+graphdb.auth.openid.client_secret=<client-secret>
+```
+
+**`client_secret_jwt`:**
+
+```properties
+graphdb.auth.openid.client.auth.type=client_secret_jwt
+graphdb.auth.openid.client_secret=<client-secret>
+# Optional: override default signing algorithm (default: HS256)
+graphdb.auth.openid.client.auth.signature_alg=HS256
+```
+
+**`private_key_jwt`:**
+
+```properties
+graphdb.auth.openid.client.auth.type=private_key_jwt
+graphdb.auth.openid.client.auth.keystore=<path_to_pkcs12_keystore>
+graphdb.auth.openid.client.auth.keystore_password=<keystore-password>
+# Optional: defaults to keystore_password if not set
+graphdb.auth.openid.client.auth.private_key_password=<private-key-password>
+# Optional: override default signing algorithm (default: RS256)
+graphdb.auth.openid.client.auth.signature_alg=RS256
+```
+
+> **Notes:**
+> - The keystore for `private_key_jwt` must be PKCS12 format with the private key as the first entry.
+> - Switching from `none` to any other method requires the identity provider to be configured to expect that method for this client.
+
 ### NAT Gateway modes
 
 This module supports multiple NAT Gateway strategies for outbound internet access from private subnets.

@@ -1,5 +1,9 @@
 # GraphDB AWS Terraform Module Changelog
 
+## 3.3.0
+
+* Added example for configuring additional OAuth token authentication methods via `graphdb_properties_path`
+
 ## 3.2.2
 
 * Updated GraphDB default version to [11.3.3](https://graphdb.ontotext.com/documentation/11.3/release-notes.html#graphdb-11-3-3)
