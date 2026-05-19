@@ -1,6 +1,8 @@
 # GraphDB AWS Terraform Module Changelog
 
 ## 3.3.0
+
+* Added example for configuring `graphdb.auth.security.enabled` via `graphdb_properties_path`
 * Added `graphdb_enable_audit_log_enabled` variable to enable GraphDB audit logging
 * Fixed perpetual Terraform drift in `aws_s3_bucket_server_side_encryption_configuration` for the backup module by explicitly setting `blocked_encryption_types = ["SSE-C"]` to match the value AWS returns
 * Added example for configuring additional OAuth token authentication methods via `graphdb_properties_path`
