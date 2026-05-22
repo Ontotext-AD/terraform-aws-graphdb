@@ -124,6 +124,10 @@ data "cloudinit_config" "graphdb_user_data" {
       graphdb_audit_log_repository : var.graphdb_audit_log_repository
       graphdb_audit_log_headers : var.graphdb_audit_log_headers
       graphdb_audit_log_request_max_length : var.graphdb_audit_log_request_max_length
+      graphdb_data_encryption_type : var.graphdb_data_encryption_type
+      graphdb_data_encryption_keystore_alias : var.graphdb_data_encryption_keystore_alias
+      graphdb_data_encryption_keystore_password : var.graphdb_data_encryption_keystore_password
+      graphdb_data_encryption_master_key_filepath : var.graphdb_data_encryption_master_key_filepath
     })
   }
 

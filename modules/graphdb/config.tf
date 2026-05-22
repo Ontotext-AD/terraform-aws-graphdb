@@ -53,6 +53,16 @@ locals {
       substr(md5(base64encode(var.m2m_app_registration_client_secret)), 0, 12),
       16
     ) : 1
+
+    keystore = fileexists(var.graphdb_data_encryption_keystore_filepath) ? parseint(
+      substr(md5(filebase64(var.graphdb_data_encryption_keystore_filepath)), 0, 12),
+      16
+    ) : 1
+
+    master_key = fileexists(var.graphdb_data_encryption_master_key_filepath) ? parseint(
+      substr(md5(filebase64(var.graphdb_data_encryption_master_key_filepath)), 0, 12),
+      16
+    ) : 1
   }
 }
 
@@ -115,3 +125,27 @@ resource "aws_ssm_parameter" "graphdb_m2m_client_secret" {
   value_wo_version = local.graphdb_ssm_versions.m2m_client_secret
   key_id           = var.parameter_store_key_arn
 }
+
+resource "aws_ssm_parameter" "graphdb_data_encryption_keystore" {
+  count = fileexists(var.graphdb_data_encryption_keystore_filepath) ? 1 : 0
+
+  name             = "/${var.resource_name_prefix}/graphdb/encryption_keystore"
+  description      = "Keystore containing the master key for encryption at rest setup"
+  type             = "SecureString"
+  value_wo         = filebase64(var.graphdb_data_encryption_keystore_filepath)
+  value_wo_version = local.graphdb_ssm_versions.keystore
+  key_id           = var.parameter_store_key_arn
+}
+
+
+resource "aws_ssm_parameter" "graphdb_data_encryption_master_key_filepath" {
+  count = fileexists(var.graphdb_data_encryption_master_key_filepath) ? 1 : 0
+
+  name             = "/${var.resource_name_prefix}/graphdb/encryption_master_key"
+  description      = "Master key for encryption at rest setup"
+  type             = "SecureString"
+  value_wo         = filebase64(var.graphdb_data_encryption_master_key_filepath)
+  value_wo_version = local.graphdb_ssm_versions.master_key
+  key_id           = var.parameter_store_key_arn
+}
+
