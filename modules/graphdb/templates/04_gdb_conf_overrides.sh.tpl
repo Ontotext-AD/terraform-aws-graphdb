@@ -168,7 +168,9 @@ if [[ -n "$DATA_ENCRYPTION_TYPE" ]]; then
    }
 
 EOF
-    ( cd /tmp && javac GenKey.java && java GenKey ${graphdb_data_encryption_keystore_password} ${graphdb_data_encryption_keystore_alias} && rm /tmp/GenKey.*)
+    PASS=${graphdb_data_encryption_keystore_password}
+    ALIAS=${graphdb_data_encryption_keystore_alias}
+    ( cd /tmp && javac GenKey.java && java GenKey $PASS $ALIAS && rm /tmp/GenKey.*)
     ENC_PROPS="-Dgraphdb.data.encryption.type=pkcs12 -Dgraphdb.data.encryption.file=/etc/master.p12 -Dgraphdb.data.encryption.keystore.alias=${graphdb_data_encryption_keystore_alias} -Dgraphdb.data.encryption.keystore.password=${graphdb_data_encryption_keystore_password}"
   else
     log_with_timestamp "Invalid or unsupported data encryption type: $DATA_ENCRYPTION_TYPE. Skipping data encryption"
@@ -176,7 +178,7 @@ fi
 
 # Appends environment overrides to GDB_JAVA_OPTS
 extra_graphdb_java_options="$(aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/graphdb_java_options" --with-decryption 2>/dev/null | jq -r .Parameter.Value || /bin/true )"
-if [[ -n ${ENC_PROPS} ]]; then
+if [[ -n $ENC_PROPS ]]; then
   extra_graphdb_java_options="$extra_graphdb_java_options $ENC_PROPS"
 fi
 

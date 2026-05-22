@@ -244,6 +244,7 @@ module "graphdb" {
   graphdb_data_encryption_type                  = var.graphdb_data_encryption_type
   graphdb_data_encryption_keystore_password     = var.graphdb_data_encryption_keystore_password
   graphdb_data_encryption_keystore_alias        = var.graphdb_data_encryption_keystore_alias
+  graphdb_data_encryption_master_key_secret     = var.graphdb_data_encryption_master_key_secret
 
   # VMs
 
