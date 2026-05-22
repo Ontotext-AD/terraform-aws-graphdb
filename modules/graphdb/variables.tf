@@ -568,3 +568,20 @@ variable "m2m_scope" {
   description = "The scope for the M2M application"
   type        = string
 }
+
+variable "graphdb_data_encryption_type" {
+  description = "The type of data encryption (Encryption at rest) to configure for the GraphDB instances. Supported values: '', file, pkcs12"
+  type = string
+}
+
+variable "graphdb_data_encryption_keystore_alias" {
+  description = "The alias of the data encryption master key, when stored in a keystore (i.e. when using type pkcs12)"
+  type = string
+  default = "masterkey"
+}
+
+variable "graphdb_data_encryption_keystore_password" {
+  description = "The keystore password for the data encryption keystore (when using type pkcs12)"
+  type = string
+  sensitive = true
+}

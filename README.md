@@ -407,6 +407,11 @@ To enable deployment of the monitoring module, you need to enable the following 
 deploy_monitoring = true
 ```
 
+
+**Encryption at Rest**
+
+Starting from 11.4.0, GraphDB supports encryption at rest (See [here]()). To configure encryption at rest
+
 ### Microsoft Entra ID (Azure AD) Integration
 
 This module supports Microsoft Entra ID (formerly Azure AD) authentication for GraphDB. When enabled, users can authenticate using their Entra ID credentials, and machine-to-machine (M2M) authentication is used for automated operations like backups and cluster management.

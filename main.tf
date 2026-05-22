@@ -236,11 +236,14 @@ module "graphdb" {
 
   # GraphDB Configurations
 
-  graphdb_admin_password  = var.graphdb_admin_password
-  graphdb_cluster_token   = var.graphdb_cluster_token
-  graphdb_properties_path = var.graphdb_properties_path
-  graphdb_java_options    = var.graphdb_java_options
-  graphdb_license_path    = var.graphdb_license_path
+  graphdb_admin_password                        = var.graphdb_admin_password
+  graphdb_cluster_token                         = var.graphdb_cluster_token
+  graphdb_properties_path                       = var.graphdb_properties_path
+  graphdb_java_options                          = var.graphdb_java_options
+  graphdb_license_path                          = var.graphdb_license_path
+  graphdb_data_encryption_type                  = var.graphdb_data_encryption_type
+  graphdb_data_encryption_keystore_password     = var.graphdb_data_encryption_keystore_password
+  graphdb_data_encryption_keystore_alias        = var.graphdb_data_encryption_keystore_alias
 
   # VMs
 
