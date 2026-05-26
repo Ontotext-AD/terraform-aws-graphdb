@@ -1,5 +1,9 @@
 # GraphDB AWS Terraform Module Changelog
 
+## 3.3.0
+
+* Fixed perpetual Terraform drift in `aws_s3_bucket_server_side_encryption_configuration` for the backup module by explicitly setting `blocked_encryption_types = ["SSE-C"]` to match the value AWS returns
+
 ## 3.2.2
 
 * Updated GraphDB default version to [11.3.3](https://graphdb.ontotext.com/documentation/11.3/release-notes.html#graphdb-11-3-3)
