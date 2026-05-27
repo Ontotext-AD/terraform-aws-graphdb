@@ -317,6 +317,11 @@ module "graphdb" {
   # ASG Instance deployment options
 
   graphdb_enable_userdata_scripts_on_reboot      = var.graphdb_enable_userdata_scripts_on_reboot
+  graphdb_audit_log_enabled                      = var.graphdb_audit_log_enabled
+  graphdb_audit_log_role                         = var.graphdb_audit_log_role
+  graphdb_audit_log_repository                   = var.graphdb_audit_log_repository
+  graphdb_audit_log_headers                      = var.graphdb_audit_log_headers
+  graphdb_audit_log_request_max_length           = var.graphdb_audit_log_request_max_length
   user_supplied_scripts_pre_userdata             = var.graphdb_user_supplied_scripts_pre_userdata
   user_supplied_rendered_templates_pre_userdata  = var.graphdb_user_supplied_rendered_templates_pre_userdata
   user_supplied_templates_pre_userdata           = var.graphdb_user_supplied_templates_pre_userdata
