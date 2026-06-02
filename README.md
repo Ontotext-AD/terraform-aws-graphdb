@@ -353,6 +353,20 @@ There are several ways to customize the GraphDB properties.
     graphdb_properties_path = "<path_to_custom_graphdb_properties_file>"
     ```
 
+    Example `graphdb.properties` content for enabling GraphDB security with the new property:
+
+    ```properties
+    graphdb.auth.security.enabled=true
+    ```
+
+    The legacy `security.enabled` property is still supported for backward compatibility, but if both are set,
+    `graphdb.auth.security.enabled` takes precedence. Once `graphdb.auth.security.enabled` is set, the security
+    configuration is locked and cannot be altered at runtime via the API.
+
+    > **Note (Cluster):** All nodes must use the same security configuration. Mixing nodes with different values
+    > for `graphdb.auth.security.enabled` or `security.enabled`, or having some nodes set `graphdb.auth.security.enabled`
+    > while others do not, will block cluster creation and node addition with a `Mismatching security settings` error.
+
 2. Setting Java Options with `graphdb_java_options`:
 
     Another option is to set Java options using the `graphdb_java_options` variable.
