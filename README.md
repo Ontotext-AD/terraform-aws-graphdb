@@ -410,7 +410,7 @@ deploy_monitoring = true
 
 **Encryption at Rest**
 
-Starting from 11.4.0, GraphDB supports encryption at rest (See [here]()). To configure encryption at rest
+Starting from 11.4.0, GraphDB supports encryption at rest (See [here](TODO)). To configure encryption at rest
 
 ### Microsoft Entra ID (Azure AD) Integration
 

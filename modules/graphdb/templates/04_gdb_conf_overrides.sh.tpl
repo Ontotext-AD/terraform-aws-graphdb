@@ -32,7 +32,6 @@ else
   EXTERNAL_URL="$${PROTOCOL}://$${LB_DNS_RECORD}"
 fi
 
-
 # Get and store the GraphDB license
 aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/license" --with-decryption | \
   jq -r .Parameter.Value | \
