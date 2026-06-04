@@ -132,48 +132,9 @@ if [[ -n "$DATA_ENCRYPTION_TYPE" ]]; then
     echo -n "${graphdb_master_key_secret}" | openssl dgst -sha256 -binary > /etc/master.key
     chmod a-wx,o-rwx /etc/master.key
     ENC_PROPS="-Dgraphdb.data.encryption.type=file -Dgraphdb.data.encryption.file=/etc/master.key"
-  elif [[ "$DATA_ENCRYPTION_TYPE" = "pkcs12" ]]; then
-    log_with_timestamp "Configuring pkcs12-based data encryption"
-    log_with_timestamp "Generating keystore and storing it to /etc/master.p12"
-    cat << EOF > /tmp/GenKey.java
-   import javax.crypto.SecretKey;
-   import javax.crypto.SecretKeyFactory;
-   import javax.crypto.spec.PBEKeySpec;
-   import javax.crypto.spec.SecretKeySpec;
-   import java.security.SecureRandom;
-   import java.io.FileOutputStream;
-   import java.security.KeyStore;
-
-   public class AESKeyGenerator {
-
-        public static SecretKey generateKeyFromString(String password, byte[] salt)
-               throws Exception {
-           PBEKeySpec spec = new PBEKeySpec(password.toCharArray(),salt,65536,256);
-           return new SecretKeySpec(SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256").generateSecret(spec).getEncoded(), "AES");
-       }
-       public static void main(String[] args) throws Exception {
-           byte[] salt = new byte[] {
-               0x73, 0x61, 0x6C, 0x74, 0x44, 0x6F, 0x67, 0x21
-           }; // "saltDog!"
-           SecretKey key = generateKeyFromString(password, salt);
-           char[] passwordChars = args[0].toCharArray();
-           KeyStore.PasswordProtection password = new KeyStore.PasswordProtection(passwordChars);
-           KeyStore ks = KeyStore.getInstance("PKCS12");
-           ks.load(null, null);
-           ks.setEntry(args[1], entry, passwordChars);
-           try (FileOutputStream fos = new FileOutputStream("/etc/master.p12")) {
-               ks.store(fos, passwordChars);
-           }
-       }
-   }
-
-EOF
-    PASS=${graphdb_data_encryption_keystore_password}
-    ALIAS=${graphdb_data_encryption_keystore_alias}
-    ( cd /tmp && javac GenKey.java && java GenKey $PASS $ALIAS && rm /tmp/GenKey.*)
-    ENC_PROPS="-Dgraphdb.data.encryption.type=pkcs12 -Dgraphdb.data.encryption.file=/etc/master.p12 -Dgraphdb.data.encryption.keystore.alias=${graphdb_data_encryption_keystore_alias} -Dgraphdb.data.encryption.keystore.password=${graphdb_data_encryption_keystore_password}"
   else
     log_with_timestamp "Invalid or unsupported data encryption type: $DATA_ENCRYPTION_TYPE. Skipping data encryption"
+  fi
 fi
 
 # Appends environment overrides to GDB_JAVA_OPTS

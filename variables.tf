@@ -1301,9 +1301,8 @@ variable "graphdb_data_encryption_master_key_secret" {
   default = ""
   validation {
     condition = (
-      var.graphdb_data_encryption_type == "file" &&
-      trimspace(var.graphdb_data_encryption_master_key_secret) != ""
-      )
+      var.graphdb_data_encryption_type != "file"
+      ) ? true : trimspace(var.graphdb_data_encryption_master_key_secret) != ""
     error_message = "Must set master key secret when using file-based data encryption"
   }
 }
