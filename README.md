@@ -203,7 +203,7 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | lb\_access\_logs\_expiration\_days | Define the days after which the LB access logs should be deleted. | `number` | `14` | no |
 | bucket\_replication\_destination\_region | Define in which Region should the bucket be replicated | `string` | `null` | no |
 | graphdb\_enable\_userdata\_scripts\_on\_reboot | (Experimental) Modifies cloud-config to always run user data scripts on EC2 boot | `bool` | `false` | no |
-| graphdb\_enable\_audit\_log | Enable or disable the GraphDB audit log | `bool` | `false` | no |
+| graphdb\_audit\_log\_enabled | Enable or disable the GraphDB audit log | `bool` | `false` | no |
 | graphdb\_audit\_log\_role | Minimum role whose actions are audit-logged. Hierarchy: ANY > USER > REPO\_MANAGER > ADMIN | `string` | `"REPO_MANAGER"` | no |
 | graphdb\_audit\_log\_repository | Repository operation level to audit-log. Accepted values: READ, WRITE (READ includes WRITE) | `string` | `"WRITE"` | no |
 | graphdb\_audit\_log\_headers | Comma-separated list of HTTP request headers to include in the audit log. Empty string disables header logging. | `string` | `""` | no |
