@@ -233,6 +233,31 @@ variable "graphdb_enable_userdata_scripts_on_reboot" {
   type        = bool
 }
 
+variable "graphdb_audit_log_enabled" {
+  description = "Enable or disable the GraphDB audit log"
+  type        = bool
+}
+
+variable "graphdb_audit_log_role" {
+  description = "Minimum role whose actions are audit-logged. Hierarchy: ANY > USER > REPO_MANAGER > ADMIN"
+  type        = string
+}
+
+variable "graphdb_audit_log_repository" {
+  description = "Repository operation level to audit-log. Accepted values: READ, WRITE (READ includes WRITE)"
+  type        = string
+}
+
+variable "graphdb_audit_log_headers" {
+  description = "Comma-separated list of HTTP request headers to include in the audit log. Empty string disables header logging."
+  type        = string
+}
+
+variable "graphdb_audit_log_request_max_length" {
+  description = "Maximum length in bytes of the request body captured in the audit log. Null uses the GraphDB default."
+  type        = number
+}
+
 variable "lb_enable_private_access" {
   description = "Enable or disable the private access via PrivateLink to the GraphDB Cluster"
   type        = bool

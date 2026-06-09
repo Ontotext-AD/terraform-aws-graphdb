@@ -709,6 +709,46 @@ variable "graphdb_enable_userdata_scripts_on_reboot" {
   default     = false
 }
 
+variable "graphdb_audit_log_enabled" {
+  description = "Enable or disable the GraphDB audit log"
+  type        = bool
+  default     = false
+}
+
+variable "graphdb_audit_log_role" {
+  description = "Minimum role whose actions are audit-logged. Hierarchy: ANY > USER > REPO_MANAGER > ADMIN"
+  type        = string
+  default     = "REPO_MANAGER"
+
+  validation {
+    condition     = contains(["ANY", "USER", "REPO_MANAGER", "ADMIN"], var.graphdb_audit_log_role)
+    error_message = "Possible values: ANY, USER, REPO_MANAGER, ADMIN."
+  }
+}
+
+variable "graphdb_audit_log_repository" {
+  description = "Repository operation level to audit-log. Accepted values: READ, WRITE (READ includes WRITE)"
+  type        = string
+  default     = "WRITE"
+
+  validation {
+    condition     = contains(["READ", "WRITE"], var.graphdb_audit_log_repository)
+    error_message = "Possible values: READ, WRITE."
+  }
+}
+
+variable "graphdb_audit_log_headers" {
+  description = "Comma-separated list of HTTP request headers to include in the audit log. Empty string disables header logging."
+  type        = string
+  default     = ""
+}
+
+variable "graphdb_audit_log_request_max_length" {
+  description = "Maximum length in bytes of the request body captured in the audit log. Null uses the GraphDB default."
+  type        = number
+  default     = null
+}
+
 variable "graphdb_user_supplied_scripts_pre_userdata" {
   description = "A list of paths to user-supplied shell scripts (local files) to be injected as additional parts in the EC2 user_data before the provisioning scripts."
   type        = list(string)

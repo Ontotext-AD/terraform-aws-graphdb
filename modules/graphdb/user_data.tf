@@ -119,6 +119,11 @@ data "cloudinit_config" "graphdb_user_data" {
       openid_auth_database : var.openid_auth_database != null ? var.openid_auth_database : ""
       oauth_roles_claim : var.oauth_roles_claim
       oauth_roles_prefix : var.oauth_roles_prefix
+      graphdb_audit_log_enabled : var.graphdb_audit_log_enabled
+      graphdb_audit_log_role : var.graphdb_audit_log_role
+      graphdb_audit_log_repository : var.graphdb_audit_log_repository
+      graphdb_audit_log_headers : var.graphdb_audit_log_headers
+      graphdb_audit_log_request_max_length : var.graphdb_audit_log_request_max_length
     })
   }
 

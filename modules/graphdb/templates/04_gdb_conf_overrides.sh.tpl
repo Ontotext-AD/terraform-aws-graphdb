@@ -102,6 +102,22 @@ cat << EOF > /etc/systemd/system/graphdb.service.d/overrides.conf
 Environment="GDB_HEAP_SIZE=$${JVM_MAX_MEMORY}g"
 EOF
 
+%{ if graphdb_enable_audit_log ~}
+log_with_timestamp "Configuring GraphDB audit log"
+cat << EOF >> /etc/graphdb/graphdb.properties
+graphdb.audit.log.enabled=true
+graphdb.audit.role=${graphdb_audit_log_role}
+graphdb.audit.repository=${graphdb_audit_log_repository}
+%{ if graphdb_audit_log_headers != "" ~}
+graphdb.audit.headers=${graphdb_audit_log_headers}
+%{ endif ~}
+%{ if graphdb_audit_log_request_max_length != null ~}
+graphdb.audit.request.max.length=${graphdb_audit_log_request_max_length}
+%{ endif ~}
+EOF
+log_with_timestamp "GraphDB audit log configuration completed"
+%{ endif ~}
+
 # Appends configuration overrides to graphdb.properties
 GDB_PROPERTIES=$(aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/graphdb_properties" --with-decryption 2>/dev/null | jq -r .Parameter.Value | base64 -d || /bin/true)
 [[ -n $GDB_PROPERTIES ]] && echo "$GDB_PROPERTIES" >> /etc/graphdb/graphdb.properties
