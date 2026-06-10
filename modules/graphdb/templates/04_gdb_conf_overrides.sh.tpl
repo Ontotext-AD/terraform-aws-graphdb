@@ -23,6 +23,7 @@ echo "#######################################"
 LB_DNS_RECORD=${graphdb_lb_dns_name}
 PROTOCOL=${external_address_protocol}
 CONTEXT_PATH="${lb_context_path}"
+DATA_ENCRYPTION_TYPE=${graphdb_data_encryption_type}
 
 # Construct the external URL with context path only if provided
 if [ -n "$CONTEXT_PATH" ]; then
@@ -102,7 +103,7 @@ cat << EOF > /etc/systemd/system/graphdb.service.d/overrides.conf
 Environment="GDB_HEAP_SIZE=$${JVM_MAX_MEMORY}g"
 EOF
 
-%{ if graphdb_enable_audit_log ~}
+%{ if graphdb_audit_log_enabled ~}
 log_with_timestamp "Configuring GraphDB audit log"
 cat << EOF >> /etc/graphdb/graphdb.properties
 graphdb.audit.log.enabled=true
@@ -122,8 +123,35 @@ log_with_timestamp "GraphDB audit log configuration completed"
 GDB_PROPERTIES=$(aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/graphdb_properties" --with-decryption 2>/dev/null | jq -r .Parameter.Value | base64 -d || /bin/true)
 [[ -n $GDB_PROPERTIES ]] && echo "$GDB_PROPERTIES" >> /etc/graphdb/graphdb.properties
 
+ENC_PROPS=""
+if [[ -n "$DATA_ENCRYPTION_TYPE" ]]; then
+  if [[ "$DATA_ENCRYPTION_TYPE" = "file" ]]; then
+    log_with_timestamp "Configuring file-based data encryption."
+    log_with_timestamp "Generating master key and storing it to /etc/graphdb/master.key"
+    aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/encryption_master_key" --with-decryption | \
+          jq -r .Parameter.Value | \
+          base64 -d > /etc/graphdb/master.key
+    chown graphdb:graphdb /etc/graphdb/master.key
+    chmod a-wx,o-rwx /etc/graphdb/master.key
+    ENC_PROPS="-Dgraphdb.data.encryption.type=file -Dgraphdb.data.encryption.file=/etc/graphdb/master.key"
+  elif [[ "$DATA_ENCRYPTION_TYPE" = "pkcs12" ]]; then
+    aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/encryption_keystore" --with-decryption | \
+      jq -r .Parameter.Value | \
+      base64 -d > /etc/graphdb/master.p12
+    chown graphdb:graphdb /etc/graphdb/master.p12
+    chmod a-wx,o-rwx /etc/graphdb/master.p12
+    ENC_PROPS="-Dgraphdb.data.encryption.type=pkcs12 -Dgraphdb.data.encryption.file=/etc/graphdb/master.p12 -Dgraphdb.data.encryption.keystore.alias=${graphdb_data_encryption_keystore_alias} -Dgraphdb.data.encryption.keystore.password=${graphdb_data_encryption_keystore_password}"
+  else
+    log_with_timestamp "Invalid or unsupported data encryption type: $DATA_ENCRYPTION_TYPE. Skipping data encryption"
+  fi
+fi
+
 # Appends environment overrides to GDB_JAVA_OPTS
 extra_graphdb_java_options="$(aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/graphdb_java_options" --with-decryption 2>/dev/null | jq -r .Parameter.Value || /bin/true )"
+if [[ -n $ENC_PROPS ]]; then
+  extra_graphdb_java_options="$extra_graphdb_java_options $ENC_PROPS"
+fi
+
 if [[ -n $extra_graphdb_java_options  ]]; then
   if grep GDB_JAVA_OPTS /etc/graphdb/graphdb.env &>/dev/null; then
     sed -ie "s|GDB_JAVA_OPTS=\"\(.*\)\"|GDB_JAVA_OPTS=\"\1 $extra_graphdb_java_options\"|g" /etc/graphdb/graphdb.env
