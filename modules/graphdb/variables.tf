@@ -574,10 +574,9 @@ variable "graphdb_data_encryption_type" {
   type        = string
 }
 
-variable "graphdb_data_encryption_master_key_secret" {
-  description = "The master key secret, when using file-based data encryption."
+variable "graphdb_data_encryption_master_key_filepath" {
+  description = "The master key, when using file-based data encryption."
   type        = string
-  sensitive   = true
 }
 
 variable "graphdb_data_encryption_keystore_alias" {
@@ -590,4 +589,9 @@ variable "graphdb_data_encryption_keystore_password" {
   description = "The keystore password for the data encryption keystore (when using type pkcs12)"
   type        = string
   sensitive   = true
+}
+
+variable "graphdb_data_encryption_keystore_filepath" {
+  description = "Local path to a keystore file containing the master key for encryption at rest setup"
+  type        = string
 }

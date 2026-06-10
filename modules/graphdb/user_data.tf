@@ -127,7 +127,7 @@ data "cloudinit_config" "graphdb_user_data" {
       graphdb_data_encryption_type : var.graphdb_data_encryption_type
       graphdb_data_encryption_keystore_alias : var.graphdb_data_encryption_keystore_alias
       graphdb_data_encryption_keystore_password : var.graphdb_data_encryption_keystore_password
-      graphdb_master_key_secret : var.graphdb_data_encryption_master_key_secret
+      graphdb_data_encryption_master_key_filepath : var.graphdb_data_encryption_master_key_filepath
     })
   }
 

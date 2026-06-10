@@ -103,7 +103,7 @@ cat << EOF > /etc/systemd/system/graphdb.service.d/overrides.conf
 Environment="GDB_HEAP_SIZE=$${JVM_MAX_MEMORY}g"
 EOF
 
-%{ if graphdb_enable_audit_log ~}
+%{ if graphdb_audit_log_enabled ~}
 log_with_timestamp "Configuring GraphDB audit log"
 cat << EOF >> /etc/graphdb/graphdb.properties
 graphdb.audit.log.enabled=true
@@ -127,10 +127,20 @@ ENC_PROPS=""
 if [[ -n "$DATA_ENCRYPTION_TYPE" ]]; then
   if [[ "$DATA_ENCRYPTION_TYPE" = "file" ]]; then
     log_with_timestamp "Configuring file-based data encryption."
-    log_with_timestamp "Generating master key and storing it to /etc/master.key"
-    echo -n "${graphdb_master_key_secret}" | openssl dgst -sha256 -binary > /etc/master.key
-    chmod a-wx,o-rwx /etc/master.key
-    ENC_PROPS="-Dgraphdb.data.encryption.type=file -Dgraphdb.data.encryption.file=/etc/master.key"
+    log_with_timestamp "Generating master key and storing it to /etc/graphdb/master.key"
+    aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/encryption_master_key" --with-decryption | \
+          jq -r .Parameter.Value | \
+          base64 -d > /etc/graphdb/master.key
+    chown graphdb:graphdb /etc/graphdb/master.key
+    chmod a-wx,o-rwx /etc/graphdb/master.key
+    ENC_PROPS="-Dgraphdb.data.encryption.type=file -Dgraphdb.data.encryption.file=/etc/graphdb/master.key"
+  elif [[ "$DATA_ENCRYPTION_TYPE" = "pkcs12" ]]; then
+    aws --cli-connect-timeout 300 ssm get-parameter --region ${region} --name "/${name}/graphdb/encryption_keystore" --with-decryption | \
+      jq -r .Parameter.Value | \
+      base64 -d > /etc/graphdb/master.p12
+    chown graphdb:graphdb /etc/graphdb/master.p12
+    chmod a-wx,o-rwx /etc/graphdb/master.p12
+    ENC_PROPS="-Dgraphdb.data.encryption.type=pkcs12 -Dgraphdb.data.encryption.file=/etc/graphdb/master.p12 -Dgraphdb.data.encryption.keystore.alias=${graphdb_data_encryption_keystore_alias} -Dgraphdb.data.encryption.keystore.password=${graphdb_data_encryption_keystore_password}"
   else
     log_with_timestamp "Invalid or unsupported data encryption type: $DATA_ENCRYPTION_TYPE. Skipping data encryption"
   fi

@@ -1294,22 +1294,34 @@ variable "graphdb_data_encryption_type" {
   }
 }
 
-variable "graphdb_data_encryption_master_key_secret" {
-  description = "The master key secret, when using file-based data encryption."
+variable "graphdb_data_encryption_master_key_filepath" {
+  description = "The master key, when using file-based data encryption."
   type        = string
   sensitive   = true
   default     = ""
   validation {
     condition = (
       var.graphdb_data_encryption_type != "file"
-    ) ? true : trimspace(var.graphdb_data_encryption_master_key_secret) != ""
-    error_message = "Must set master key secret when using file-based data encryption"
+    ) ? true : trimspace(var.graphdb_data_encryption_master_key_filepath) != "" && fileexists(var.graphdb_data_encryption_master_key_filepath)
+    error_message = "Master key variable empty or file was not found"
   }
 }
 
 variable "graphdb_data_encryption_keystore_alias" {
   description = "The alias of the data encryption master key, when stored in a keystore (i.e. when using type pkcs12)"
   type        = string
+}
+
+variable "graphdb_data_encryption_keystore_filepath" {
+  description = "Local path to a keystore file containing the master key for encryption at rest setup"
+  type        = string
+  default     = ""
+  validation {
+    condition = (
+      var.graphdb_data_encryption_type != "file"
+    ) ? true : trimspace(var.graphdb_data_encryption_keystore_filepath) != "" && fileexists(var.graphdb_data_encryption_keystore_filepath)
+    error_message = "PKCS12 Keystore variable empty or file was not found"
+  }
 }
 
 variable "graphdb_data_encryption_keystore_password" {
