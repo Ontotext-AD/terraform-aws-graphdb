@@ -153,7 +153,7 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | tgw\_enable\_propagation | Whether to enable propagation of this attachment into tgw\_route\_table\_id. | `bool` | `null` | no |
 | lb\_enable\_private\_access | Enable or disable the private access via PrivateLink to the GraphDB Cluster | `bool` | `false` | no |
 | ami\_id | (Optional) User-provided AMI ID to use with GraphDB instances. If you provide this value, please ensure it will work with the default userdata script (assumes latest version of Ubuntu LTS). Otherwise, please provide your own userdata script using the user\_supplied\_userdata\_path variable. | `string` | `null` | no |
-| graphdb\_version | GraphDB version | `string` | `"11.3.3"` | no |
+| graphdb\_version | GraphDB version | `string` | `"11.4.0"` | no |
 | device\_name | The device to which EBS volumes for the GraphDB data directory will be mapped. | `string` | `"/dev/sdf"` | no |
 | ebs\_volume\_type | Type of the EBS volumes, used by the GraphDB nodes. | `string` | `"gp3"` | no |
 | ebs\_volume\_size | The size of the EBS volumes, used by the GraphDB nodes. | `number` | `500` | no |
@@ -287,6 +287,11 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | m2m\_app\_registration\_client\_id | The M2M App registration client ID | `string` | `null` | no |
 | m2m\_app\_registration\_client\_secret | The M2M App registration client secret | `string` | `null` | no |
 | m2m\_scope | The scope for the M2M application | `string` | `null` | no |
+| graphdb\_data\_encryption\_type | The type of data encryption (Encryption at rest) to configure for the GraphDB instances. Supported values: '', file, pkcs12 | `string` | `""` | no |
+| graphdb\_data\_encryption\_master\_key\_filepath | The master key, when using file-based data encryption. | `string` | `""` | no |
+| graphdb\_data\_encryption\_keystore\_alias | The alias of the data encryption master key, when stored in a keystore (i.e. when using type pkcs12) | `string` | n/a | yes |
+| graphdb\_data\_encryption\_keystore\_filepath | Local path to a keystore file containing the master key for encryption at rest setup | `string` | `""` | no |
+| graphdb\_data\_encryption\_keystore\_password | The keystore password for the data encryption keystore (when using type pkcs12) | `string` | `""` | no |
 <!-- END_TF_DOCS -->
 
 ## Usage
