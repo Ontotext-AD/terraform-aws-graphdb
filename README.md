@@ -2,7 +2,7 @@
 
 This Terraform module allows you to provision an GraphDB cluster within a Virtual Private Cloud (VPC). The module
 provides a flexible way to configure the cluster and the associated VPC components. It implements the GraphDB reference
-architecture. Check the official [documentation](https://graphdb.ontotext.com/documentation/11.3/aws-deployment.html)
+architecture. Check the official [documentation](https://graphdb.ontotext.com/documentation/11.4/aws-deployment.html)
 for more details.
 
 ## Table of contents
@@ -358,6 +358,20 @@ There are several ways to customize the GraphDB properties.
     ```hcl
     graphdb_properties_path = "<path_to_custom_graphdb_properties_file>"
     ```
+
+    Example `graphdb.properties` content for enabling GraphDB security with the new property:
+
+    ```properties
+    graphdb.auth.security.enabled=true
+    ```
+
+    The legacy `security.enabled` property is still supported for backward compatibility, but if both are set,
+    `graphdb.auth.security.enabled` takes precedence. Once `graphdb.auth.security.enabled` is set, the security
+    configuration is locked and cannot be altered at runtime via the API.
+
+    > **Note (Cluster):** All nodes must use the same security configuration. Mixing nodes with different values
+    > for `graphdb.auth.security.enabled` or `security.enabled`, or having some nodes set `graphdb.auth.security.enabled`
+    > while others do not, will block cluster creation and node addition with a `Mismatching security settings` error.
 
 2. Setting Java Options with `graphdb_java_options`:
 
@@ -947,7 +961,7 @@ app_name             = "graphdb"
 # ============================================
 # GraphDB Configuration
 # ============================================
-graphdb_version        = "11.3.3"
+graphdb_version        = "11.4.0"
 graphdb_node_count     = 3
 ec2_instance_type      = "r6i.2xlarge"
 graphdb_admin_password = "your-secure-password"  # Use secrets manager in production
