@@ -1283,3 +1283,50 @@ variable "m2m_scope" {
   type        = string
   default     = null
 }
+
+variable "graphdb_data_encryption_type" {
+  description = "The type of data encryption (Encryption at rest) to configure for the GraphDB instances. Supported values: '', file, pkcs12"
+  type        = string
+  default     = ""
+  validation {
+    condition     = contains(["", "file", "pkcs12"], var.graphdb_data_encryption_type)
+    error_message = "graphdb_data_encryption_type can be either empty, 'file' or 'pkcs12'"
+  }
+}
+
+variable "graphdb_data_encryption_master_key_filepath" {
+  description = "The master key, when using file-based data encryption."
+  type        = string
+  sensitive   = true
+  default     = ""
+  validation {
+    condition     = var.graphdb_data_encryption_type != "file" || fileexists(var.graphdb_data_encryption_master_key_filepath)
+    error_message = "Master key variable empty or file was not found"
+  }
+}
+
+variable "graphdb_data_encryption_keystore_alias" {
+  description = "The alias of the data encryption master key, when stored in a keystore (i.e. when using type pkcs12)"
+  type        = string
+}
+
+variable "graphdb_data_encryption_keystore_filepath" {
+  description = "Local path to a keystore file containing the master key for encryption at rest setup"
+  type        = string
+  default     = ""
+  validation {
+    condition     = var.graphdb_data_encryption_type != "pkcs12" || fileexists(var.graphdb_data_encryption_keystore_filepath)
+    error_message = "PKCS12 Keystore variable empty or file was not found"
+  }
+}
+
+variable "graphdb_data_encryption_keystore_password" {
+  description = "The keystore password for the data encryption keystore (when using type pkcs12)"
+  type        = string
+  sensitive   = true
+  default     = ""
+  validation {
+    condition     = var.graphdb_data_encryption_type != "pkcs12" || (trimspace(var.graphdb_data_encryption_keystore_password) != "")
+    error_message = "PKCS12 Keystore password cannot be null when configuring PKCS12-based data encryption"
+  }
+}

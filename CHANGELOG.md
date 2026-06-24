@@ -1,5 +1,10 @@
 # GraphDB AWS Terraform Module Changelog
 
+## 3.4.0
+
+* Added support for encryption at rest configuration - see [GraphDB 11.4.0](https://graphdb.ontotext.com/documentation/11.4/encryption.html#encryption-at-rest) documentation
+* Added example for configuring `pkcs12`-based encryption at rest
+* Added example for configuring `file`-based encryption at rest
 ## 3.3.0
 
 * Added example for configuring `graphdb.auth.security.enabled` via `graphdb_properties_path`
