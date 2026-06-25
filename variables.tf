@@ -1300,7 +1300,7 @@ variable "graphdb_data_encryption_master_key_filepath" {
   sensitive   = true
   default     = ""
   validation {
-    condition     = var.graphdb_data_encryption_type != "file" || fileexists(var.graphdb_data_encryption_master_key_filepath)
+    condition     = var.graphdb_data_encryption_type != "file" || (trimspace(var.graphdb_data_encryption_master_key_filepath) != "" && fileexists(var.graphdb_data_encryption_master_key_filepath))
     error_message = "Master key variable empty or file was not found"
   }
 }
@@ -1315,7 +1315,7 @@ variable "graphdb_data_encryption_keystore_filepath" {
   type        = string
   default     = ""
   validation {
-    condition     = var.graphdb_data_encryption_type != "pkcs12" || fileexists(var.graphdb_data_encryption_keystore_filepath)
+    condition     = var.graphdb_data_encryption_type != "pkcs12" || (trimspace(var.graphdb_data_encryption_keystore_filepath) != "" && fileexists(var.graphdb_data_encryption_keystore_filepath))
     error_message = "PKCS12 Keystore variable empty or file was not found"
   }
 }

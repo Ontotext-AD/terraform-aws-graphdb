@@ -54,12 +54,12 @@ locals {
       16
     ) : 1
 
-    keystore = fileexists(var.graphdb_data_encryption_keystore_filepath) ? parseint(
+    keystore = trimspace(var.graphdb_data_encryption_keystore_filepath) != "" && fileexists(var.graphdb_data_encryption_keystore_filepath) ? parseint(
       substr(md5(filebase64(var.graphdb_data_encryption_keystore_filepath)), 0, 12),
       16
     ) : 1
 
-    master_key = fileexists(var.graphdb_data_encryption_master_key_filepath) ? parseint(
+    master_key = trimspace(var.graphdb_data_encryption_master_key_filepath) != "" && fileexists(var.graphdb_data_encryption_master_key_filepath) ? parseint(
       substr(md5(filebase64(var.graphdb_data_encryption_master_key_filepath)), 0, 12),
       16
     ) : 1
@@ -127,7 +127,7 @@ resource "aws_ssm_parameter" "graphdb_m2m_client_secret" {
 }
 
 resource "aws_ssm_parameter" "graphdb_data_encryption_keystore" {
-  count = fileexists(var.graphdb_data_encryption_keystore_filepath) ? 1 : 0
+  count = trimspace(var.graphdb_data_encryption_keystore_filepath) != "" && fileexists(var.graphdb_data_encryption_keystore_filepath) ? 1 : 0
 
   name             = "/${var.resource_name_prefix}/graphdb/encryption_keystore"
   description      = "Keystore containing the master key for encryption at rest setup"
@@ -139,7 +139,7 @@ resource "aws_ssm_parameter" "graphdb_data_encryption_keystore" {
 
 
 resource "aws_ssm_parameter" "graphdb_data_encryption_master_key_filepath" {
-  count = fileexists(var.graphdb_data_encryption_master_key_filepath) ? 1 : 0
+  count = trimspace(var.graphdb_data_encryption_master_key_filepath) != "" && fileexists(var.graphdb_data_encryption_master_key_filepath) ? 1 : 0
 
   name             = "/${var.resource_name_prefix}/graphdb/encryption_master_key"
   description      = "Master key for encryption at rest setup"
