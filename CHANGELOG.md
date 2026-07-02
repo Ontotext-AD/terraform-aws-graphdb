@@ -1,12 +1,10 @@
 # GraphDB AWS Terraform Module Changelog
 
-## 3.4.0
+## 3.3.0
 
 * Added support for encryption at rest configuration - see [GraphDB 11.4.0](https://graphdb.ontotext.com/documentation/11.4/encryption.html#encryption-at-rest) documentation
 * Added example for configuring `pkcs12`-based encryption at rest
 * Added example for configuring `file`-based encryption at rest
-## 3.3.0
-
 * Added example for configuring `graphdb.auth.security.enabled` via `graphdb_properties_path`
 * Added `graphdb_enable_audit_log_enabled` variable to enable GraphDB audit logging
 * Fixed perpetual Terraform drift in `aws_s3_bucket_server_side_encryption_configuration` for the backup module by explicitly setting `blocked_encryption_types = ["SSE-C"]` to match the value AWS returns
