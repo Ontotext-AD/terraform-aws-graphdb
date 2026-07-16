@@ -1,5 +1,9 @@
 # GraphDB AWS Terraform Module Changelog
 
+## 3.3.1
+
+* Updated GraphDB default version to [11.4.1](https://graphdb.ontotext.com/documentation/11.4/release-notes.html#graphdb-11-4-1)
+
 ## 3.3.0
 
 * Added support for encryption at rest configuration - see [GraphDB 11.4.0](https://graphdb.ontotext.com/documentation/11.4/encryption.html#encryption-at-rest) documentation
