@@ -1308,6 +1308,7 @@ variable "graphdb_data_encryption_master_key_filepath" {
 variable "graphdb_data_encryption_keystore_alias" {
   description = "The alias of the data encryption master key, when stored in a keystore (i.e. when using type pkcs12)"
   type        = string
+  default     = null
 }
 
 variable "graphdb_data_encryption_keystore_filepath" {
