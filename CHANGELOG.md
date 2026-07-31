@@ -13,6 +13,11 @@
 * Fixed missing `default` value for `graphdb_data_encryption_keystore_alias`, which made it a required variable even when not using `pkcs12`-based encryption at rest
 * Added a per-node CloudWatch alarm (`graphdb_workbench_settings_error_alarm`) that triggers when a node logs "Error loading Workbench settings, using the defaults"
 * Fixed the low disk space metric filter pattern, which searched for the unrelated string "No space left on the device" and never matched GraphDB's actual `FileSystemHealth` log message ("...is critically low on free disk space..."), so the alarm could never fire
+* Fixed NLB and VPC subnet/AZ count no longer shrinking to a single subnet/AZ when `graphdb_node_count` is scaled down to `1`, which caused Terraform to force a replacement of the network load balancer (`Error: ELBv2 Load Balancer ... already exists`) since AWS does not allow removing subnets from an existing NLB
+* NAT Gateway count now defaults to a single NAT Gateway when `graphdb_node_count` is `1` (instead of one per AZ), avoiding the extra NAT Gateway/EIP
+* Public/private route table counts are now derived from `vpc_public_subnet_cidrs`/`vpc_private_subnet_cidrs` length instead of a hardcoded AZ count, so custom subnet CIDR lists (including a single subnet) no longer risk an index-out-of-range error
+* Hardened per-AZ NAT Gateway routing to no longer assume `vpc_public_subnet_cidrs` and `vpc_private_subnet_cidrs` are the same length
+* Added a `vpc_private_subnet_cidrs`/`vpc_public_subnet_cidrs` length validation to catch a mismatched subnet count at plan time instead of silently reusing the last NAT Gateway
 
 ## 3.3.2
 
