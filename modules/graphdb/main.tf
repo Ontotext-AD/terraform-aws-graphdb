@@ -121,5 +121,9 @@ resource "aws_autoscaling_group" "graphdb_auto_scaling_group" {
       propagate_at_launch = true
     }
   }
+
+  # Keeps the deny policy in place until the instances are gone on destroy, otherwise the CloudWatch agent
+  # on a terminating node recreates the log groups Terraform has already deleted.
+  depends_on = [aws_iam_role_policy.graphdb_deny_log_group_creation]
 }
 

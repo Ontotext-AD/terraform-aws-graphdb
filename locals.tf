@@ -41,19 +41,6 @@ locals {
   lb_tls_enabled      = var.lb_tls_certificate_arn != "" ? true : false
   calculated_protocol = local.lb_tls_enabled ? "https" : "http"
 
-  # Subnet CIDR lists
-  effective_private_subnet_cidrs = (
-    var.lb_type == "application"
-    ? var.vpc_private_subnet_cidrs
-    : (var.graphdb_node_count == 1 ? [var.vpc_private_subnet_cidrs[0]] : var.vpc_private_subnet_cidrs)
-  )
-
-  effective_public_subnet_cidrs = (
-    var.lb_type == "application"
-    ? var.vpc_public_subnet_cidrs
-    : (var.graphdb_node_count == 1 ? [var.vpc_public_subnet_cidrs[0]] : var.vpc_public_subnet_cidrs)
-  )
-
   all_private_subnet_ids = var.vpc_id == "" ? module.vpc[0].private_subnet_ids : var.vpc_private_subnet_ids
   all_public_subnet_ids  = var.vpc_id == "" ? module.vpc[0].public_subnet_ids : var.vpc_public_subnet_ids
 
@@ -71,20 +58,13 @@ locals {
         min(2, length(local.all_public_subnet_ids))
       )
       ) : (
-      var.graphdb_node_count == 1 ? [
-        (
-          var.lb_internal
-          ? local.all_private_subnet_ids[0]
-          : local.all_public_subnet_ids[0]
-        )
-        ] : (
-        var.lb_internal
-        ? local.all_private_subnet_ids
-        : local.all_public_subnet_ids
-      )
+      var.lb_internal
+      ? local.all_private_subnet_ids
+      : local.all_public_subnet_ids
     )
   )
 
+  # A single node stays in the first subnet: its EBS data volume is AZ-bound.
   graphdb_subnets = var.graphdb_node_count == 1 ? [local.all_private_subnet_ids[0]] : local.all_private_subnet_ids
 
   # Load Balancer ARNs & DNS
