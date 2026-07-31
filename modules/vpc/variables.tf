@@ -6,6 +6,11 @@ variable "resource_name_prefix" {
 variable "vpc_private_subnet_cidrs" {
   description = "CIDR blocks for private subnets"
   type        = list(string)
+
+  validation {
+    condition     = length(var.vpc_private_subnet_cidrs) <= length(var.vpc_public_subnet_cidrs)
+    error_message = "vpc_private_subnet_cidrs must not have more entries than vpc_public_subnet_cidrs, otherwise per-AZ NAT gateway routing has no matching public subnet/NAT gateway for the extra private subnets."
+  }
 }
 
 variable "vpc_public_subnet_cidrs" {
