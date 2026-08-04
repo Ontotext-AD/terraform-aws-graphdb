@@ -106,7 +106,6 @@ EOF
 %{ if graphdb_audit_log_enabled ~}
 log_with_timestamp "Configuring GraphDB audit log"
 cat << EOF >> /etc/graphdb/graphdb.properties
-graphdb.audit.log.enabled=true
 graphdb.audit.role=${graphdb_audit_log_role}
 graphdb.audit.repository=${graphdb_audit_log_repository}
 %{ if graphdb_audit_log_headers != "" ~}

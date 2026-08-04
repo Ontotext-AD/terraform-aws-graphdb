@@ -1,5 +1,9 @@
 # GraphDB AWS Terraform Module Changelog
 
+## 4.0.0
+
+* Fixed missing `default` value for `graphdb_data_encryption_keystore_alias`, which made it a required variable even when not using `pkcs12`-based encryption at rest
+
 ## 3.3.2
 
 * Updated GraphDB default version to [11.4.2](https://graphdb.ontotext.com/documentation/11.4/release-notes.html#graphdb-11-4-2)
