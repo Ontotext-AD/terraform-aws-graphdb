@@ -67,6 +67,7 @@ versions. The next table shows the version compatability between GraphDB, and th
 | [Version 2.7.x](https://github.com/Ontotext-AD/terraform-aws-graphdb/releases) | [Version 11.2.x](https://graphdb.ontotext.com/documentation/11.2/release-notes.html) |
 | [Version 3.2.x](https://github.com/Ontotext-AD/terraform-aws-graphdb/releases) | [Version 11.3.x](https://graphdb.ontotext.com/documentation/11.3/release-notes.html) |
 | [Version 3.3.x](https://github.com/Ontotext-AD/terraform-aws-graphdb/releases) | [Version 11.4.x](https://graphdb.ontotext.com/documentation/11.4/release-notes.html) |
+| [Version 3.4.x](https://github.com/Ontotext-AD/terraform-aws-graphdb/releases) | [Version 11.5.x](https://graphdb.ontotext.com/documentation/11.5/release-notes.html) |
 
 You can track the particular version updates of GraphDB in the [changelog](CHANGELOG.md).
 
@@ -154,7 +155,7 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | tgw\_enable\_propagation | Whether to enable propagation of this attachment into tgw\_route\_table\_id. | `bool` | `null` | no |
 | lb\_enable\_private\_access | Enable or disable the private access via PrivateLink to the GraphDB Cluster | `bool` | `false` | no |
 | ami\_id | (Optional) User-provided AMI ID to use with GraphDB instances. If you provide this value, please ensure it will work with the default userdata script (assumes latest version of Ubuntu LTS). Otherwise, please provide your own userdata script using the user\_supplied\_userdata\_path variable. | `string` | `null` | no |
-| graphdb\_version | GraphDB version | `string` | `"11.4.3"` | no |
+| graphdb\_version | GraphDB version | `string` | `"11.5.0"` | no |
 | device\_name | The device to which EBS volumes for the GraphDB data directory will be mapped. | `string` | `"/dev/sdf"` | no |
 | ebs\_volume\_type | Type of the EBS volumes, used by the GraphDB nodes. | `string` | `"gp3"` | no |
 | ebs\_volume\_size | The size of the EBS volumes, used by the GraphDB nodes. | `number` | `500` | no |
@@ -392,7 +393,7 @@ Note: The options mention above will be appended to the ones set in the user dat
 **Customize GraphDB Version**
 
 ```hcl
-graphdb_version = "11.4.3"
+graphdb_version = "11.5.0"
 ```
 
 **Purge Protection**
@@ -430,13 +431,13 @@ deploy_monitoring = true
 
 **Encryption at Rest**
 
-Starting from 11.4.0, GraphDB supports encryption at rest (See [here](https://graphdb.ontotext.com/documentation/11.4/encryption.html#encryption-at-rest)). To configure encryption at rest
+Starting from 11.4.0, GraphDB supports encryption at rest (See [here](https://graphdb.ontotext.com/documentation/11.5/encryption.html#encryption-at-rest)). To configure encryption at rest
 
 ### Microsoft Entra ID (Azure AD) Integration
 
 This module supports Microsoft Entra ID (formerly Azure AD) authentication for GraphDB. When enabled, users can authenticate using their Entra ID credentials, and machine-to-machine (M2M) authentication is used for automated operations like backups and cluster management.
 
-For detailed information about GraphDB authentication methods and access control, see the official [GraphDB Access Control documentation](https://graphdb.ontotext.com/documentation/11.4/access-control.html).
+For detailed information about GraphDB authentication methods and access control, see the official [GraphDB Access Control documentation](https://graphdb.ontotext.com/documentation/11.5/access-control.html).
 
 #### Prerequisites
 
@@ -971,7 +972,7 @@ app_name             = "graphdb"
 # ============================================
 # GraphDB Configuration
 # ============================================
-graphdb_version        = "11.4.3"
+graphdb_version        = "11.5.0"
 graphdb_node_count     = 3
 ec2_instance_type      = "r6i.2xlarge"
 graphdb_admin_password = "your-secure-password"  # Use secrets manager in production
