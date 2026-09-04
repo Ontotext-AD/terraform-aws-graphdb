@@ -29,7 +29,10 @@ module "vpc" {
   vpc_flow_log_bucket_arn = var.vpc_enable_flow_logs && var.deploy_logging_module ? (
     module.logging[0].graphdb_logging_bucket_arn
   ) : null
-  graphdb_node_count = var.graphdb_node_count
+  vpc_flow_logs_enable_s3_delivery           = var.deploy_logging_module && var.logs_enable_s3_delivery
+  vpc_flow_logs_enable_cloudwatch_delivery   = var.logs_enable_cloudwatch_delivery
+  vpc_flow_logs_cloudwatch_retention_in_days = var.logs_cloudwatch_retention_in_days
+  graphdb_node_count                         = var.graphdb_node_count
 
   tgw_id                       = var.tgw_id != "" ? var.tgw_id : null
   tgw_subnet_cidrs             = var.tgw_id != "" ? var.tgw_subnet_cidrs : []
@@ -55,17 +58,20 @@ module "backup" {
   s3_access_logs_bucket_name = var.deploy_logging_module && var.s3_enable_access_logs ? (
     module.logging[0].graphdb_logging_bucket_name
   ) : null
-  create_s3_kms_key              = var.create_s3_kms_key
-  s3_default_kms_key             = var.s3_kms_default_key
-  s3_cmk_alias                   = var.s3_cmk_alias
-  s3_kms_key_admin_arn           = local.s3_key_admin_arn_joined
-  s3_cmk_description             = var.s3_cmk_description
-  s3_key_specification           = var.s3_key_specification
-  s3_kms_key_enabled             = var.s3_kms_key_enabled
-  s3_key_rotation_enabled        = var.s3_key_rotation_enabled
-  s3_key_deletion_window_in_days = var.s3_key_deletion_window_in_days
-  s3_external_kms_key            = var.s3_external_kms_key_arn
-  s3_kms_key_arn                 = local.calculated_s3_kms_key_arn
+  s3_access_logs_enable_s3_delivery           = var.deploy_logging_module && var.logs_enable_s3_delivery
+  s3_access_logs_enable_cloudwatch_delivery   = var.s3_enable_access_logs && var.logs_enable_cloudwatch_delivery
+  s3_access_logs_cloudwatch_retention_in_days = var.logs_cloudwatch_retention_in_days
+  create_s3_kms_key                           = var.create_s3_kms_key
+  s3_default_kms_key                          = var.s3_kms_default_key
+  s3_cmk_alias                                = var.s3_cmk_alias
+  s3_kms_key_admin_arn                        = local.s3_key_admin_arn_joined
+  s3_cmk_description                          = var.s3_cmk_description
+  s3_key_specification                        = var.s3_key_specification
+  s3_kms_key_enabled                          = var.s3_kms_key_enabled
+  s3_key_rotation_enabled                     = var.s3_key_rotation_enabled
+  s3_key_deletion_window_in_days              = var.s3_key_deletion_window_in_days
+  s3_external_kms_key                         = var.s3_external_kms_key_arn
+  s3_kms_key_arn                              = local.calculated_s3_kms_key_arn
 }
 
 module "logging" {
@@ -74,19 +80,19 @@ module "logging" {
   count = var.deploy_logging_module ? 1 : 0
 
   resource_name_prefix = var.resource_name_prefix
-  lb_access_logs_expiration_days = var.deploy_logging_module && var.lb_enable_access_logs ? (
+  lb_access_logs_expiration_days = var.deploy_logging_module && var.lb_enable_access_logs && var.logs_enable_s3_delivery ? (
   var.lb_access_logs_expiration_days) : null
-  lb_access_logs_lifecycle_rule_status = var.deploy_logging_module && var.lb_enable_access_logs ? (
+  lb_access_logs_lifecycle_rule_status = var.deploy_logging_module && var.lb_enable_access_logs && var.logs_enable_s3_delivery ? (
   var.lb_access_logs_lifecycle_rule_status) : "Disabled"
-  s3_access_logs_expiration_days = var.deploy_logging_module && var.s3_enable_access_logs ? (
+  s3_access_logs_expiration_days = var.deploy_logging_module && var.s3_enable_access_logs && var.logs_enable_s3_delivery ? (
   var.s3_access_logs_expiration_days) : null
-  s3_access_logs_lifecycle_rule_status = var.deploy_logging_module && var.s3_enable_access_logs ? (
+  s3_access_logs_lifecycle_rule_status = var.deploy_logging_module && var.s3_enable_access_logs && var.logs_enable_s3_delivery ? (
     var.s3_access_logs_lifecycle_rule_status
   ) : "Disabled"
-  vpc_flow_logs_expiration_days = var.deploy_logging_module && var.vpc_enable_flow_logs ? (
+  vpc_flow_logs_expiration_days = var.deploy_logging_module && var.vpc_enable_flow_logs && var.logs_enable_s3_delivery ? (
     var.vpc_flow_logs_expiration_days
   ) : null
-  vpc_flow_logs_lifecycle_rule_status = var.deploy_logging_module && var.vpc_enable_flow_logs ? (
+  vpc_flow_logs_lifecycle_rule_status = var.deploy_logging_module && var.vpc_enable_flow_logs && var.logs_enable_s3_delivery ? (
     var.vpc_flow_logs_lifecycle_rule_status
   ) : "Disabled"
   expired_object_delete_marker = var.s3_expired_object_delete_marker
@@ -156,6 +162,10 @@ module "load_balancer" {
   lb_client_keep_alive_timeout  = var.lb_client_keep_alive_timeout
   lb_enable_http2               = var.alb_enable_http2
   lb_context_path               = var.lb_context_path
+
+  lb_access_logs_enable_s3_delivery           = var.deploy_logging_module && var.logs_enable_s3_delivery
+  lb_access_logs_enable_cloudwatch_delivery   = var.lb_enable_access_logs && var.logs_enable_cloudwatch_delivery
+  lb_access_logs_cloudwatch_retention_in_days = var.logs_cloudwatch_retention_in_days
 }
 
 module "monitoring" {

@@ -32,3 +32,8 @@ output "key_admin_iam_role_name" {
   description = "Outputs the IAM Role name for the S3 Key Admin Role"
   value       = aws_iam_role.graphdb_s3_key_admin_role.name
 }
+
+output "s3_access_logs_cloudwatch_log_group_arn" {
+  description = "ARN of the CloudWatch Log Group receiving the backup bucket's S3 access logs (if enabled)"
+  value       = try(aws_cloudwatch_log_group.graphdb_s3_access_logs[0].arn, null)
+}

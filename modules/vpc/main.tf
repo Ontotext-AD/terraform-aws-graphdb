@@ -167,11 +167,85 @@ resource "aws_route_table_association" "graphdb_private_association" {
 # GraphDB VPC Flow Logs
 
 resource "aws_flow_log" "graphdb_vpc_flow_log" {
-  count = var.vpc_enable_flow_logs ? 1 : 0
+  count = var.vpc_enable_flow_logs && var.vpc_flow_logs_enable_s3_delivery ? 1 : 0
 
   traffic_type         = "ALL"
   log_destination_type = "s3"
   log_destination      = var.vpc_flow_log_bucket_arn
+  vpc_id               = aws_vpc.graphdb_vpc.id
+}
+
+# GraphDB VPC Flow Logs - CloudWatch Logs destination (in addition to S3)
+
+resource "aws_cloudwatch_log_group" "graphdb_vpc_flow_log_group" {
+  count = var.vpc_enable_flow_logs && var.vpc_flow_logs_enable_cloudwatch_delivery ? 1 : 0
+
+  name              = "/aws/vpc-flow-logs/${var.resource_name_prefix}"
+  retention_in_days = var.vpc_flow_logs_cloudwatch_retention_in_days
+}
+
+data "aws_iam_policy_document" "graphdb_vpc_flow_log_assume_role" {
+  count = var.vpc_enable_flow_logs && var.vpc_flow_logs_enable_cloudwatch_delivery ? 1 : 0
+
+  statement {
+    effect  = "Allow"
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["vpc-flow-logs.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role" "graphdb_vpc_flow_log_role" {
+  count = var.vpc_enable_flow_logs && var.vpc_flow_logs_enable_cloudwatch_delivery ? 1 : 0
+
+  name               = "${var.resource_name_prefix}-vpc-flow-logs"
+  assume_role_policy = data.aws_iam_policy_document.graphdb_vpc_flow_log_assume_role[0].json
+}
+
+data "aws_iam_policy_document" "graphdb_vpc_flow_log_policy" {
+  count = var.vpc_enable_flow_logs && var.vpc_flow_logs_enable_cloudwatch_delivery ? 1 : 0
+
+  statement {
+    effect = "Allow"
+    actions = [
+      "logs:CreateLogStream",
+      "logs:PutLogEvents",
+    ]
+    resources = ["${aws_cloudwatch_log_group.graphdb_vpc_flow_log_group[0].arn}:*"]
+  }
+
+  # logs:DescribeLogGroups and logs:DescribeLogStreams don't support
+  # resource-level permissions, so they must use "*" per AWS's documented
+  # flow-log IAM role policy (a scoped resource would silently not
+  # authorize the call): https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs-iam-role.html
+  statement {
+    effect = "Allow"
+    actions = [
+      "logs:DescribeLogGroups",
+      "logs:DescribeLogStreams",
+    ]
+    resources = ["*"]
+  }
+}
+
+resource "aws_iam_role_policy" "graphdb_vpc_flow_log_policy" {
+  count = var.vpc_enable_flow_logs && var.vpc_flow_logs_enable_cloudwatch_delivery ? 1 : 0
+
+  name   = "${var.resource_name_prefix}-vpc-flow-logs"
+  role   = aws_iam_role.graphdb_vpc_flow_log_role[0].id
+  policy = data.aws_iam_policy_document.graphdb_vpc_flow_log_policy[0].json
+}
+
+resource "aws_flow_log" "graphdb_vpc_flow_log_cloudwatch" {
+  count = var.vpc_enable_flow_logs && var.vpc_flow_logs_enable_cloudwatch_delivery ? 1 : 0
+
+  traffic_type         = "ALL"
+  log_destination_type = "cloud-watch-logs"
+  log_destination      = aws_cloudwatch_log_group.graphdb_vpc_flow_log_group[0].arn
+  iam_role_arn         = aws_iam_role.graphdb_vpc_flow_log_role[0].arn
   vpc_id               = aws_vpc.graphdb_vpc.id
 }
 

@@ -85,6 +85,23 @@ variable "lb_access_logs_bucket_name" {
   type        = string
 }
 
+variable "lb_access_logs_enable_s3_delivery" {
+  description = "Deliver LB access logs to S3. Set to false to skip S3 delivery (e.g. to go CloudWatch-only)."
+  type        = bool
+  default     = true
+}
+
+variable "lb_access_logs_enable_cloudwatch_delivery" {
+  description = "In addition to S3, also deliver LB access logs to a CloudWatch Logs log group."
+  type        = bool
+  default     = false
+}
+
+variable "lb_access_logs_cloudwatch_retention_in_days" {
+  description = "Retention in days for the LB access logs CloudWatch Log Group."
+  type        = number
+}
+
 variable "graphdb_node_count" {
   description = "Number of GraphDB nodes to deploy in ASG"
   type        = number

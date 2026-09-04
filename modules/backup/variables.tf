@@ -23,6 +23,23 @@ variable "s3_access_logs_bucket_name" {
   type        = string
 }
 
+variable "s3_access_logs_enable_s3_delivery" {
+  description = "Deliver the backup bucket's access logs to S3. Set to false to skip S3 delivery (e.g. to go CloudWatch-only)."
+  type        = bool
+  default     = true
+}
+
+variable "s3_access_logs_enable_cloudwatch_delivery" {
+  description = "In addition to S3, also deliver the backup bucket's access logs to a CloudWatch Logs log group."
+  type        = bool
+  default     = false
+}
+
+variable "s3_access_logs_cloudwatch_retention_in_days" {
+  description = "Retention in days for the S3 access logs CloudWatch Log Group."
+  type        = number
+}
+
 # KMS CMK
 
 variable "create_s3_kms_key" {

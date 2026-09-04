@@ -44,7 +44,8 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "graphdb_logging_s
   bucket = aws_s3_bucket.graphdb_logging_bucket.id
 
   rule {
-    bucket_key_enabled = true
+    bucket_key_enabled       = true
+    blocked_encryption_types = ["SSE-C"]
 
     apply_server_side_encryption_by_default {
       sse_algorithm = "AES256"
@@ -134,9 +135,33 @@ resource "aws_s3_bucket_lifecycle_configuration" "logs_lifecycle_configuration" 
       prefix = "s3_access_logs/"
     }
 
+    dynamic "expiration" {
+      for_each = var.s3_access_logs_expiration_days != null ? [var.s3_access_logs_expiration_days] : []
+      content {
+        days = expiration.value
+      }
+    }
+  }
+
+  # Lifecycle rule to clean up delete markers left behind on the S3 access
+  # logs prefix once their noncurrent versions have all expired. AWS rejects
+  # `days` and `expired_object_delete_marker` in the same expiration block,
+  # so this needs its own rule rather than living in the rule above.
+
+  rule {
+    id     = "${var.resource_name_prefix}-s3-access-logs-delete-markers"
+    status = var.s3_access_logs_lifecycle_rule_status
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = var.abort_multipart_upload
+    }
+
+    filter {
+      prefix = "s3_access_logs/"
+    }
+
     expiration {
-      days                         = var.s3_access_logs_expiration_days
-      expired_object_delete_marker = true
+      expired_object_delete_marker = var.expired_object_delete_marker
     }
   }
 
@@ -154,8 +179,11 @@ resource "aws_s3_bucket_lifecycle_configuration" "logs_lifecycle_configuration" 
       prefix = "AWSLogs/"
     }
 
-    expiration {
-      days = var.lb_access_logs_expiration_days
+    dynamic "expiration" {
+      for_each = var.lb_access_logs_expiration_days != null ? [var.lb_access_logs_expiration_days] : []
+      content {
+        days = expiration.value
+      }
     }
   }
   # Lifecycle rule for the VPC flow logs
@@ -172,8 +200,11 @@ resource "aws_s3_bucket_lifecycle_configuration" "logs_lifecycle_configuration" 
       prefix = "AWSLogs/${data.aws_caller_identity.current.account_id}/${data.aws_region.current.id}/vpcflowlogs/"
     }
 
-    expiration {
-      days = var.vpc_flow_logs_expiration_days
+    dynamic "expiration" {
+      for_each = var.vpc_flow_logs_expiration_days != null ? [var.vpc_flow_logs_expiration_days] : []
+      content {
+        days = expiration.value
+      }
     }
   }
 }

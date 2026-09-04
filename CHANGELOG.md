@@ -4,6 +4,9 @@
 
 **BREAKING CHANGE**: The `graphdb_nodes_disconnected` CloudWatch alarm has been changed from a single `count`-based resource to per-node alarms using `for_each` over instance hostnames. Terraform will destroy the existing alarm and recreate one alarm per node. Alarms are now named `al-{prefix}-{hostname}-detected-nodes-disconnected` to clarify that the alarm fires on the node that detected the disconnection, not the node that went down. Any notification subscriptions or dashboards referencing the old alarm name will need to be updated.
 
+* Added `logs_enable_cloudwatch_delivery` variable to also deliver VPC flow logs, LB access logs, and S3 (backup bucket) access logs to CloudWatch Logs, alongside or instead of S3
+* Added `logs_enable_s3_delivery` variable (default `true`) to disable S3 delivery for those same log types independently of CloudWatch delivery
+* Added `logs_cloudwatch_retention_in_days` variable to control retention on the new CloudWatch Log Groups
 * Changed comparison operator for the nodes disconnected alarm from `GreaterThanThreshold` to `GreaterThanOrEqualToThreshold`
 * Added `insufficient_data_actions` to all CloudWatch alarms so that transitions to `INSUFFICIENT_DATA` state (e.g. when a node stops emitting metrics) trigger an SNS notification
 * Fixed typo in KMS key policy: `kms:Ecnrypt` → `kms:Encrypt` and expanded `kms:ReEncrypt` to `kms:ReEncrypt*`

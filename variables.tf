@@ -623,12 +623,6 @@ variable "s3_access_logs_expiration_days" {
   default     = 30
 }
 
-variable "s3_expired_object_delete_marker" {
-  description = "Indicates whether Amazon S3 will remove a delete marker with no noncurrent versions. If set to true, the delete marker will be expired; if set to false the policy takes no action."
-  type        = bool
-  default     = true
-}
-
 variable "s3_mfa_delete" {
   description = "Enable MFA delete for either Change the versioning state of your bucket or Permanently delete an object version. Default is false. This cannot be used to toggle this setting but is available to allow managed buckets to reflect the state in AWS"
   type        = string
@@ -651,6 +645,30 @@ variable "s3_enable_replication_rule" {
   description = "Enable or disable S3 bucket replication"
   type        = string
   default     = "Disabled"
+}
+
+variable "s3_expired_object_delete_marker" {
+  description = "Indicates whether Amazon S3 will remove a delete marker with no noncurrent versions. If set to true, the delete marker will be expired; if set to false the policy takes no action."
+  type        = bool
+  default     = true
+}
+
+variable "logs_enable_s3_delivery" {
+  description = "Deliver VPC flow logs, LB access logs, and S3 (backup bucket) access logs to S3. Set to false to stop S3 delivery for the log types that are enabled (e.g. to go CloudWatch-only); requires logs_enable_cloudwatch_delivery = true if you disable this, otherwise that log type gets no destination at all."
+  type        = bool
+  default     = true
+}
+
+variable "logs_enable_cloudwatch_delivery" {
+  description = "Also deliver VPC flow logs, LB access logs, and S3 (backup bucket) access logs to CloudWatch Logs, alongside or instead of S3 (see logs_enable_s3_delivery)."
+  type        = bool
+  default     = false
+}
+
+variable "logs_cloudwatch_retention_in_days" {
+  description = "Retention in days for the CloudWatch Log Groups created when logs_enable_cloudwatch_delivery is true."
+  type        = number
+  default     = 30
 }
 
 variable "existing_lb_arn" {

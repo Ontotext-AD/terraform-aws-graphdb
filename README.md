@@ -195,6 +195,9 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | s3\_versioning\_enabled | Enable versioning. Once you version-enable a bucket, it can never return to an unversioned state. You can, however, suspend versioning on that bucket. | `string` | `"Enabled"` | no |
 | s3\_abort\_multipart\_upload | Specifies the number of days after initiating a multipart upload when the multipart upload must be completed. | `number` | `7` | no |
 | s3\_enable\_replication\_rule | Enable or disable S3 bucket replication | `string` | `"Disabled"` | no |
+| logs\_enable\_s3\_delivery | Deliver VPC flow logs, LB access logs, and S3 (backup bucket) access logs to S3. Set to false to stop S3 delivery for the log types that are enabled (e.g. to go CloudWatch-only); requires logs\_enable\_cloudwatch\_delivery = true if you disable this, otherwise that log type gets no destination at all. | `bool` | `true` | no |
+| logs\_enable\_cloudwatch\_delivery | Also deliver VPC flow logs, LB access logs, and S3 (backup bucket) access logs to CloudWatch Logs, alongside or instead of S3 (see logs\_enable\_s3\_delivery). | `bool` | `false` | no |
+| logs\_cloudwatch\_retention\_in\_days | Retention in days for the CloudWatch Log Groups created when logs\_enable\_cloudwatch\_delivery is true. | `number` | `30` | no |
 | existing\_lb\_arn | (Optional) ARN of an existing Load Balancer. If provided, the module will not create a new LB. | `string` | `""` | no |
 | existing\_lb\_dns\_name | (Optional) Use the DNS Name of an existing Load Balancer. | `string` | `""` | no |
 | existing\_lb\_subnets | (Optional) Provide the subnet/s of the existing Load Balancer | `list(string)` | `[]` | no |
@@ -1013,6 +1016,8 @@ backup_schedule      = "0 2 * * *"  # Daily at 2 AM
 backup_retention_count = 30
 
 deploy_logging_module = true
+# logs_enable_cloudwatch_delivery = true  # also deliver VPC flow/LB/S3 access logs to CloudWatch Logs
+# logs_enable_s3_delivery         = false # set false to go CloudWatch-only instead of S3
 
 # ============================================
 # Monitoring

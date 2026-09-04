@@ -32,3 +32,8 @@ output "tgw_rt_propagation_id" {
   description = "ID of the TGW route table propagation (if created)"
   value       = try(aws_ec2_transit_gateway_route_table_propagation.graphdb_tgw_propagation[0].id, null)
 }
+
+output "vpc_flow_logs_cloudwatch_log_group_arn" {
+  description = "ARN of the CloudWatch Log Group receiving VPC flow logs (if enabled)"
+  value       = try(aws_cloudwatch_log_group.graphdb_vpc_flow_log_group[0].arn, null)
+}

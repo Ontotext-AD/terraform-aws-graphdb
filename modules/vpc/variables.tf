@@ -81,6 +81,23 @@ variable "vpc_flow_log_bucket_arn" {
   default     = null
 }
 
+variable "vpc_flow_logs_enable_s3_delivery" {
+  description = "Deliver VPC flow logs to S3. Set to false to skip S3 delivery (e.g. to go CloudWatch-only)."
+  type        = bool
+  default     = true
+}
+
+variable "vpc_flow_logs_enable_cloudwatch_delivery" {
+  description = "In addition to S3, also deliver VPC flow logs to a CloudWatch Logs log group."
+  type        = bool
+  default     = false
+}
+
+variable "vpc_flow_logs_cloudwatch_retention_in_days" {
+  description = "Retention in days for the VPC flow logs CloudWatch Log Group."
+  type        = number
+}
+
 variable "graphdb_node_count" {
   description = "Number of GraphDB nodes to deploy in ASG"
   type        = number
