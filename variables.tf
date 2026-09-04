@@ -653,6 +653,29 @@ variable "s3_enable_replication_rule" {
   default     = "Disabled"
 }
 
+variable "logs_enable_s3_delivery" {
+  description = "Deliver VPC flow logs, LB access logs, and S3 (backup bucket) access logs to S3. Set to false to stop S3 delivery, e.g. to go CloudWatch-only. Logs already in the logging bucket are kept or expired according to the *_lifecycle_rule_status and *_expiration_days variables."
+  type        = bool
+  default     = true
+}
+
+variable "logs_enable_cloudwatch_delivery" {
+  description = "Deliver VPC flow logs, LB access logs, and S3 (backup bucket) access logs to CloudWatch Logs. Can be combined with logs_enable_s3_delivery."
+  type        = bool
+  default     = false
+}
+
+variable "logs_cloudwatch_retention_in_days" {
+  description = "Retention in days for the CloudWatch Log Groups created when logs_enable_cloudwatch_delivery is true."
+  type        = number
+  default     = 30
+
+  validation {
+    condition     = contains([0, 1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1096, 1827, 2192, 2557, 2922, 3288, 3653], var.logs_cloudwatch_retention_in_days)
+    error_message = "logs_cloudwatch_retention_in_days must be one of 0, 1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1096, 1827, 2192, 2557, 2922, 3288, 3653."
+  }
+}
+
 variable "existing_lb_arn" {
   description = "(Optional) ARN of an existing Load Balancer. If provided, the module will not create a new LB."
   type        = string

@@ -195,6 +195,9 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | s3\_versioning\_enabled | Enable versioning. Once you version-enable a bucket, it can never return to an unversioned state. You can, however, suspend versioning on that bucket. | `string` | `"Enabled"` | no |
 | s3\_abort\_multipart\_upload | Specifies the number of days after initiating a multipart upload when the multipart upload must be completed. | `number` | `7` | no |
 | s3\_enable\_replication\_rule | Enable or disable S3 bucket replication | `string` | `"Disabled"` | no |
+| logs\_enable\_s3\_delivery | Deliver VPC flow logs, LB access logs, and S3 (backup bucket) access logs to S3. Set to false to stop S3 delivery, e.g. to go CloudWatch-only. Logs already in the logging bucket are kept or expired according to the *\_lifecycle\_rule\_status and *\_expiration\_days variables. | `bool` | `true` | no |
+| logs\_enable\_cloudwatch\_delivery | Deliver VPC flow logs, LB access logs, and S3 (backup bucket) access logs to CloudWatch Logs. Can be combined with logs\_enable\_s3\_delivery. | `bool` | `false` | no |
+| logs\_cloudwatch\_retention\_in\_days | Retention in days for the CloudWatch Log Groups created when logs\_enable\_cloudwatch\_delivery is true. | `number` | `30` | no |
 | existing\_lb\_arn | (Optional) ARN of an existing Load Balancer. If provided, the module will not create a new LB. | `string` | `""` | no |
 | existing\_lb\_dns\_name | (Optional) Use the DNS Name of an existing Load Balancer. | `string` | `""` | no |
 | existing\_lb\_subnets | (Optional) Provide the subnet/s of the existing Load Balancer | `list(string)` | `[]` | no |
@@ -675,6 +678,23 @@ vpc_enable_flow_logs = true
 vpc_flow_logs_lifecycle_rule_status = "Enabled"
 ```
 
+#### CloudWatch Logs Delivery
+
+The VPC flow logs, load balancer access logs and S3 access logs can also be delivered to CloudWatch Logs, alongside or instead of S3:
+
+```hcl
+logs_enable_cloudwatch_delivery   = true
+logs_enable_s3_delivery           = false # CloudWatch-only
+logs_cloudwatch_retention_in_days = 30
+```
+
+When S3 delivery is disabled, the logs already in the logging bucket are kept or expired according to the `*_lifecycle_rule_status` and `*_expiration_days` variables.
+
+Notes:
+- VPC flow logs are not created when an existing VPC is used (`vpc_id`).
+- S3 access logs require `deploy_backup = true`.
+- Network load balancer access logs are written only for TLS listeners.
+
 #### KMS Encryption using Customer Master Keys
 
 **Parameter Store encryption**
@@ -1033,6 +1053,8 @@ backup_schedule      = "0 2 * * *"  # Daily at 2 AM
 backup_retention_count = 30
 
 deploy_logging_module = true
+# logs_enable_cloudwatch_delivery = true  # also deliver VPC flow/LB/S3 access logs to CloudWatch Logs
+# logs_enable_s3_delivery         = false # set false to go CloudWatch-only instead of S3
 
 # ============================================
 # Monitoring
