@@ -4,11 +4,15 @@
 
 **BREAKING CHANGE**: The `graphdb_nodes_disconnected` CloudWatch alarm has been changed from a single `count`-based resource to per-node alarms using `for_each` over instance hostnames. Terraform will destroy the existing alarm and recreate one alarm per node. Alarms are now named `al-{prefix}-{hostname}-detected-nodes-disconnected` to clarify that the alarm fires on the node that detected the disconnection, not the node that went down. Any notification subscriptions or dashboards referencing the old alarm name will need to be updated.
 
+**BREAKING CHANGE**: GraphDB node logs are now shipped to a dedicated CloudWatch log group per node (`{prefix}-{hostname}`) instead of a single shared log group. The `graphdb_attempting_to_recover_alarm` and `graphdb_low_disk_space_alarm` metric filters/alarms have accordingly been converted from single `count`-based resources to per-node resources using `for_each`, with matching per-node alarm names (`al-{prefix}-{hostname}-attempting-recover`, `al-{prefix}-{hostname}-low-disk-space-GraphDB-disk`). Terraform will destroy the existing single alarms and recreate one alarm per node. Any notification subscriptions or dashboards referencing the old alarm names will need to be updated. The original shared log group resource is left in place but no longer receives new log events.
+
 * Changed comparison operator for the nodes disconnected alarm from `GreaterThanThreshold` to `GreaterThanOrEqualToThreshold`
 * Added `insufficient_data_actions` to all CloudWatch alarms so that transitions to `INSUFFICIENT_DATA` state (e.g. when a node stops emitting metrics) trigger an SNS notification
 * Fixed typo in KMS key policy: `kms:Ecnrypt` → `kms:Encrypt` and expanded `kms:ReEncrypt` to `kms:ReEncrypt*`
 * Separated CloudWatch alarms KMS permissions into a dedicated policy statement with an `aws:SourceAccount` condition, removing `cloudwatch.amazonaws.com` from the shared SNS service principal block
 * Fixed missing `default` value for `graphdb_data_encryption_keystore_alias`, which made it a required variable even when not using `pkcs12`-based encryption at rest
+* Added a per-node CloudWatch alarm (`graphdb_workbench_settings_error_alarm`) that triggers when a node logs "Error loading Workbench settings, using the defaults"
+* Fixed the low disk space metric filter pattern, which searched for the unrelated string "No space left on the device" and never matched GraphDB's actual `FileSystemHealth` log message ("...is critically low on free disk space..."), so the alarm could never fire
 
 ## 3.3.2
 
