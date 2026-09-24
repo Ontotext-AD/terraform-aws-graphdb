@@ -2,7 +2,7 @@
 
 This Terraform module allows you to provision an GraphDB cluster within a Virtual Private Cloud (VPC). The module
 provides a flexible way to configure the cluster and the associated VPC components. It implements the GraphDB reference
-architecture. Check the official [documentation](https://graphdb.ontotext.com/documentation/11.4/aws-deployment.html)
+architecture. Check the official [documentation](https://graphdb.ontotext.com/documentation/11.5/aws-deployment.html)
 for more details.
 
 ## Table of contents
@@ -155,7 +155,7 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | tgw\_enable\_propagation | Whether to enable propagation of this attachment into tgw\_route\_table\_id. | `bool` | `null` | no |
 | lb\_enable\_private\_access | Enable or disable the private access via PrivateLink to the GraphDB Cluster | `bool` | `false` | no |
 | ami\_id | (Optional) User-provided AMI ID to use with GraphDB instances. If you provide this value, please ensure it will work with the default userdata script (assumes latest version of Ubuntu LTS). Otherwise, please provide your own userdata script using the user\_supplied\_userdata\_path variable. | `string` | `null` | no |
-| graphdb\_version | GraphDB version | `string` | `"11.5.0"` | no |
+| graphdb\_version | GraphDB version | `string` | `"11.5.1"` | no |
 | device\_name | The device to which EBS volumes for the GraphDB data directory will be mapped. | `string` | `"/dev/sdf"` | no |
 | ebs\_volume\_type | Type of the EBS volumes, used by the GraphDB nodes. | `string` | `"gp3"` | no |
 | ebs\_volume\_size | The size of the EBS volumes, used by the GraphDB nodes. | `number` | `500` | no |
@@ -393,7 +393,7 @@ Note: The options mention above will be appended to the ones set in the user dat
 **Customize GraphDB Version**
 
 ```hcl
-graphdb_version = "11.5.0"
+graphdb_version = "11.5.1"
 ```
 
 **Purge Protection**
@@ -498,7 +498,7 @@ When `graphdb.auth.openid.proxy=true`, GraphDB calls the identity provider's tok
 
 > **Note:** `graphdb.auth.openid.proxy` must be set to `true` to enable additional client authentication — it signals that GraphDB proxies the token endpoint.
 
-See the official [GraphDB documentation on additional authentication for OpenID clients](https://graphdb.ontotext.com/documentation/11.4/access-control.html#additional-authentication-for-openid-clients) for more details.
+See the official [GraphDB documentation on additional authentication for OpenID clients](https://graphdb.ontotext.com/documentation/11.5/access-control.html#additional-authentication-for-openid-clients) for more details.
 
 Configure via a custom `graphdb.properties` file referenced with `graphdb_properties_path`:
 
@@ -972,7 +972,7 @@ app_name             = "graphdb"
 # ============================================
 # GraphDB Configuration
 # ============================================
-graphdb_version        = "11.5.0"
+graphdb_version        = "11.5.1"
 graphdb_node_count     = 3
 ec2_instance_type      = "r6i.2xlarge"
 graphdb_admin_password = "your-secure-password"  # Use secrets manager in production
