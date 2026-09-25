@@ -3,13 +3,13 @@
 data "aws_availability_zones" "available" {}
 
 locals {
-  azs         = var.graphdb_node_count == 1 ? slice(data.aws_availability_zones.available.names, 0, 1) : slice(data.aws_availability_zones.available.names, 0, 3)
+  azs         = slice(data.aws_availability_zones.available.names, 0, 3)
   public_azs  = slice(data.aws_availability_zones.available.names, 0, length(var.vpc_public_subnet_cidrs))
   private_azs = slice(data.aws_availability_zones.available.names, 0, length(var.vpc_private_subnet_cidrs))
   effective_nat_gateway_mode = (
     var.nat_gateway_mode != null
     ? var.nat_gateway_mode
-    : (var.single_nat_gateway ? "single" : "per_az")
+    : (var.single_nat_gateway || var.graphdb_node_count == 1 ? "single" : "per_az")
   )
 
   nat_gateway_count = var.enable_nat_gateway ? (
@@ -107,7 +107,7 @@ resource "aws_nat_gateway" "graphdb_nat_gateway" {
 # GraphDB Public Route Table
 
 resource "aws_route_table" "graphdb_public_route_table" {
-  count = length(local.azs)
+  count = length(var.vpc_public_subnet_cidrs)
 
   vpc_id = aws_vpc.graphdb_vpc.id
 
@@ -122,7 +122,7 @@ resource "aws_route_table" "graphdb_public_route_table" {
 }
 
 resource "aws_route_table_association" "graphdb_public_association" {
-  count = length(local.azs)
+  count = length(var.vpc_public_subnet_cidrs)
 
   route_table_id = aws_route_table.graphdb_public_route_table[count.index].id
   subnet_id      = aws_subnet.graphdb_public_subnet[count.index].id
@@ -131,7 +131,7 @@ resource "aws_route_table_association" "graphdb_public_association" {
 # GraphDB Private Route Table
 
 resource "aws_route_table" "graphdb_private_route_table" {
-  count = length(local.azs)
+  count = length(var.vpc_private_subnet_cidrs)
 
   vpc_id = aws_vpc.graphdb_vpc.id
 
@@ -150,7 +150,7 @@ resource "aws_route_table" "graphdb_private_route_table" {
         : (
           local.effective_nat_gateway_mode == "single"
           ? aws_nat_gateway.graphdb_nat_gateway[0].id
-          : aws_nat_gateway.graphdb_nat_gateway[count.index].id
+          : aws_nat_gateway.graphdb_nat_gateway[min(count.index, local.nat_gateway_count - 1)].id
         )
       )
     }
@@ -158,7 +158,7 @@ resource "aws_route_table" "graphdb_private_route_table" {
 }
 
 resource "aws_route_table_association" "graphdb_private_association" {
-  count = length(local.azs)
+  count = length(var.vpc_private_subnet_cidrs)
 
   route_table_id = aws_route_table.graphdb_private_route_table[count.index].id
   subnet_id      = aws_subnet.graphdb_private_subnet[count.index].id

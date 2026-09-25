@@ -565,9 +565,36 @@ This module supports multiple NAT Gateway strategies for outbound internet acces
 The legacy input `single_nat_gateway` is kept for compatibility.
 If `nat_gateway_mode` is not set:
 - `single_nat_gateway = true` → behaves as `nat_gateway_mode = "single"`
-- `single_nat_gateway = false` → behaves as `nat_gateway_mode = "per_az"`
+- `single_nat_gateway = false` → behaves as `nat_gateway_mode = "per_az"`, **unless** `graphdb_node_count = 1`, in which case `single` is used regardless of `single_nat_gateway`
 
 Prefer using `nat_gateway_mode` in new deployments.
+
+### Subnets and Load Balancer Behavior
+
+Regardless of `graphdb_node_count`, the module always provisions and uses the **full** subnet/AZ set defined by
+`vpc_public_subnet_cidrs` / `vpc_private_subnet_cidrs` (or the provided `graphdb_subnets` / existing VPC subnets,
+when bringing your own VPC). Subnet/route table counts are never derived from `graphdb_node_count`.
+
+This matters because AWS does not allow removing a subnet from an existing Network Load Balancer — the NLB must be
+replaced instead. Earlier versions of this module shrank the subnet/AZ list down to a single subnet whenever
+`graphdb_node_count = 1`, which forced Terraform to try to recreate the NLB when scaling a cluster down to one node,
+failing with `Error: ELBv2 Load Balancer ... already exists`. The load balancer, its subnets, and the route tables
+now always span the same fixed subnet set, so changing `graphdb_node_count` alone never triggers an NLB/ALB
+replacement.
+
+The target group is the one thing that *does* change shape at the `graphdb_node_count = 1` boundary: a single node
+is health-checked on GraphDB's `/protocol` endpoint over port `7201`, while a cluster (`graphdb_node_count > 1`)
+uses port `7200` and `lb_health_check_path`. The target group's name carries a random suffix that only regenerates
+when `graphdb_node_count` crosses that `1 <-> >1` boundary — scaling within the cluster range (e.g. `3 -> 5 -> 7`)
+reuses the same target group and does not recreate it.
+
+Because the NLB always spans the full AZ set while a `graphdb_node_count = 1` deployment only has a target in one
+of those AZs, the other AZs have no registered targets. AWS's Network Load Balancer handles this for free via
+[DNS failover](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-target-groups.html#target-group-health):
+by default, an AZ whose healthy target count falls below a threshold (1, by default) has its load balancer node's IP
+removed from the load balancer's DNS name, so clients simply never resolve to the empty AZ. This module does not
+enable `enable_cross_zone_load_balancing` — it isn't needed for this scenario and would incur inter-AZ data transfer
+charges on the traffic it would otherwise reroute for no benefit over what DNS failover already provides for free.
 
 **ASG_WAIT**
 
