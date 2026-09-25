@@ -9,7 +9,7 @@
         "collect_list": [
           {
             "file_path": "/var/opt/graphdb/node/logs/main.log",
-            "log_group_name": "${name}",
+            "log_group_name": "${name}-{local_hostname}",
             "log_stream_name": "{local_hostname}",
             "filters": [
               {

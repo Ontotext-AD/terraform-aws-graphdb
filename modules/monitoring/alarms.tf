@@ -1,34 +1,34 @@
 # Alarms
 
-# Attempting to recover metric filter
+# Attempting to recover metric filter, one per node so the alarm can identify which node it happened on
 
 resource "aws_cloudwatch_log_metric_filter" "graphdb_attempting_to_recover_metric_filter" {
-  count = var.graphdb_node_count > 1 ? 1 : 0
+  for_each = var.graphdb_node_count > 1 ? toset(local.instance_hostnames) : toset([])
 
-  name           = "mf-${var.resource_name_prefix}-attempting-to-recover"
+  name           = "mf-${var.resource_name_prefix}-${each.key}-attempting-to-recover"
   pattern        = "Attempting to recover through snapshot replication"
-  log_group_name = aws_cloudwatch_log_group.graphdb_log_group.name
+  log_group_name = aws_cloudwatch_log_group.graphdb_node_log_group[each.key].name
 
   metric_transformation {
-    name      = "Attempting to recover through snapshot replication"
+    name      = "Attempting to recover through snapshot replication - ${each.key}"
     namespace = var.resource_name_prefix
     value     = "1"
     unit      = "Count"
   }
 
-  depends_on = [aws_cloudwatch_log_group.graphdb_log_group]
+  depends_on = [aws_cloudwatch_log_group.graphdb_node_log_group]
 }
 
-# Attempting to recover alarm based on metric filter
+# Attempting to recover alarm based on metric filter, per node
 
 resource "aws_cloudwatch_metric_alarm" "graphdb_attempting_to_recover_alarm" {
-  count = var.graphdb_node_count > 1 ? 1 : 0
+  for_each = var.graphdb_node_count > 1 ? toset(local.instance_hostnames) : toset([])
 
-  alarm_name                = "al-${var.resource_name_prefix}-attempting-recover"
-  alarm_description         = "Attempting to recover through snapshot replication"
+  alarm_name                = "al-${var.resource_name_prefix}-${each.key}-attempting-recover"
+  alarm_description         = "Attempting to recover through snapshot replication on ${each.key}"
   comparison_operator       = "GreaterThanThreshold"
-  metric_name               = aws_cloudwatch_log_metric_filter.graphdb_attempting_to_recover_metric_filter[0].metric_transformation[0].name
-  namespace                 = aws_cloudwatch_log_metric_filter.graphdb_attempting_to_recover_metric_filter[0].metric_transformation[0].namespace
+  metric_name               = aws_cloudwatch_log_metric_filter.graphdb_attempting_to_recover_metric_filter[each.key].metric_transformation[0].name
+  namespace                 = aws_cloudwatch_log_metric_filter.graphdb_attempting_to_recover_metric_filter[each.key].metric_transformation[0].namespace
   period                    = var.cloudwatch_period
   statistic                 = "Maximum"
   evaluation_periods        = var.cloudwatch_evaluation_periods
@@ -38,34 +38,38 @@ resource "aws_cloudwatch_metric_alarm" "graphdb_attempting_to_recover_alarm" {
   insufficient_data_actions = [aws_sns_topic.graphdb_sns_topic.arn]
   treat_missing_data        = "missing"
 
-  depends_on = [aws_cloudwatch_log_metric_filter.graphdb_attempting_to_recover_metric_filter[0]]
+  depends_on = [aws_cloudwatch_log_metric_filter.graphdb_attempting_to_recover_metric_filter]
 }
 
-# Log filter for low disk space messages in the logs
+# Log filter for low disk space messages in the logs, one per node so the alarm can identify which node it happened on
 
 resource "aws_cloudwatch_log_metric_filter" "graphdb_low_disk_space_metric_filter" {
-  name           = "al-${var.resource_name_prefix}-low-disk-space-GraphDB-disk"
-  pattern        = "No space left on the device"
-  log_group_name = aws_cloudwatch_log_group.graphdb_log_group.name
+  for_each = toset(local.instance_hostnames)
+
+  name           = "al-${var.resource_name_prefix}-${each.key}-low-disk-space-GraphDB-disk"
+  pattern        = "\"is critically low on free disk space\""
+  log_group_name = aws_cloudwatch_log_group.graphdb_node_log_group[each.key].name
 
   metric_transformation {
-    name      = "Low disk space"
+    name      = "Low disk space - ${each.key}"
     namespace = var.resource_name_prefix
     value     = "1"
     unit      = "Count"
   }
 
-  depends_on = [aws_cloudwatch_log_group.graphdb_log_group]
+  depends_on = [aws_cloudwatch_log_group.graphdb_node_log_group]
 }
 
-# Alarm based on metric filter for Low Disk Space messages in the logs
+# Alarm based on metric filter for Low Disk Space messages in the logs, per node
 
 resource "aws_cloudwatch_metric_alarm" "graphdb_low_disk_space_alarm" {
-  alarm_name                = "al-${var.resource_name_prefix}-low-disk-space-GraphDB-disk"
-  alarm_description         = "Low Disk Space"
+  for_each = toset(local.instance_hostnames)
+
+  alarm_name                = "al-${var.resource_name_prefix}-${each.key}-low-disk-space-GraphDB-disk"
+  alarm_description         = "Low Disk Space on ${each.key}"
   comparison_operator       = "GreaterThanThreshold"
-  metric_name               = aws_cloudwatch_log_metric_filter.graphdb_low_disk_space_metric_filter.metric_transformation[0].name
-  namespace                 = aws_cloudwatch_log_metric_filter.graphdb_low_disk_space_metric_filter.metric_transformation[0].namespace
+  metric_name               = aws_cloudwatch_log_metric_filter.graphdb_low_disk_space_metric_filter[each.key].metric_transformation[0].name
+  namespace                 = aws_cloudwatch_log_metric_filter.graphdb_low_disk_space_metric_filter[each.key].metric_transformation[0].namespace
   period                    = var.cloudwatch_period
   statistic                 = "SampleCount"
   evaluation_periods        = var.cloudwatch_evaluation_periods
@@ -76,6 +80,47 @@ resource "aws_cloudwatch_metric_alarm" "graphdb_low_disk_space_alarm" {
   treat_missing_data        = "missing"
 
   depends_on = [aws_cloudwatch_log_metric_filter.graphdb_low_disk_space_metric_filter]
+}
+
+# Log filter for Workbench settings loading errors in the logs, one per node so the alarm can identify which node it happened on
+
+resource "aws_cloudwatch_log_metric_filter" "graphdb_workbench_settings_error_metric_filter" {
+  for_each = toset(local.instance_hostnames)
+
+  name           = "mf-${var.resource_name_prefix}-${each.key}-workbench-settings-error"
+  pattern        = "\"Error loading Workbench settings, using the defaults\""
+  log_group_name = aws_cloudwatch_log_group.graphdb_node_log_group[each.key].name
+
+  metric_transformation {
+    name      = "Workbench settings loading error - ${each.key}"
+    namespace = var.resource_name_prefix
+    value     = "1"
+    unit      = "Count"
+  }
+
+  depends_on = [aws_cloudwatch_log_group.graphdb_node_log_group]
+}
+
+# Alarm based on metric filter for Workbench settings loading errors in the logs, per node
+
+resource "aws_cloudwatch_metric_alarm" "graphdb_workbench_settings_error_alarm" {
+  for_each = toset(local.instance_hostnames)
+
+  alarm_name                = "al-${var.resource_name_prefix}-${each.key}-workbench-settings-error"
+  alarm_description         = "Error loading Workbench settings, using the defaults on ${each.key}"
+  comparison_operator       = "GreaterThanOrEqualToThreshold"
+  metric_name               = aws_cloudwatch_log_metric_filter.graphdb_workbench_settings_error_metric_filter[each.key].metric_transformation[0].name
+  namespace                 = aws_cloudwatch_log_metric_filter.graphdb_workbench_settings_error_metric_filter[each.key].metric_transformation[0].namespace
+  period                    = var.cloudwatch_period
+  statistic                 = "SampleCount"
+  evaluation_periods        = var.cloudwatch_evaluation_periods
+  threshold                 = "1"
+  alarm_actions             = [aws_sns_topic.graphdb_sns_topic.arn]
+  ok_actions                = [aws_sns_topic.graphdb_sns_topic.arn]
+  insufficient_data_actions = [aws_sns_topic.graphdb_sns_topic.arn]
+  treat_missing_data        = "missing"
+
+  depends_on = [aws_cloudwatch_log_metric_filter.graphdb_workbench_settings_error_metric_filter]
 }
 
 locals {

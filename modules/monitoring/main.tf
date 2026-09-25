@@ -30,6 +30,15 @@ resource "aws_cloudwatch_log_group" "graphdb_log_group" {
   retention_in_days = var.cloudwatch_log_group_retention_in_days
 }
 
+# Per-node log group which hosts each node's main.log, so log-based alarms can be scoped per node
+
+resource "aws_cloudwatch_log_group" "graphdb_node_log_group" {
+  for_each = toset(local.instance_hostnames)
+
+  name              = "${var.resource_name_prefix}-${each.key}"
+  retention_in_days = var.cloudwatch_log_group_retention_in_days
+}
+
 # SSM Parameter which hosts the config for the cloudwatch agent
 
 resource "aws_ssm_parameter" "graphdb_cloudwatch_agent_config" {
