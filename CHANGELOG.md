@@ -6,6 +6,9 @@
 
 **BREAKING CHANGE**: GraphDB node logs are now shipped to a dedicated CloudWatch log group per node (`{prefix}-{hostname}`) instead of a single shared log group. The `graphdb_attempting_to_recover_alarm` and `graphdb_low_disk_space_alarm` metric filters/alarms have accordingly been converted from single `count`-based resources to per-node resources using `for_each`, with matching per-node alarm names (`al-{prefix}-{hostname}-attempting-recover`, `al-{prefix}-{hostname}-low-disk-space-GraphDB-disk`). Terraform will destroy the existing single alarms and recreate one alarm per node. Any notification subscriptions or dashboards referencing the old alarm names will need to be updated. The original shared log group resource is left in place but no longer receives new log events.
 
+**BREAKING CHANGE**: Target group name format has changed from `{prefix}-tg-{flavor}-{suffix}` to `{prefix}-{suffix}` to stay within AWS's 32-character name limit. The prefix is automatically truncated to 27 characters if longer, leaving room for the hyphen and 4-character random hex suffix. Existing deployments will have their target group destroyed and recreated.
+
+
 * Changed comparison operator for the nodes disconnected alarm from `GreaterThanThreshold` to `GreaterThanOrEqualToThreshold`
 * Added `insufficient_data_actions` to all CloudWatch alarms so that transitions to `INSUFFICIENT_DATA` state (e.g. when a node stops emitting metrics) trigger an SNS notification
 * Fixed typo in KMS key policy: `kms:Ecnrypt` → `kms:Encrypt` and expanded `kms:ReEncrypt` to `kms:ReEncrypt*`
@@ -14,7 +17,18 @@
 * Added a per-node CloudWatch alarm (`graphdb_workbench_settings_error_alarm`) that triggers when a node logs "Error loading Workbench settings, using the defaults"
 * Fixed the low disk space metric filter pattern, which searched for the unrelated string "No space left on the device" and never matched GraphDB's actual `FileSystemHealth` log message ("...is critically low on free disk space..."), so the alarm could never fire
 
-## 3.3.2
+## 3.4.0
+
+* Added support for encryption at rest configuration - see [GraphDB 11.4.0](https://graphdb.ontotext.com/documentation/11.4/encryption.html#encryption-at-rest) documentation
+* Added example for configuring `pkcs12`-based encryption at rest
+* Added example for configuring `file`-based encryption at rest
+* Added example for configuring `graphdb.auth.security.enabled` via `graphdb_properties_path`
+* Added `graphdb_enable_audit_log_enabled` variable to enable GraphDB audit logging
+* Fixed perpetual Terraform drift in `aws_s3_bucket_server_side_encryption_configuration` for the backup module by explicitly setting `blocked_encryption_types = ["SSE-C"]` to match the value AWS returns
+* Added example for configuring additional OAuth token authentication methods via `graphdb_properties_path`
+* Updated GraphDB default version to [11.4.0](https://graphdb.ontotext.com/documentation/11.4/release-notes.html#graphdb-11-4-0)
+
+# 3.3.2
 
 * Updated GraphDB default version to [11.4.2](https://graphdb.ontotext.com/documentation/11.4/release-notes.html#graphdb-11-4-2)
 
