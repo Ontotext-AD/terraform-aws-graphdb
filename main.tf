@@ -15,8 +15,8 @@ module "vpc" {
   resource_name_prefix                            = var.resource_name_prefix
   vpc_dns_hostnames                               = var.vpc_dns_hostnames
   vpc_dns_support                                 = var.vpc_dns_support
-  vpc_private_subnet_cidrs                        = local.effective_private_subnet_cidrs
-  vpc_public_subnet_cidrs                         = local.effective_public_subnet_cidrs
+  vpc_private_subnet_cidrs                        = var.vpc_private_subnet_cidrs
+  vpc_public_subnet_cidrs                         = var.vpc_public_subnet_cidrs
   vpc_cidr_block                                  = var.vpc_cidr_block
   single_nat_gateway                              = var.single_nat_gateway
   enable_nat_gateway                              = var.enable_nat_gateway

@@ -16,6 +16,15 @@
 * Fixed missing `default` value for `graphdb_data_encryption_keystore_alias`, which made it a required variable even when not using `pkcs12`-based encryption at rest
 * Added a per-node CloudWatch alarm (`graphdb_workbench_settings_error_alarm`) that triggers when a node logs "Error loading Workbench settings, using the defaults"
 * Fixed the low disk space metric filter pattern, which searched for the unrelated string "No space left on the device" and never matched GraphDB's actual `FileSystemHealth` log message ("...is critically low on free disk space..."), so the alarm could never fire
+* Stopped shrinking the NLB and VPC subnets to a single AZ when `graphdb_node_count` is `1`. Scaling down to one node forced an NLB replacement that failed with `Error: ELBv2 Load Balancer ... already exists`. The GraphDB ASG stays pinned to the first private subnet for a single node, since its EBS data volume is AZ-bound
+  * Existing single-node deployments get the additional public/private subnets and route tables. If `tgw_subnet_cidrs` has more than one entry, the extra TGW subnets move to other AZs and are recreated
+* NAT Gateway mode defaults to `single` when `graphdb_node_count` is `1` and neither `nat_gateway_mode` nor `single_nat_gateway` is set
+* Route table counts are derived from the length of `vpc_public_subnet_cidrs`/`vpc_private_subnet_cidrs` instead of a hardcoded AZ count
+* Added a plan-time check that `vpc_private_subnet_cidrs` has no more entries than `vpc_public_subnet_cidrs` when using per-AZ NAT Gateways
+* The target group suffix now regenerates only when `graphdb_node_count` crosses `1 <-> >1`. Existing deployments get the target group recreated once on upgrade
+* Fixed `ResourceAlreadyExistsException` for per-node CloudWatch log groups after scaling or `terraform destroy`. The CloudWatch agent on a terminating node recreated log groups Terraform had just deleted; the instance role now denies `logs:CreateLogGroup` for the deployment's log groups
+  * The deny policy is kept until the Auto Scaling Group is gone on `terraform destroy`
+  * A node whose per-node log group does not exist (e.g. a node name outside `node-1..node-N` after scaling) ships its GraphDB log to the shared `{prefix}` log group instead. The check runs at boot, so it applies to instances launched after the upgrade
 
 ## 3.4.0
 

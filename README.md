@@ -565,9 +565,29 @@ This module supports multiple NAT Gateway strategies for outbound internet acces
 The legacy input `single_nat_gateway` is kept for compatibility.
 If `nat_gateway_mode` is not set:
 - `single_nat_gateway = true` → behaves as `nat_gateway_mode = "single"`
-- `single_nat_gateway = false` → behaves as `nat_gateway_mode = "per_az"`
+- `single_nat_gateway = false` → behaves as `nat_gateway_mode = "per_az"`, **unless** `graphdb_node_count = 1`, in which case `single` is used regardless of `single_nat_gateway`
 
 Prefer using `nat_gateway_mode` in new deployments.
+
+### Subnets and Load Balancer Behavior
+
+The load balancer, subnets and route tables always span the full subnet set from `vpc_public_subnet_cidrs` /
+`vpc_private_subnet_cidrs` (or `vpc_public_subnet_ids` / `vpc_private_subnet_ids` when using an existing VPC),
+regardless of `graphdb_node_count`. AWS does not allow removing subnets from an existing NLB, so changing
+`graphdb_node_count` must not change the load balancer's subnets.
+
+Exceptions:
+- **GraphDB ASG subnets** — with `graphdb_node_count = 1` the Auto Scaling Group is pinned to the first private
+  subnet, because the node's EBS data volume is bound to that AZ.
+- **NAT Gateway count** — when `nat_gateway_mode` is not set and `single_nat_gateway = false`, a single node uses one
+  NAT Gateway and a cluster uses one per AZ. Scaling across `1 <-> >1` adds or removes NAT Gateways/EIPs; the first
+  one is kept. Set `nat_gateway_mode` explicitly to keep the count fixed.
+- **Target group** — a single node is health-checked on `/protocol` over port `7201`, a cluster on
+  `lb_health_check_path` over port `7200`. The target group is recreated only when crossing `1 <-> >1`.
+
+With a single node, AZs without a healthy target are removed from the NLB's DNS
+([DNS failover](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-target-groups.html#target-group-health)),
+so cross-zone load balancing is not needed.
 
 **ASG_WAIT**
 
