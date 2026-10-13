@@ -594,9 +594,16 @@ variable "graphdb_java_options" {
 # Logging
 
 variable "deploy_logging_module" {
-  description = "Enable or disable logging module"
+  description = "Enable or disable logging module. Must be true when vpc_enable_flow_logs, lb_enable_access_logs, s3_enable_access_logs or logging_enable_bucket_replication is enabled."
   type        = bool
   default     = false
+
+  validation {
+    condition = var.deploy_logging_module || !(
+      var.vpc_enable_flow_logs || var.lb_enable_access_logs || var.s3_enable_access_logs || var.logging_enable_bucket_replication
+    )
+    error_message = "deploy_logging_module must be true when any logging feature is enabled."
+  }
 }
 
 variable "logging_enable_bucket_replication" {
@@ -624,9 +631,21 @@ variable "s3_access_logs_expiration_days" {
 }
 
 variable "s3_expired_object_delete_marker" {
-  description = "Indicates whether Amazon S3 will remove a delete marker with no noncurrent versions. If set to true, the delete marker will be expired; if set to false the policy takes no action."
+  description = "Indicates whether Amazon S3 will remove a delete marker with no noncurrent versions in the logging bucket. Applies to the whole bucket, regardless of the lifecycle rule statuses. If set to true, the delete marker will be expired; if set to false the policy takes no action."
   type        = bool
   default     = true
+  nullable    = false
+}
+
+variable "s3_noncurrent_version_expiration_days" {
+  description = "Define the days after which noncurrent object versions in the logging bucket should be deleted. Applies to the whole bucket, regardless of the lifecycle rule statuses. Set to null to keep them."
+  type        = number
+  default     = null
+
+  validation {
+    condition     = var.s3_noncurrent_version_expiration_days == null ? true : var.s3_noncurrent_version_expiration_days >= 1
+    error_message = "s3_noncurrent_version_expiration_days must be null or at least 1."
+  }
 }
 
 variable "s3_mfa_delete" {

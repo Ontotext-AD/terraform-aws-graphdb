@@ -89,10 +89,11 @@ module "logging" {
   vpc_flow_logs_lifecycle_rule_status = var.deploy_logging_module && var.vpc_enable_flow_logs ? (
     var.vpc_flow_logs_lifecycle_rule_status
   ) : "Disabled"
-  expired_object_delete_marker = var.s3_expired_object_delete_marker
-  mfa_delete                   = var.s3_mfa_delete
-  versioning_enabled           = var.s3_versioning_enabled
-  abort_multipart_upload       = var.s3_abort_multipart_upload
+  expired_object_delete_marker       = var.s3_expired_object_delete_marker
+  noncurrent_version_expiration_days = var.s3_noncurrent_version_expiration_days
+  mfa_delete                         = var.s3_mfa_delete
+  versioning_enabled                 = var.s3_versioning_enabled
+  abort_multipart_upload             = var.s3_abort_multipart_upload
 }
 
 module "logging_replication" {

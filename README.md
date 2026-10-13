@@ -185,12 +185,13 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | cmk\_availability\_key\_alias | CMK Key Alias for the availability SNS topic | `string` | `"alias/graphdb-availability-sns-cmk-key-alias"` | no |
 | graphdb\_properties\_path | Path to a local file containing GraphDB properties (graphdb.properties) that would be appended to the default in the VM. | `string` | `null` | no |
 | graphdb\_java\_options | GraphDB options to pass to GraphDB with GRAPHDB\_JAVA\_OPTS environment variable. | `string` | `null` | no |
-| deploy\_logging\_module | Enable or disable logging module | `bool` | `false` | no |
+| deploy\_logging\_module | Enable or disable logging module. Must be true when vpc\_enable\_flow\_logs, lb\_enable\_access\_logs, s3\_enable\_access\_logs or logging\_enable\_bucket\_replication is enabled. | `bool` | `false` | no |
 | logging\_enable\_bucket\_replication | Enable or disable S3 bucket replication | `bool` | `false` | no |
 | s3\_enable\_access\_logs | Enable or disable access logs | `bool` | `false` | no |
 | s3\_access\_logs\_lifecycle\_rule\_status | Define status of the S3 lifecycle rule. Possible options are enabled or disabled. | `string` | `"Disabled"` | no |
 | s3\_access\_logs\_expiration\_days | Define the days after which the S3 access logs should be deleted. | `number` | `30` | no |
-| s3\_expired\_object\_delete\_marker | Indicates whether Amazon S3 will remove a delete marker with no noncurrent versions. If set to true, the delete marker will be expired; if set to false the policy takes no action. | `bool` | `true` | no |
+| s3\_expired\_object\_delete\_marker | Indicates whether Amazon S3 will remove a delete marker with no noncurrent versions in the logging bucket. Applies to the whole bucket, regardless of the lifecycle rule statuses. If set to true, the delete marker will be expired; if set to false the policy takes no action. | `bool` | `true` | no |
+| s3\_noncurrent\_version\_expiration\_days | Define the days after which noncurrent object versions in the logging bucket should be deleted. Applies to the whole bucket, regardless of the lifecycle rule statuses. Set to null to keep them. | `number` | `null` | no |
 | s3\_mfa\_delete | Enable MFA delete for either Change the versioning state of your bucket or Permanently delete an object version. Default is false. This cannot be used to toggle this setting but is available to allow managed buckets to reflect the state in AWS | `string` | `"Disabled"` | no |
 | s3\_versioning\_enabled | Enable versioning. Once you version-enable a bucket, it can never return to an unversioned state. You can, however, suspend versioning on that bucket. | `string` | `"Enabled"` | no |
 | s3\_abort\_multipart\_upload | Specifies the number of days after initiating a multipart upload when the multipart upload must be completed. | `number` | `7` | no |
@@ -611,6 +612,7 @@ By configuring these variables accordingly you enforce GraphDB accessibility sol
 **Logging**
 
 To enable the logging feature the first thing that you should do is to switch the `deploy_logging_module` variable to `true`.
+Enabling any of the logging features below while `deploy_logging_module` is `false` fails with a validation error.
 
 There are several logging features that can be enabled with the following variables:
 
@@ -641,7 +643,7 @@ To enable the load balancer logs you should enable the following variables to `t
 
 ```hcl
 deploy_logging_module = true
-lb_access_logs_lifecycle_rule_status = true
+lb_access_logs_lifecycle_rule_status = "Enabled"
 lb_enable_access_logs = true
 ```
 
@@ -653,6 +655,14 @@ To enable the VPC Flow logs you should switch the following variables to `true`:
 deploy_logging_module = true
 vpc_enable_flow_logs = true
 vpc_flow_logs_lifecycle_rule_status = "Enabled"
+```
+
+#### Noncurrent Log Versions
+
+The logging bucket is versioned, so expired logs are kept as noncurrent versions. To delete them set the following variable, which applies to the whole logging bucket:
+
+```hcl
+s3_noncurrent_version_expiration_days = 1
 ```
 
 #### KMS Encryption using Customer Master Keys
