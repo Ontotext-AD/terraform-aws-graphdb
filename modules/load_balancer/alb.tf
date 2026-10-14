@@ -44,7 +44,7 @@ resource "aws_lb" "graphdb_alb" {
   enable_http2               = var.lb_enable_http2
 
   dynamic "access_logs" {
-    for_each = var.lb_enable_access_logs ? [1] : []
+    for_each = var.lb_enable_access_logs && var.lb_access_logs_enable_s3_delivery ? [1] : []
     content {
       bucket  = var.lb_access_logs_bucket_name
       enabled = true

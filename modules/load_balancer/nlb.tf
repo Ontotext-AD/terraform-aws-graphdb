@@ -9,7 +9,7 @@ resource "aws_lb" "graphdb_nlb" {
   security_groups            = var.lb_security_groups
 
   dynamic "access_logs" {
-    for_each = var.lb_enable_access_logs ? [1] : []
+    for_each = var.lb_enable_access_logs && var.lb_access_logs_enable_s3_delivery ? [1] : []
 
     content {
       bucket  = var.lb_access_logs_bucket_name

@@ -31,6 +31,10 @@ module "vpc" {
   ) : null
   graphdb_node_count = var.graphdb_node_count
 
+  vpc_flow_logs_enable_s3_delivery           = var.deploy_logging_module && var.logs_enable_s3_delivery
+  vpc_flow_logs_enable_cloudwatch_delivery   = var.logs_enable_cloudwatch_delivery
+  vpc_flow_logs_cloudwatch_retention_in_days = var.logs_cloudwatch_retention_in_days
+
   tgw_id                       = var.tgw_id != "" ? var.tgw_id : null
   tgw_subnet_cidrs             = var.tgw_id != "" ? var.tgw_subnet_cidrs : []
   tgw_subnet_ids               = var.tgw_id != "" ? var.tgw_subnet_ids : []
@@ -66,6 +70,10 @@ module "backup" {
   s3_key_deletion_window_in_days = var.s3_key_deletion_window_in_days
   s3_external_kms_key            = var.s3_external_kms_key_arn
   s3_kms_key_arn                 = local.calculated_s3_kms_key_arn
+
+  s3_access_logs_enable_s3_delivery           = var.deploy_logging_module && var.logs_enable_s3_delivery
+  s3_access_logs_enable_cloudwatch_delivery   = var.logs_enable_cloudwatch_delivery
+  s3_access_logs_cloudwatch_retention_in_days = var.logs_cloudwatch_retention_in_days
 }
 
 module "logging" {
@@ -156,6 +164,10 @@ module "load_balancer" {
   lb_client_keep_alive_timeout  = var.lb_client_keep_alive_timeout
   lb_enable_http2               = var.alb_enable_http2
   lb_context_path               = var.lb_context_path
+
+  lb_access_logs_enable_s3_delivery           = var.deploy_logging_module && var.logs_enable_s3_delivery
+  lb_access_logs_enable_cloudwatch_delivery   = var.logs_enable_cloudwatch_delivery
+  lb_access_logs_cloudwatch_retention_in_days = var.logs_cloudwatch_retention_in_days
 }
 
 module "monitoring" {

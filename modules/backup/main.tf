@@ -95,10 +95,93 @@ data "aws_iam_policy_document" "backup_s3_crud" {
 }
 
 resource "aws_s3_bucket_logging" "graphdb_backup_bucket_logs" {
-  count = var.s3_enable_access_logs ? 1 : 0
+  count = var.s3_enable_access_logs && var.s3_access_logs_enable_s3_delivery ? 1 : 0
 
   bucket = aws_s3_bucket.graphdb_backup.id
 
   target_bucket = var.s3_access_logs_bucket_name
   target_prefix = "s3_access_logs/"
+}
+
+# S3 Access Logs - CloudWatch Logs destination
+
+resource "aws_cloudwatch_log_group" "graphdb_s3_access_logs" {
+  count = var.s3_enable_access_logs && var.s3_access_logs_enable_cloudwatch_delivery ? 1 : 0
+
+  name              = "/aws/vendedlogs/${var.resource_name_prefix}-s3-access-logs"
+  retention_in_days = var.s3_access_logs_cloudwatch_retention_in_days
+}
+
+resource "aws_cloudwatch_log_delivery_source" "graphdb_s3_access_logs" {
+  count = var.s3_enable_access_logs && var.s3_access_logs_enable_cloudwatch_delivery ? 1 : 0
+
+  name         = "${var.resource_name_prefix}-s3-access-logs"
+  log_type     = "S3_SERVER_ACCESS_LOGS"
+  resource_arn = aws_s3_bucket.graphdb_backup.arn
+}
+
+data "aws_iam_policy_document" "graphdb_s3_access_logs_delivery" {
+  count = var.s3_enable_access_logs && var.s3_access_logs_enable_cloudwatch_delivery ? 1 : 0
+
+  statement {
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["delivery.logs.amazonaws.com"]
+    }
+
+    actions = [
+      "logs:CreateLogStream",
+      "logs:PutLogEvents",
+    ]
+
+    resources = ["${aws_cloudwatch_log_group.graphdb_s3_access_logs[0].arn}:log-stream:*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "aws:SourceAccount"
+      values   = [data.aws_caller_identity.current.account_id]
+    }
+
+    condition {
+      test     = "ArnLike"
+      variable = "aws:SourceArn"
+      values   = ["arn:aws:logs:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:*"]
+    }
+  }
+}
+
+resource "aws_cloudwatch_log_resource_policy" "graphdb_s3_access_logs" {
+  count = var.s3_enable_access_logs && var.s3_access_logs_enable_cloudwatch_delivery ? 1 : 0
+
+  policy_name     = "${var.resource_name_prefix}-s3-access-logs-delivery"
+  policy_document = data.aws_iam_policy_document.graphdb_s3_access_logs_delivery[0].json
+}
+
+resource "aws_cloudwatch_log_delivery_destination" "graphdb_s3_access_logs" {
+  count = var.s3_enable_access_logs && var.s3_access_logs_enable_cloudwatch_delivery ? 1 : 0
+
+  name = "${var.resource_name_prefix}-s3-access-logs"
+
+  delivery_destination_configuration {
+    destination_resource_arn = aws_cloudwatch_log_group.graphdb_s3_access_logs[0].arn
+  }
+}
+
+resource "aws_cloudwatch_log_delivery" "graphdb_s3_access_logs" {
+  count = var.s3_enable_access_logs && var.s3_access_logs_enable_cloudwatch_delivery ? 1 : 0
+
+  delivery_source_name     = aws_cloudwatch_log_delivery_source.graphdb_s3_access_logs[0].name
+  delivery_destination_arn = aws_cloudwatch_log_delivery_destination.graphdb_s3_access_logs[0].arn
+
+  depends_on = [aws_cloudwatch_log_resource_policy.graphdb_s3_access_logs]
+
+  # Recreate the delivery when the source changes
+  lifecycle {
+    replace_triggered_by = [
+      aws_cloudwatch_log_delivery_source.graphdb_s3_access_logs,
+      aws_cloudwatch_log_delivery_destination.graphdb_s3_access_logs,
+    ]
+  }
 }

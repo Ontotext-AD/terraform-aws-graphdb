@@ -8,7 +8,10 @@
 
 **BREAKING CHANGE**: Target group name format has changed from `{prefix}-tg-{flavor}-{suffix}` to `{prefix}-{suffix}` to stay within AWS's 32-character name limit. The prefix is automatically truncated to 27 characters if longer, leaving room for the hyphen and 4-character random hex suffix. Existing deployments will have their target group destroyed and recreated.
 
-
+* Added `logs_enable_cloudwatch_delivery` variable to also deliver VPC flow logs, LB access logs, and S3 (backup bucket) access logs to CloudWatch Logs, alongside or instead of S3
+* Added `logs_enable_s3_delivery` variable (default `true`) to disable S3 delivery for those same log types independently of CloudWatch delivery. Logs already in the logging bucket are still expired by the existing lifecycle rules
+* Added `logs_cloudwatch_retention_in_days` variable to control retention on the new CloudWatch Log Groups
+* VPC flow logs, LB access logs and S3 access logs are no longer delivered to S3 when `deploy_logging_module` is `false`, instead of failing with `Missing required argument`
 * Changed comparison operator for the nodes disconnected alarm from `GreaterThanThreshold` to `GreaterThanOrEqualToThreshold`
 * Added `insufficient_data_actions` to all CloudWatch alarms so that transitions to `INSUFFICIENT_DATA` state (e.g. when a node stops emitting metrics) trigger an SNS notification
 * Fixed typo in KMS key policy: `kms:Ecnrypt` → `kms:Encrypt` and expanded `kms:ReEncrypt` to `kms:ReEncrypt*`
