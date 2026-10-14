@@ -16,6 +16,14 @@
 * Fixed missing `default` value for `graphdb_data_encryption_keystore_alias`, which made it a required variable even when not using `pkcs12`-based encryption at rest
 * Added a per-node CloudWatch alarm (`graphdb_workbench_settings_error_alarm`) that triggers when a node logs "Error loading Workbench settings, using the defaults"
 * Fixed the low disk space metric filter pattern, which searched for the unrelated string "No space left on the device" and never matched GraphDB's actual `FileSystemHealth` log message ("...is critically low on free disk space..."), so the alarm could never fire
+* Fixed `Invalid Attribute Combination` warning in the logging bucket lifecycle configuration when a log type is disabled
+* Fixed `s3_expired_object_delete_marker` being ignored
+* Added `s3_noncurrent_version_expiration_days` to delete noncurrent object versions in the logging bucket. Disabled by default
+* Fixed `Access Denied for bucket` error on first apply when enabling access logs or VPC flow logs
+* Added validation that `deploy_logging_module` is `true` when log flags or `logging_enable_bucket_replication` are enabled, replacing the `Missing required argument` error
+* Fixed the VPC flow logs lifecycle rule prefix, which never matched the delivered logs. It is now `AWSLogs/{account_id}/vpcflowlogs/{region}/`
+* Narrowed the LB access logs lifecycle rule prefix to `AWSLogs/{account_id}/elasticloadbalancing/`, so that it no longer expires the VPC flow logs. The `ELBAccessLogTestFile` is expired by a separate rule
+* Fixed perpetual Terraform drift in `aws_s3_bucket_server_side_encryption_configuration` for the logging module by explicitly setting `blocked_encryption_types = ["SSE-C"]`
 
 ## 3.4.0
 

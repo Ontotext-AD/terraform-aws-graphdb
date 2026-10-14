@@ -44,7 +44,8 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "graphdb_logging_s
   bucket = aws_s3_bucket.graphdb_logging_bucket.id
 
   rule {
-    bucket_key_enabled = true
+    bucket_key_enabled       = true
+    blocked_encryption_types = ["SSE-C"]
 
     apply_server_side_encryption_by_default {
       sse_algorithm = "AES256"
@@ -134,9 +135,12 @@ resource "aws_s3_bucket_lifecycle_configuration" "logs_lifecycle_configuration" 
       prefix = "s3_access_logs/"
     }
 
-    expiration {
-      days                         = var.s3_access_logs_expiration_days
-      expired_object_delete_marker = true
+    dynamic "expiration" {
+      for_each = var.s3_access_logs_expiration_days != null ? [1] : []
+
+      content {
+        days = var.s3_access_logs_expiration_days
+      }
     }
   }
 
@@ -151,11 +155,15 @@ resource "aws_s3_bucket_lifecycle_configuration" "logs_lifecycle_configuration" 
     }
 
     filter {
-      prefix = "AWSLogs/"
+      prefix = "AWSLogs/${data.aws_caller_identity.current.account_id}/elasticloadbalancing/"
     }
 
-    expiration {
-      days = var.lb_access_logs_expiration_days
+    dynamic "expiration" {
+      for_each = var.lb_access_logs_expiration_days != null ? [1] : []
+
+      content {
+        days = var.lb_access_logs_expiration_days
+      }
     }
   }
   # Lifecycle rule for the VPC flow logs
@@ -169,11 +177,67 @@ resource "aws_s3_bucket_lifecycle_configuration" "logs_lifecycle_configuration" 
     }
 
     filter {
-      prefix = "AWSLogs/${data.aws_caller_identity.current.account_id}/${data.aws_region.current.id}/vpcflowlogs/"
+      prefix = "AWSLogs/${data.aws_caller_identity.current.account_id}/vpcflowlogs/${data.aws_region.current.id}/"
     }
 
-    expiration {
-      days = var.vpc_flow_logs_expiration_days
+    dynamic "expiration" {
+      for_each = var.vpc_flow_logs_expiration_days != null ? [1] : []
+
+      content {
+        days = var.vpc_flow_logs_expiration_days
+      }
+    }
+  }
+
+  # Lifecycle rule for the LB access logs test file
+
+  rule {
+    id     = "${var.resource_name_prefix}-lb-access-logs-test-file"
+    status = var.lb_access_logs_lifecycle_rule_status
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = var.abort_multipart_upload
+    }
+
+    filter {
+      prefix = "AWSLogs/${data.aws_caller_identity.current.account_id}/ELBAccessLogTestFile"
+    }
+
+    dynamic "expiration" {
+      for_each = var.lb_access_logs_expiration_days != null ? [1] : []
+
+      content {
+        days = var.lb_access_logs_expiration_days
+      }
+    }
+  }
+
+  # Lifecycle rule for the noncurrent versions and expired delete markers
+
+  dynamic "rule" {
+    for_each = var.expired_object_delete_marker || var.noncurrent_version_expiration_days != null ? [1] : []
+
+    content {
+      id     = "${var.resource_name_prefix}-noncurrent-versions-cleanup"
+      status = "Enabled"
+
+      filter {}
+
+      dynamic "noncurrent_version_expiration" {
+        for_each = var.noncurrent_version_expiration_days != null ? [1] : []
+
+        content {
+          noncurrent_days = var.noncurrent_version_expiration_days
+        }
+      }
+
+      dynamic "expiration" {
+        for_each = var.expired_object_delete_marker ? [1] : []
+
+        content {
+          expired_object_delete_marker = true
+        }
+      }
     }
   }
 }

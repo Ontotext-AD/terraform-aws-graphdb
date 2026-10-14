@@ -34,6 +34,11 @@ variable "expired_object_delete_marker" {
   type        = bool
 }
 
+variable "noncurrent_version_expiration_days" {
+  description = "Define the days after which noncurrent object versions should be deleted. Set to null to keep them."
+  type        = number
+}
+
 variable "mfa_delete" {
   description = "Enable MFA delete for either Change the versioning state of your bucket or Permanently delete an object version. Default is false. This cannot be used to toggle this setting but is available to allow managed buckets to reflect the state in AWS"
   type        = string
