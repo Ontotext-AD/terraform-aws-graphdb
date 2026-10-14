@@ -17,13 +17,12 @@ locals {
   http_action_type = var.lb_tls_enabled ? "redirect" : (local.lb_context_path_clean != "" ? "fixed-response" : "forward")
 }
 
-# This creates a random suffix for the target group name
-# it will only be regenerated if the graphdb_node_count changes.
-# Required when recreating the target group when scaling from 1 to 3 or more nodes.
+# Random suffix for the target group name. Regenerates only when graphdb_node_count
+# crosses 1 <-> >1, where the target group port and health check change.
 
 resource "random_id" "tg_name_suffix" {
   keepers = {
-    node_count = var.graphdb_node_count
+    node_count_gt_one = var.graphdb_node_count > 1
   }
   byte_length = 2
 }

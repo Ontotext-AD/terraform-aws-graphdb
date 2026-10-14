@@ -23,6 +23,28 @@ resource "aws_iam_role_policy_attachment" "graphdb_cloudwatch_access_policy" {
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchFullAccessV2"
 }
 
+# Log groups are managed by Terraform. Without this, the CloudWatch agent on a terminating node recreates
+# a log group Terraform just deleted, and the next apply fails with ResourceAlreadyExistsException.
+resource "aws_iam_role_policy" "graphdb_deny_log_group_creation" {
+  name   = "${var.resource_name_prefix}-deny-log-group-creation"
+  role   = aws_iam_role.graphdb_iam_role.id
+  policy = data.aws_iam_policy_document.graphdb_deny_log_group_creation.json
+}
+
+data "aws_iam_policy_document" "graphdb_deny_log_group_creation" {
+  statement {
+    effect = "Deny"
+
+    actions = [
+      "logs:CreateLogGroup"
+    ]
+
+    resources = [
+      "arn:aws:logs:${var.aws_region}:${var.aws_subscription_id}:log-group:${var.resource_name_prefix}*"
+    ]
+  }
+}
+
 resource "aws_iam_role" "graphdb_iam_role" {
   name_prefix        = var.resource_name_prefix
   assume_role_policy = data.aws_iam_policy_document.graphdb_instance_role.json
