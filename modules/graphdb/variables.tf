@@ -233,6 +233,12 @@ variable "graphdb_enable_userdata_scripts_on_reboot" {
   type        = bool
 }
 
+variable "graphdb_disable_automatic_os_updates" {
+  description = "Disables Ubuntu unattended-upgrades and prevents needrestart from restarting GraphDB services. OS patching must then be done manually, one node at a time."
+  type        = bool
+  default     = true
+}
+
 variable "graphdb_audit_log_enabled" {
   description = "Enable or disable the GraphDB audit log"
   type        = bool
