@@ -1,5 +1,11 @@
 # GraphDB AWS Terraform Module Changelog
 
+## 3.5.0
+
+* Added `graphdb_disable_automatic_os_updates` (defaults to `true`), which disables Ubuntu unattended-upgrades and prevents needrestart from restarting GraphDB services, so OS updates no longer restart cluster nodes at random times.
+  * **Behaviour change:** automatic OS security patching is now disabled by default. Patch nodes manually, one at a time, and wait for the cluster to be healthy before moving to the next node. Set the variable to `false` to keep the previous behaviour.
+  * The change is applied through the launch template user data, so it affects only newly launched instances. Existing nodes keep their current settings until they are replaced.
+
 ## 3.4.2
 
 * Updated GraphDB default version to [11.5.2](https://graphdb.ontotext.com/documentation/11.5/release-notes.html#graphdb-11-5-2)
