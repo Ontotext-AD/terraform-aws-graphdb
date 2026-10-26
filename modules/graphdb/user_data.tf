@@ -36,6 +36,22 @@ data "cloudinit_config" "graphdb_user_data" {
     })
   }
 
+  # Prevent OS updates from restarting GraphDB services or rebooting the node at random times
+  dynamic "part" {
+    for_each = var.graphdb_disable_automatic_restarts ? [1] : []
+
+    content {
+      content_type = "text/x-shellscript"
+      content      = <<-EOF
+        #!/bin/bash
+        echo "Disabling automatic GraphDB service restarts and node reboots"
+        mkdir -p /etc/needrestart/conf.d
+        echo '$nrconf{override_rc}{qr(^graphdb)} = 0;' > /etc/needrestart/conf.d/50-graphdb.conf
+        echo 'Unattended-Upgrade::Automatic-Reboot "false";' > /etc/apt/apt.conf.d/99-graphdb-no-auto-reboot
+      EOF
+    }
+  }
+
   # Execute additional scripts before the built-in steps
   dynamic "part" {
     for_each = var.user_supplied_scripts_pre_userdata

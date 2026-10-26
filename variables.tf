@@ -396,7 +396,7 @@ variable "ami_id" {
 variable "graphdb_version" {
   description = "GraphDB version"
   type        = string
-  default     = "11.4.2"
+  default     = "11.5.2"
   nullable    = false
 }
 
@@ -707,6 +707,13 @@ variable "graphdb_enable_userdata_scripts_on_reboot" {
   description = "(Experimental) Modifies cloud-config to always run user data scripts on EC2 boot"
   type        = bool
   default     = false
+}
+
+variable "graphdb_disable_automatic_restarts" {
+  description = "Prevents OS updates from restarting GraphDB services (needrestart) or rebooting the node (unattended-upgrades). OS updates are still installed."
+  type        = bool
+  default     = true
+  nullable    = false
 }
 
 variable "graphdb_audit_log_enabled" {
