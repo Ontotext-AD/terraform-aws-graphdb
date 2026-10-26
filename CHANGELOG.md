@@ -2,9 +2,8 @@
 
 ## 3.5.0
 
-* Added `graphdb_disable_automatic_os_updates` (defaults to `true`), which disables Ubuntu unattended-upgrades and prevents needrestart from restarting GraphDB services, so OS updates no longer restart cluster nodes at random times.
-  * **Behaviour change:** automatic OS security patching is now disabled by default. Patch nodes manually, one at a time, and wait for the cluster to be healthy before moving to the next node. Set the variable to `false` to keep the previous behaviour.
-  * The change is applied through the launch template user data, so it affects only newly launched instances. Existing nodes keep their current settings until they are replaced.
+* Added `graphdb_disable_automatic_restarts` (default `true`), which stops OS updates from restarting the GraphDB services (needrestart) or rebooting the node (unattended-upgrades). Updates are still installed; restart the nodes one at a time to apply those that need a restart.
+  * Applied through the launch template user data, so it affects only newly launched instances.
 
 ## 3.4.2
 

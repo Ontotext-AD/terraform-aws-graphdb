@@ -36,31 +36,18 @@ data "cloudinit_config" "graphdb_user_data" {
     })
   }
 
-  # Disable Ubuntu automatic updates and service restarts.
-  # unattended-upgrades + needrestart restart graphdb.service at random times, disrupting the cluster.
+  # Prevent OS updates from restarting GraphDB services or rebooting the node at random times
   dynamic "part" {
-    for_each = var.graphdb_disable_automatic_os_updates ? [1] : []
+    for_each = var.graphdb_disable_automatic_restarts ? [1] : []
 
     content {
       content_type = "text/x-shellscript"
       content      = <<-EOF
         #!/bin/bash
-        echo "Disabling automatic OS updates"
-        # Separate file so package upgrades or dpkg-reconfigure don't revert it
-        cat > /etc/apt/apt.conf.d/99-disable-auto-upgrades <<'CFG'
-        APT::Periodic::Enable "0";
-        APT::Periodic::Update-Package-Lists "0";
-        APT::Periodic::Unattended-Upgrade "0";
-        CFG
-        # Disable each unit separately, so a missing unit doesn't skip the rest
-        for unit in apt-daily.timer apt-daily-upgrade.timer unattended-upgrades.service; do
-          systemctl disable --now "$unit" || true
-        done
-        # Stop apt jobs already started at boot (Persistent timers can fire before this script runs)
-        systemctl stop apt-daily.service apt-daily-upgrade.service || true
-        # Never let needrestart restart GraphDB services, even after manual apt runs
+        echo "Disabling automatic GraphDB service restarts and node reboots"
         mkdir -p /etc/needrestart/conf.d
         echo '$nrconf{override_rc}{qr(^graphdb)} = 0;' > /etc/needrestart/conf.d/50-graphdb.conf
+        echo 'Unattended-Upgrade::Automatic-Reboot "false";' > /etc/apt/apt.conf.d/99-graphdb-no-auto-reboot
       EOF
     }
   }

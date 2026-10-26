@@ -322,7 +322,7 @@ module "graphdb" {
   # ASG Instance deployment options
 
   graphdb_enable_userdata_scripts_on_reboot      = var.graphdb_enable_userdata_scripts_on_reboot
-  graphdb_disable_automatic_os_updates           = var.graphdb_disable_automatic_os_updates
+  graphdb_disable_automatic_restarts             = var.graphdb_disable_automatic_restarts
   graphdb_audit_log_enabled                      = var.graphdb_audit_log_enabled
   graphdb_audit_log_role                         = var.graphdb_audit_log_role
   graphdb_audit_log_repository                   = var.graphdb_audit_log_repository
