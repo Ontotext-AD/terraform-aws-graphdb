@@ -5,9 +5,10 @@
 **BREAKING CHANGE**: The `graphdb_nodes_disconnected` CloudWatch alarm has been changed from a single `count`-based resource to per-node alarms using `for_each` over instance hostnames. Terraform will destroy the existing alarm and recreate one alarm per node. Alarms are now named `al-{prefix}-{hostname}-detected-nodes-disconnected` to clarify that the alarm fires on the node that detected the disconnection, not the node that went down. Any notification subscriptions or dashboards referencing the old alarm name will need to be updated.
 
 **BREAKING CHANGE**: GraphDB node logs are now shipped to a dedicated CloudWatch log group per node (`{prefix}-{hostname}`) instead of a single shared log group. The `graphdb_attempting_to_recover_alarm` and `graphdb_low_disk_space_alarm` metric filters/alarms have accordingly been converted from single `count`-based resources to per-node resources using `for_each`, with matching per-node alarm names (`al-{prefix}-{hostname}-attempting-recover`, `al-{prefix}-{hostname}-low-disk-space-GraphDB-disk`). Terraform will destroy the existing single alarms and recreate one alarm per node. Any notification subscriptions or dashboards referencing the old alarm names will need to be updated. The original shared log group resource is left in place but no longer receives new log events.
+* Added `graphdb_disable_automatic_restarts` (default `true`), which stops OS updates from restarting the GraphDB services (needrestart) or rebooting the node (unattended-upgrades). Updates are still installed; restart the nodes one at a time to apply those that need a restart.
+  * Applied through the launch template user data, so it affects only newly launched instances.
 
 **BREAKING CHANGE**: Target group name format has changed from `{prefix}-tg-{flavor}-{suffix}` to `{prefix}-{suffix}` to stay within AWS's 32-character name limit. The prefix is automatically truncated to 27 characters if longer, leaving room for the hyphen and 4-character random hex suffix. Existing deployments will have their target group destroyed and recreated.
-
 
 * Changed comparison operator for the nodes disconnected alarm from `GreaterThanThreshold` to `GreaterThanOrEqualToThreshold`
 * Added `insufficient_data_actions` to all CloudWatch alarms so that transitions to `INSUFFICIENT_DATA` state (e.g. when a node stops emitting metrics) trigger an SNS notification
@@ -25,6 +26,21 @@
 * Fixed `ResourceAlreadyExistsException` for per-node CloudWatch log groups after scaling or `terraform destroy`. The CloudWatch agent on a terminating node recreated log groups Terraform had just deleted; the instance role now denies `logs:CreateLogGroup` for the deployment's log groups
   * The deny policy is kept until the Auto Scaling Group is gone on `terraform destroy`
   * A node whose per-node log group does not exist (e.g. a node name outside `node-1..node-N` after scaling) ships its GraphDB log to the shared `{prefix}` log group instead. The check runs at boot, so it applies to instances launched after the upgrade
+* Added `graphdb_disable_automatic_restarts` (default `true`), which stops OS updates from restarting the GraphDB services (needrestart) or rebooting the node (unattended-upgrades). Updates are still installed; restart the nodes one at a time to apply those that need a restart.
+  * Applied through the launch template user data, so it affects only newly launched instances.
+
+## 3.5.0
+
+* Added `graphdb_disable_automatic_restarts` (default `true`), which stops OS updates from restarting the GraphDB services (needrestart) or rebooting the node (unattended-upgrades). Updates are still installed; restart the nodes one at a time to apply those that need a restart.
+  * Applied through the launch template user data, so it affects only newly launched instances.
+
+## 3.4.2
+
+* Updated GraphDB default version to [11.5.2](https://graphdb.ontotext.com/documentation/11.5/release-notes.html#graphdb-11-5-2)
+
+## 3.4.1
+
+* Updated GraphDB default version to [11.5.1](https://graphdb.ontotext.com/documentation/11.5/release-notes.html#graphdb-11-5-1)
 
 ## 3.4.0
 
