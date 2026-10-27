@@ -709,6 +709,13 @@ variable "graphdb_enable_userdata_scripts_on_reboot" {
   default     = false
 }
 
+variable "graphdb_disable_automatic_restarts" {
+  description = "Prevents OS updates from restarting GraphDB services (needrestart) or rebooting the node (unattended-upgrades). OS updates are still installed."
+  type        = bool
+  default     = true
+  nullable    = false
+}
+
 variable "graphdb_audit_log_enabled" {
   description = "Enable or disable the GraphDB audit log"
   type        = bool

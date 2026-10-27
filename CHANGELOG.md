@@ -1,5 +1,10 @@
 # GraphDB AWS Terraform Module Changelog
 
+## 3.5.0
+
+* Added `graphdb_disable_automatic_restarts` (default `true`), which stops OS updates from restarting the GraphDB services (needrestart) or rebooting the node (unattended-upgrades). Updates are still installed; restart the nodes one at a time to apply those that need a restart.
+  * Applied through the launch template user data, so it affects only newly launched instances.
+
 ## 3.4.2
 
 * Updated GraphDB default version to [11.5.2](https://graphdb.ontotext.com/documentation/11.5/release-notes.html#graphdb-11-5-2)
