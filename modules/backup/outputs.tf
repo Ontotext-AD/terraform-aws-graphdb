@@ -15,12 +15,12 @@ output "bucket_arn" {
 
 output "s3_cmk_arn" {
   description = "ARN of the KMS key for S3 bucket encryption"
-  value       = var.create_s3_kms_key ? aws_kms_key.s3_cmk[0].arn : ""
+  value       = local.create_s3_cmk ? aws_kms_key.s3_cmk[0].arn : ""
 }
 
 output "s3_cmk_alias_arn" {
   description = "ARN of the KMS key alias for S3 bucket encryption"
-  value       = var.create_s3_kms_key ? aws_kms_alias.s3_cmk_alias[0].arn : ""
+  value       = local.create_s3_cmk ? aws_kms_alias.s3_cmk_alias[0].arn : ""
 }
 
 output "key_admin_iam_role_arn" {

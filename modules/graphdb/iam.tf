@@ -1,6 +1,7 @@
 
 locals {
-  assume_role_principal_arn = var.assume_role_principal_arn != null ? var.assume_role_principal_arn : data.aws_caller_identity.current.arn
+  # Account root by default: any principal whose IAM policy allows sts:AssumeRole on the role.
+  assume_role_principal_arn = var.assume_role_principal_arn != null ? var.assume_role_principal_arn : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
 }
 
 resource "aws_iam_instance_profile" "graphdb_iam_instance_profile" {
@@ -92,13 +93,35 @@ data "aws_iam_policy_document" "graphdb_instance_ssm" {
     effect = "Allow"
 
     actions = [
-      "ssm:DescribeParameters",
-      "kms:Decrypt"
+      "ssm:DescribeParameters"
     ]
 
     resources = [
       "arn:aws:ssm:${var.aws_region}:${var.aws_subscription_id}:/${var.resource_name_prefix}/graphdb/*"
     ]
+  }
+
+  # Decrypt the GraphDB SecureString parameters, only through SSM. Needed for keys whose policy delegates to IAM.
+  statement {
+    sid     = "DecryptGraphDBParametersViaSSM"
+    effect  = "Allow"
+    actions = ["kms:Decrypt"]
+
+    resources = [
+      "arn:aws:kms:${var.aws_region}:${data.aws_caller_identity.current.account_id}:key/*"
+    ]
+
+    condition {
+      test     = "StringEquals"
+      variable = "kms:ViaService"
+      values   = ["ssm.${var.aws_region}.amazonaws.com"]
+    }
+
+    condition {
+      test     = "StringLike"
+      variable = "kms:EncryptionContext:PARAMETER_ARN"
+      values   = ["arn:aws:ssm:${var.aws_region}:${var.aws_subscription_id}:parameter/${var.resource_name_prefix}/graphdb/*"]
+    }
   }
 }
 
@@ -132,33 +155,80 @@ data "aws_iam_policy_document" "graphdb_instance_volume" {
 
     actions = [
       "ec2:DescribeVolumes",
-      "ec2:MonitorInstances",
-      "kms:Encrypt",
-      "kms:Decrypt",
-      "kms:GenerateDataKey",
-      "kms:GenerateDataKeyWithoutPlaintext",
-      "kms:CreateGrant",
-      "kms:DescribeKey",
-      "kms:ListGrants",
-      "kms:ReEncrypt*",
-      "kms:GetKeyPolicy",
-      "kms:ListAliases",
-      "kms:ListKeys",
-      "kms:RetireGrant",
-      "kms:RevokeGrant",
-      "kms:TagResource",
-      "kms:UntagResource",
-      "kms:EnableKey",
-      "kms:DisableKey"
+      "ec2:MonitorInstances"
     ]
 
     resources = [
       "arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.current.account_id}:volume/*",
       "arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.current.account_id}:instance/*",
-      "arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.current.account_id}:network-interface/*",
+      "arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.current.account_id}:network-interface/*"
+    ]
+  }
+
+  # Create and attach encrypted data volumes, only through EC2. Needed for keys whose policy delegates to IAM.
+  statement {
+    sid    = "EBSKeyUseViaEC2"
+    effect = "Allow"
+
+    actions = [
+      "kms:Decrypt",
+      "kms:DescribeKey",
+      "kms:GenerateDataKeyWithoutPlaintext",
+      "kms:ReEncrypt*"
+    ]
+
+    resources = [
       "arn:aws:kms:${var.aws_region}:${data.aws_caller_identity.current.account_id}:key/*"
     ]
 
+    condition {
+      test     = "StringEquals"
+      variable = "kms:ViaService"
+      values   = ["ec2.${var.aws_region}.amazonaws.com"]
+    }
+  }
+
+  statement {
+    sid     = "EBSKeyGrantsViaEC2"
+    effect  = "Allow"
+    actions = ["kms:CreateGrant"]
+
+    resources = [
+      "arn:aws:kms:${var.aws_region}:${data.aws_caller_identity.current.account_id}:key/*"
+    ]
+
+    condition {
+      test     = "StringEquals"
+      variable = "kms:ViaService"
+      values   = ["ec2.${var.aws_region}.amazonaws.com"]
+    }
+
+    condition {
+      test     = "Bool"
+      variable = "kms:GrantIsForAWSResource"
+      values   = ["true"]
+    }
+  }
+
+  # Read and write backups, only through S3. Needed for keys whose policy delegates to IAM.
+  statement {
+    sid    = "BackupKeyUseViaS3"
+    effect = "Allow"
+
+    actions = [
+      "kms:GenerateDataKey",
+      "kms:Decrypt"
+    ]
+
+    resources = [
+      "arn:aws:kms:${var.aws_region}:${data.aws_caller_identity.current.account_id}:key/*"
+    ]
+
+    condition {
+      test     = "StringEquals"
+      variable = "kms:ViaService"
+      values   = ["s3.${var.aws_region}.amazonaws.com"]
+    }
   }
   statement {
     effect = "Allow"
@@ -340,7 +410,7 @@ data "aws_iam_policy_document" "graphdb_s3_replication_policy_backup" {
       "s3:ListBucket",
     ]
 
-    resources = ["arn:aws:s3:::${var.graphdb_backup_bucket_name}/*"]
+    resources = ["arn:aws:s3:::${var.graphdb_backup_bucket_name}"]
   }
 
   statement {
@@ -365,6 +435,48 @@ data "aws_iam_policy_document" "graphdb_s3_replication_policy_backup" {
     ]
 
     resources = ["arn:aws:s3:::${var.graphdb_backup_replication_bucket_name}/*"]
+  }
+
+  # Backups are SSE-KMS: decrypt them from the backup bucket, encrypt the replicas with the replica key.
+  # With a Bucket Key the encryption context is the bucket ARN, otherwise the object ARN.
+  statement {
+    effect    = "Allow"
+    actions   = ["kms:Decrypt"]
+    resources = ["arn:aws:kms:${var.aws_region}:${var.aws_subscription_id}:key/*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "kms:ViaService"
+      values   = ["s3.${var.aws_region}.amazonaws.com"]
+    }
+
+    condition {
+      test     = "StringLike"
+      variable = "kms:EncryptionContext:aws:s3:arn"
+      values   = ["arn:aws:s3:::${var.graphdb_backup_bucket_name}", "arn:aws:s3:::${var.graphdb_backup_bucket_name}/*"]
+    }
+  }
+
+  dynamic "statement" {
+    for_each = var.graphdb_backup_replica_kms_key_arn != "" ? [split(":", var.graphdb_backup_replica_kms_key_arn)[3]] : []
+
+    content {
+      effect    = "Allow"
+      actions   = ["kms:Encrypt", "kms:Decrypt"]
+      resources = [var.graphdb_backup_replica_kms_key_arn]
+
+      condition {
+        test     = "StringEquals"
+        variable = "kms:ViaService"
+        values   = ["s3.${statement.value}.amazonaws.com"]
+      }
+
+      condition {
+        test     = "StringLike"
+        variable = "kms:EncryptionContext:aws:s3:arn"
+        values   = ["arn:aws:s3:::${var.graphdb_backup_replication_bucket_name}", "arn:aws:s3:::${var.graphdb_backup_replication_bucket_name}/*"]
+      }
+    }
   }
 }
 
@@ -401,69 +513,15 @@ data "aws_iam_policy_document" "ebs_key_admin_role_assume" {
       "sts:AssumeRole"
     ]
   }
-
-  statement {
-    effect = "Allow"
-
-    principals {
-      type = "Service"
-      identifiers = [
-        "s3.amazonaws.com",
-        "ebs.amazonaws.com",
-        "sns.amazonaws.com",
-        "ec2.amazonaws.com",
-        "kms.amazonaws.com",
-        "ssm.amazonaws.com"
-      ]
-    }
-
-    actions = ["sts:AssumeRole"]
-  }
 }
 
-data "aws_iam_policy_document" "ebs_key_admin_role_permissions" {
-  statement {
-    effect = "Allow"
-
-    actions = [
-      "kms:CreateAlias",
-      "kms:CreateKey",
-      "kms:Encrypt",
-      "kms:Decrypt",
-      "kms:DeleteAlias",
-      "kms:DescribeKey",
-      "kms:GetKeyPolicy",
-      "kms:GetKeyRotationStatus",
-      "kms:ListAliases",
-      "kms:ListGrants",
-      "kms:ListKeyPolicies",
-      "kms:ListKeys",
-      "kms:PutKeyPolicy",
-      "kms:UpdateAlias",
-      "kms:EnableKeyRotation",
-      "kms:ListResourceTags",
-      "kms:ScheduleKeyDeletion",
-      "kms:DisableKeyRotation",
-      "tag:GetResources"
-    ]
-
-    resources = [
-      "*"
-    ]
-  }
-}
-
-resource "aws_iam_role_policy" "ebs_key_admin_role_permissions" {
-  name   = "KMSPermissionsPolicy-EBS"
-  role   = aws_iam_role.ebs_key_admin_role.name
-  policy = data.aws_iam_policy_document.ebs_key_admin_role_permissions.json
-}
-
+# No IAM policy: the key policy grants all permissions.
 resource "aws_iam_role" "ebs_key_admin_role" {
   name               = "${var.resource_name_prefix}-ebs-key-admin"
   assume_role_policy = data.aws_iam_policy_document.ebs_key_admin_role_assume.json
 }
 
+# No IAM policy: the key policy grants all permissions.
 resource "aws_iam_role" "param_store_key_admin_role" {
   name               = "${var.resource_name_prefix}-param-store-key-admin"
   assume_role_policy = data.aws_iam_policy_document.param_store_key_admin_role_assume.json
@@ -484,63 +542,6 @@ data "aws_iam_policy_document" "param_store_key_admin_role_assume" {
       "sts:AssumeRole"
     ]
   }
-
-  statement {
-    effect = "Allow"
-
-    principals {
-      type = "Service"
-      identifiers = [
-        "s3.amazonaws.com",
-        "ebs.amazonaws.com",
-        "kms.amazonaws.com",
-        "sns.amazonaws.com",
-        "ssm.amazonaws.com"
-      ]
-    }
-
-    actions = [
-      "sts:AssumeRole"
-    ]
-  }
-}
-
-data "aws_iam_policy_document" "param_store_key_admin_role_permissions" {
-  statement {
-    effect = "Allow"
-
-    actions = [
-      "kms:CreateAlias",
-      "kms:CreateKey",
-      "kms:Encrypt",
-      "kms:Decrypt",
-      "kms:DeleteAlias",
-      "kms:DescribeKey",
-      "kms:GetKeyPolicy",
-      "kms:GetKeyRotationStatus",
-      "kms:ListAliases",
-      "kms:ListGrants",
-      "kms:ListKeyPolicies",
-      "kms:ListKeys",
-      "kms:PutKeyPolicy",
-      "kms:UpdateAlias",
-      "kms:EnableKeyRotation",
-      "kms:ListResourceTags",
-      "kms:ScheduleKeyDeletion",
-      "kms:DisableKeyRotation",
-      "tag:GetResources"
-    ]
-
-    resources = [
-      "*"
-    ]
-  }
-}
-
-resource "aws_iam_role_policy" "param_store_key_admin_role_permissions" {
-  name   = "KMSPermissionsPolicy-Param_store"
-  role   = aws_iam_role.param_store_key_admin_role.name
-  policy = data.aws_iam_policy_document.param_store_key_admin_role_permissions.json
 }
 
 resource "aws_iam_role_policy_attachment" "additional_policies" {

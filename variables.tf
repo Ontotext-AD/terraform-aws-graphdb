@@ -63,7 +63,7 @@ variable "assume_role_external_id" {
 }
 
 variable "assume_role_principal_arn" {
-  description = "(Optional) Principal for the IAM role assume policies"
+  description = "(Optional) Principal allowed to assume the KMS key administrator roles. Defaults to the account root, which delegates to IAM."
   type        = string
   default     = null
 }
@@ -1022,7 +1022,13 @@ variable "deletion_window_in_days" {
 }
 
 variable "sns_external_kms_key" {
-  description = "ARN of the external KMS key that will be used for encryption of SNS topics"
+  description = "ARN of an external KMS key in aws_region for the main SNS notifications topic"
+  type        = string
+  default     = ""
+}
+
+variable "sns_availability_external_kms_key" {
+  description = "ARN of an external KMS key in monitoring_route53_health_check_aws_region for the availability SNS topic"
   type        = string
   default     = ""
 }
