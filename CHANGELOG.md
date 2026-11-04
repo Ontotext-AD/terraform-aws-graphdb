@@ -44,6 +44,7 @@
 * Fixed backup bucket replication, which never replicated the SSE-KMS encrypted backups. Replicas are encrypted with `aws/s3` in the destination region
 * Fixed perpetual drift on the replication buckets' encryption configuration
 * Fixed `ValidationException: Value at 'value' failed to satisfy constraint` when changing the KMS key of the SSM parameters. Existing deployments rewrite the parameters once on upgrade, with unchanged values
+* Replaced tfsec with Trivy in CI. tfsec is no longer developed and cannot parse `check` blocks. The tfsec exclusions moved to `.trivyignore`
 
 ## 3.4.0
 

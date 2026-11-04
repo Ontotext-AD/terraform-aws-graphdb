@@ -1,0 +1,6 @@
+# We want to access it by default
+AWS-0053
+# Bucket logging depends on the deployment/use case, should be provided additionally with aws_s3_bucket_logging
+AWS-0089
+# We want GraphDB to access the internet by default
+AWS-0104
