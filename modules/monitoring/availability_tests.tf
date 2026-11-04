@@ -5,9 +5,19 @@
 resource "aws_sns_topic" "graphdb_route53_sns_topic" {
   count = var.enable_availability_tests ? 1 : 0
 
-  provider          = aws.useast1
-  name              = "${var.resource_name_prefix}-route53-sns-notifications"
-  kms_master_key_id = var.sns_external_kms_key != "" ? var.sns_external_kms_key : (var.enable_sns_kms_key ? aws_kms_key.sns_availability_topic_key[0].arn : var.sns_default_kms_key)
+  provider = aws.useast1
+  name     = "${var.resource_name_prefix}-route53-sns-notifications"
+  kms_master_key_id = !var.enable_sns_kms_key ? var.sns_default_kms_key : (
+    var.sns_availability_external_kms_key != "" ? var.sns_availability_external_kms_key : aws_kms_key.sns_availability_topic_key[0].arn
+  )
+
+  lifecycle {
+    # KMS keys are regional; SNS cannot use a key from another region.
+    precondition {
+      condition     = !var.enable_sns_kms_key || !startswith(var.sns_availability_external_kms_key, "arn:") || try(split(":", var.sns_availability_external_kms_key)[3], "") == data.aws_region.availability.region
+      error_message = "sns_availability_external_kms_key must be a key in ${data.aws_region.availability.region}, the region of the availability topic."
+    }
+  }
 }
 
 resource "aws_sns_topic_subscription" "graphdb_route53_sns_topic_subscription" {

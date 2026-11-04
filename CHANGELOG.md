@@ -25,6 +25,26 @@
 * Fixed `ResourceAlreadyExistsException` for per-node CloudWatch log groups after scaling or `terraform destroy`. The CloudWatch agent on a terminating node recreated log groups Terraform had just deleted; the instance role now denies `logs:CreateLogGroup` for the deployment's log groups
   * The deny policy is kept until the Auto Scaling Group is gone on `terraform destroy`
   * A node whose per-node log group does not exist (e.g. a node name outside `node-1..node-N` after scaling) ships its GraphDB log to the shared `{prefix}` log group instead. The check runs at boot, so it applies to instances launched after the upgrade
+* Hardened the KMS key policies (EBS, Parameter Store, S3 backup, SNS)
+  * The key policies no longer name the deployer's caller ARN, so other principals can manage a deployment someone else created. The account root gets key management; account principals can use the keys only through the owning service (`kms:ViaService`)
+  * Key administrators no longer get data permissions
+  * The GraphDB instance role can use the keys only through EC2, S3 and SSM, scoped to the backup bucket and the `/<prefix>/graphdb/*` parameters. Removed its key management, grant and tagging permissions
+  * SNS and CloudWatch statements require `aws:SourceAccount`, SNS statements also `aws:SourceArn`. Removed the unused `ec2`/`ssm` service principals
+  * The availability SNS key policy uses the availability region instead of a hardcoded `us-east-1`
+* Key admin roles trust `assume_role_principal_arn`, or the account root when unset, instead of the deployer's caller ARN. Removed their inline policies that granted KMS actions on `*`
+* The module no longer creates an EBS, Parameter Store, S3 or SNS key when the matching external key is set
+  * Existing deployments that set both `create_*_kms_key = true` and an external key get the unused module key scheduled for deletion and its alias removed. Exception: EBS data volumes created before `ebs_external_kms_key` was set still use the module key, and a replaced node cannot attach them. See "Changing the EBS key on an existing deployment" in the README
+* Added `sns_availability_external_kms_key` for the availability SNS topic. `sns_external_kms_key` now applies only to the main notifications topic
+  * Existing deployments that set `sns_external_kms_key` get a module-created key on the availability topic. Set `sns_availability_external_kms_key` to keep your own key there
+  * The plan fails if an external SNS key is in a different region than its topic
+* Documented the key policy statement an external SNS key needs for CloudWatch alarms
+* Added a plan-time warning when monitoring uses an SNS topic encrypted with `alias/aws/sns`, which CloudWatch alarms cannot publish to
+* Fixed `Invalid index` when `create_s3_kms_key` or `create_sns_kms_key` is `true` and `deploy_backup` or `deploy_monitoring` is `false`
+* Documented the KMS permissions the deployer needs. See "KMS Deployer Permissions" in the README
+* Fixed backup bucket replication, which never replicated the SSE-KMS encrypted backups. Replicas are encrypted with `aws/s3` in the destination region
+* Fixed perpetual drift on the replication buckets' encryption configuration
+* Fixed `ValidationException: Value at 'value' failed to satisfy constraint` when changing the KMS key of the SSM parameters. Existing deployments rewrite the parameters once on upgrade, with unchanged values
+* Replaced tfsec with Trivy in CI. tfsec is no longer developed and cannot parse `check` blocks. The tfsec exclusions moved to `.trivyignore`
 
 ## 3.4.0
 

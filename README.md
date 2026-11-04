@@ -104,7 +104,7 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | assume\_role\_arn | IAM Role that should be used to access another account | `string` | `null` | no |
 | assume\_role\_session\_name | (Optional) name of the session to be assumed to run session | `string` | `null` | no |
 | assume\_role\_external\_id | The external ID can be any identifier that is known only by you and the third party. For example, you can use an invoice ID between you and the third party | `string` | `null` | no |
-| assume\_role\_principal\_arn | (Optional) Principal for the IAM role assume policies | `string` | `null` | no |
+| assume\_role\_principal\_arn | (Optional) Principal allowed to assume the KMS key administrator roles. Defaults to the account root, which delegates to IAM. | `string` | `null` | no |
 | graphdb\_additional\_policy\_arns | List of additional IAM policy ARNs to attach to the instance IAM role | `list(string)` | `[]` | no |
 | deploy\_backup | Deploy backup module | `bool` | `true` | no |
 | backup\_schedule | Cron expression for the backup job. | `string` | `"0 0 * * *"` | no |
@@ -252,7 +252,8 @@ Before you begin using this Terraform module, ensure you meet the following prer
 | sns\_cmk\_description | Description for the KMS key for the encryption of SNS | `string` | `"KMS CMK Key to encrypt SNS topics"` | no |
 | sns\_key\_admin\_arn | ARN of the role or user granted administrative access to the SNS KMS key. | `string` | `""` | no |
 | deletion\_window\_in\_days | The waiting period, specified in number of days for AWS to delete the KMS key(Between 7 and 30). | `number` | `30` | no |
-| sns\_external\_kms\_key | ARN of the external KMS key that will be used for encryption of SNS topics | `string` | `""` | no |
+| sns\_external\_kms\_key | ARN of an external KMS key in aws\_region for the main SNS notifications topic | `string` | `""` | no |
+| sns\_availability\_external\_kms\_key | ARN of an external KMS key in monitoring\_route53\_health\_check\_aws\_region for the availability SNS topic | `string` | `""` | no |
 | sns\_cmk\_key\_alias | The alias for the SNS CMK key. | `string` | `"alias/graphdb-sns-cmk-key-alias"` | no |
 | sns\_default\_kms\_key | ARN of the default KMS key that will be used for encryption of SNS topics | `string` | `"alias/aws/sns"` | no |
 | sns\_key\_spec | Specification of the Key. | `string` | `"SYMMETRIC_DEFAULT"` | no |
@@ -607,6 +608,9 @@ monitoring_memory_utilization_threshold = 80
 ```
 
 **Note**: In order for the Cloudwatch Alarms to be able to publish alarms in SNS you should use [CMK key](https://repost.aws/knowledge-center/cloudwatch-configure-alarm-sns).
+With the default `create_sns_kms_key = false` the topics are encrypted with the AWS managed key `alias/aws/sns`, whose policy cannot allow CloudWatch.
+The alarm actions then fail with `CloudWatch Alarms does not have authorization to access the SNS topic encryption key` and no notifications are delivered.
+`terraform plan` warns about this when `deploy_monitoring` is enabled.
 
 **Providing a TLS certificate**
 
@@ -707,7 +711,8 @@ graphdb_parameter_store_key_admin_arn = "arn:aws:iam::123456789012:role/KeyAdmin
 
 ##### Using Custom Principal ARN
 
-You can set custom principal for the EBS Key Admin Role and for the Parameter Store Admin Role via the following variable:
+You can set a custom principal allowed to assume the EBS, Parameter Store, S3 and SNS key admin roles via the following variable.
+If it is not set, the roles trust the account root, so only principals whose IAM policies allow `sts:AssumeRole` on them can assume them:
 
 ```hcl
 assume_role_principal_arn = "arn:aws:iam::${accountID}:role/$USER or $ROLE"
@@ -730,6 +735,13 @@ You can also provide your own key using the `ebs_external_kms_key` variable.
 create_graphdb_ebs_kms_key = true
 ebs_external_kms_key = "arn:aws:kms:us-east-1:123456789012:key/your-external-key-arn"
 ```
+
+**Changing the EBS key on an existing deployment:** existing data volumes keep the key they were created with; only new volumes use the new key.
+Switching away from the module-created key (`create_ebs_kms_key = false`, or setting `ebs_external_kms_key`) schedules it for deletion,
+and a replaced node can no longer attach a data volume encrypted with it, so it starts with an empty one.
+Before switching, either keep the old key with `terraform state rm 'module.graphdb.aws_kms_key.ebs_cmk[0]' 'module.graphdb.aws_kms_alias.ebs_cmk_alias[0]' 'module.graphdb.aws_kms_key_policy.ebs_cmk_policy[0]'`,
+or re-encrypt the data volumes (snapshot, then `aws ec2 copy-snapshot --encrypted --kms-key-id <new key>`).
+Within the deletion window the old key can be restored with `aws kms cancel-key-deletion` followed by `aws kms enable-key`.
 
 ##### Key Admin
 
@@ -777,6 +789,26 @@ app_name                      = "example_app"
 environment_name              = "env_name"
 ```
 
+You can also provide your own keys (requires `create_sns_kms_key = true`). KMS keys are regional, so each key must be in its topic's region:
+- `sns_external_kms_key` for the main notifications topic, in `aws_region`
+- `sns_availability_external_kms_key` for the availability topic, in `monitoring_route53_health_check_aws_region`
+
+A topic without an external key gets a module-created key. For CloudWatch alarms to publish to a topic, its external key's policy must allow CloudWatch:
+
+```json
+{
+  "Sid": "AllowCloudWatchAlarms",
+  "Effect": "Allow",
+  "Principal": { "Service": "cloudwatch.amazonaws.com" },
+  "Action": ["kms:Decrypt", "kms:GenerateDataKey*"],
+  "Resource": "*",
+  "Condition": { "StringEquals": { "aws:SourceAccount": "123456789012" } }
+}
+```
+
+**Note:** When an external key is set (`ebs_external_kms_key`, `parameter_store_external_kms_key`, `s3_external_kms_key_arn`
+`sns_external_kms_key` or `sns_availability_external_kms_key`), the module does not create its own key for that resource.
+
 #### KMS Key Administrator Access
 
 You can grant administrative access to KMS keys using either IAM roles (recommended) or IAM groups (legacy).
@@ -810,6 +842,81 @@ iam_admin_group = "Your_Iam_Group_Name"
 The module will automatically resolve the ARNs of the users in the specified group and use them as KMS key administrators.
 
 **Note:** If both `iam_admin_role_arns` and `iam_admin_group` are provided, role ARNs take precedence and can be combined with user ARNs from the group for backward compatibility.
+
+#### KMS Deployer Permissions
+
+The KMS key policies delegate key management to IAM via the account root principal, and allow data use
+(`Encrypt`/`Decrypt`/`GenerateDataKey`) only through the owning service (`kms:ViaService`).
+Key administrators get key management only, never data access.
+
+The principal running Terraform needs KMS permissions in its own IAM policy (`AdministratorAccess` or
+`PowerUserAccess` already covers this). A new key starts with the default key policy, which defers to IAM, until the
+module attaches its own key policy, so the key policies alone (`iam_admin_role_arns`) are not enough to create the keys:
+
+- **Creating keys:** `kms:CreateKey` and `kms:ListAliases`, plus `kms:TagResource`, because the provider tags the key
+  in the `CreateKey` call.
+- **Key management** on the module's keys, e.g. scoped by the `Release_Name` tag the provider adds (the
+  `resource_name_prefix`). `kms:CreateAlias`, `kms:DeleteAlias` and `kms:UpdateAlias` also need the alias resource.
+- **Parameter Store CMK data use** for writing the SecureString parameters: `kms:Encrypt`, `kms:Decrypt`,
+  `kms:GenerateDataKey`. The key policy allows these only via SSM.
+
+A least-privilege deployer IAM policy for KMS looks like this:
+
+```hcl
+statement {
+  actions   = ["kms:CreateKey", "kms:ListAliases"]
+  resources = ["*"]
+}
+statement {
+  actions   = ["kms:TagResource"]
+  resources = ["*"]
+  condition {
+    test     = "StringEquals"
+    variable = "aws:RequestTag/Release_Name"
+    values   = ["<resource_name_prefix>"]
+  }
+}
+statement {
+  actions = [
+    "kms:CancelKeyDeletion", "kms:CreateAlias", "kms:DeleteAlias", "kms:DescribeKey", "kms:DisableKey",
+    "kms:DisableKeyRotation", "kms:EnableKey", "kms:EnableKeyRotation", "kms:GetKeyPolicy", "kms:GetKeyRotationStatus",
+    "kms:ListKeyPolicies", "kms:ListKeyRotations", "kms:ListResourceTags", "kms:PutKeyPolicy", "kms:ScheduleKeyDeletion",
+    "kms:TagResource", "kms:UntagResource", "kms:UpdateAlias", "kms:UpdateKeyDescription"
+  ]
+  # All regions: the availability SNS key lives in monitoring_route53_health_check_aws_region
+  resources = ["arn:aws:kms:*:<account-id>:key/*"]
+  condition {
+    test     = "StringEquals"
+    variable = "aws:ResourceTag/Release_Name"
+    values   = ["<resource_name_prefix>"]
+  }
+}
+statement {
+  actions   = ["kms:CreateAlias", "kms:DeleteAlias", "kms:UpdateAlias"]
+  resources = ["arn:aws:kms:*:<account-id>:alias/*"]
+}
+statement {
+  actions   = ["kms:Encrypt", "kms:Decrypt", "kms:GenerateDataKey"]
+  resources = ["arn:aws:kms:<region>:<account-id>:key/*"]
+  condition {
+    test     = "StringEquals"
+    variable = "kms:ViaService"
+    values   = ["ssm.<region>.amazonaws.com"]
+  }
+}
+```
+
+To grant key management to other roles (e.g. a second deployer or a cross-account role) on existing keys, list them
+in `iam_admin_role_arns`. A cross-account role still needs the KMS actions in an IAM policy in its own account:
+
+```hcl
+iam_admin_role_arns = [
+  "arn:aws:iam::123456789012:role/TerraformDeploymentRole"
+]
+```
+
+**Note:** Never remove `kms:PutKeyPolicy` from the deployer. KMS rejects a key policy update that would lock the
+caller out of future updates.
 
 #### Replication
 

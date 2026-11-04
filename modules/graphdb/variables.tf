@@ -283,6 +283,12 @@ variable "graphdb_backup_replication_bucket_name" {
   type        = string
 }
 
+variable "graphdb_backup_replica_kms_key_arn" {
+  description = "ARN of the KMS key that encrypts the backup replicas"
+  type        = string
+  default     = ""
+}
+
 variable "logging_enable_replication" {
   description = "Enable or disable logging bucket replication"
   type        = bool

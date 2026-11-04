@@ -15,13 +15,13 @@ locals {
 
   calculated_s3_kms_key_arn = var.create_s3_kms_key ? (
     var.s3_external_kms_key_arn != "" ? var.s3_external_kms_key_arn :
-    module.backup[0].s3_cmk_arn != "" ? module.backup[0].s3_cmk_arn :
+    try(module.backup[0].s3_cmk_arn, "") != "" ? module.backup[0].s3_cmk_arn :
     var.s3_kms_default_key
   ) : var.s3_kms_default_key
 
   calculated_sns_kms_key_arn = var.create_sns_kms_key ? (
     var.sns_external_kms_key != "" ? var.sns_external_kms_key :
-    module.monitoring[0].sns_cmk_arn != "" ? module.monitoring[0].sns_cmk_arn :
+    try(module.monitoring[0].sns_cmk_arn, "") != "" ? module.monitoring[0].sns_cmk_arn :
     var.sns_default_kms_key
   ) : var.sns_default_kms_key
 

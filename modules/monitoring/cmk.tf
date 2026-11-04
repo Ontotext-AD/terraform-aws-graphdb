@@ -1,10 +1,20 @@
+locals {
+  create_sns_cmk              = var.enable_sns_kms_key && var.sns_external_kms_key == ""
+  create_sns_availability_cmk = var.enable_sns_kms_key && var.sns_availability_external_kms_key == ""
+}
+
 data "aws_region" "current" {}
+
+# Region of the availability tests provider.
+data "aws_region" "availability" {
+  provider = aws.useast1
+}
 
 data "aws_caller_identity" "current" {}
 
 # Creates/manages KMS CMK for the main deployment region
 resource "aws_kms_key" "sns_cmk" {
-  count = var.enable_sns_kms_key ? 1 : 0
+  count = local.create_sns_cmk ? 1 : 0
 
   is_enabled               = var.key_enabled
   description              = var.sns_cmk_description
@@ -15,14 +25,48 @@ resource "aws_kms_key" "sns_cmk" {
 
 # Add an alias to the key
 resource "aws_kms_alias" "sns_cmk_alias" {
-  count = var.enable_sns_kms_key ? 1 : 0
+  count = local.create_sns_cmk ? 1 : 0
 
   name          = var.cmk_key_alias
   target_key_id = aws_kms_key.sns_cmk[0].key_id
 }
 
+locals {
+  # Key management only. Data-plane (Encrypt/Decrypt/GenerateDataKey) is granted only to the services that need it.
+  sns_kms_key_management_actions = [
+    "kms:CancelKeyDeletion",
+    "kms:CreateAlias",
+    "kms:DeleteAlias",
+    "kms:DescribeKey",
+    "kms:DisableKey",
+    "kms:DisableKeyRotation",
+    "kms:EnableKey",
+    "kms:EnableKeyRotation",
+    "kms:GetKeyPolicy",
+    "kms:GetKeyRotationStatus",
+    "kms:ListGrants",
+    "kms:ListKeyPolicies",
+    "kms:ListKeyRotations",
+    "kms:ListResourceTags",
+    "kms:PutKeyPolicy",
+    "kms:RevokeGrant",
+    "kms:RotateKeyOnDemand",
+    "kms:ScheduleKeyDeletion",
+    "kms:TagResource",
+    "kms:UntagResource",
+    "kms:UpdateAlias",
+    "kms:UpdateKeyDescription"
+  ]
+
+  sns_topic_arn              = "arn:aws:sns:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:${var.resource_name_prefix}-graphdb-notifications"
+  sns_availability_topic_arn = "arn:aws:sns:${data.aws_region.availability.region}:${data.aws_caller_identity.current.account_id}:${var.resource_name_prefix}-route53-sns-notifications"
+
+  # The module admin role has no IAM policy, so it stays a key administrator next to any custom admins.
+  sns_kms_key_admin_principals = distinct(concat(length(trimspace(var.sns_key_admin_arn)) > 0 ? split(",", var.sns_key_admin_arn) : [], [aws_iam_role.sns_key_admin_role.arn]))
+}
+
 resource "aws_kms_key_policy" "sns_cmk_policy" {
-  count = var.enable_sns_kms_key ? 1 : 0
+  count = local.create_sns_cmk ? 1 : 0
 
   key_id = aws_kms_key.sns_cmk[0].id
 
@@ -31,83 +75,61 @@ resource "aws_kms_key_policy" "sns_cmk_policy" {
     "Id" : "kms-key-policy-access-control",
     "Statement" : [
       {
-        "Sid" : "Enable IAM User Permissions",
+        "Sid" : "AllowAccountKeyManagement",
         "Effect" : "Allow",
         "Principal" : {
-          "AWS" : data.aws_caller_identity.current.arn
+          "AWS" : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
         },
-        "Action" : [
-          "kms:CreateAlias",
-          "kms:CreateKey",
-          "kms:Encrypt",
-          "kms:Decrypt",
-          "kms:DeleteAlias",
-          "kms:DescribeKey",
-          "kms:GetKeyPolicy",
-          "kms:GetKeyRotationStatus",
-          "kms:ListAliases",
-          "kms:ListGrants",
-          "kms:ListKeyPolicies",
-          "kms:ListKeys",
-          "kms:PutKeyPolicy",
-          "kms:UpdateAlias",
-          "kms:EnableKeyRotation",
-          "kms:ListResourceTags",
-          "kms:ScheduleKeyDeletion",
-          "kms:DisableKeyRotation",
-          "kms:GenerateDataKey",
-          "kms:GetKeyRotationStatus"
-        ],
+        "Action" : local.sns_kms_key_management_actions,
         "Resource" : "*"
       },
       {
-        "Sid" : "Allow access for Key Administrators",
+        "Sid" : "AllowKeyAdministrators",
         "Effect" : "Allow",
         "Principal" : {
-          "AWS" = length(trimspace(var.sns_key_admin_arn)) > 0 ? split(",", var.sns_key_admin_arn) : [aws_iam_role.sns_key_admin_role.arn]
+          "AWS" : local.sns_kms_key_admin_principals
         },
-        "Action" : [
-          "kms:CreateAlias",
-          "kms:CreateKey",
-          "kms:Encrypt",
-          "kms:Decrypt",
-          "kms:DeleteAlias",
-          "kms:DescribeKey",
-          "kms:GetKeyPolicy",
-          "kms:GetKeyRotationStatus",
-          "kms:ListAliases",
-          "kms:ListGrants",
-          "kms:ListKeyPolicies",
-          "kms:ListKeys",
-          "kms:PutKeyPolicy",
-          "kms:UpdateAlias",
-          "kms:EnableKeyRotation",
-          "kms:ListResourceTags",
-          "kms:ScheduleKeyDeletion",
-          "kms:DisableKeyRotation",
-          "kms:GenerateDataKey"
-        ],
-        "Resource" : aws_kms_key.sns_cmk[0].arn
+        "Action" : local.sns_kms_key_management_actions,
+        "Resource" : "*"
       },
       {
-        "Sid" : "Allow use of the key for SNS",
+        "Sid" : "AllowSNSServiceToUseKey",
         "Effect" : "Allow",
         "Principal" : {
-          "Service" : [
-            "sns.amazonaws.com",
-            "ec2.amazonaws.com",
-            "ssm.amazonaws.com"
-          ]
+          "Service" : "sns.amazonaws.com"
         },
         "Action" : [
-          "kms:GenerateDataKeyWithoutPlaintext",
-          "kms:DescribeKey",
-          "kms:GenerateDataKey",
           "kms:Decrypt",
-          "kms:ReEncrypt*",
-          "kms:Encrypt"
+          "kms:GenerateDataKey*",
+          "kms:DescribeKey"
         ],
-        "Resource" : aws_kms_key.sns_cmk[0].arn
+        "Resource" : "*",
+        "Condition" : {
+          "StringEquals" : {
+            "aws:SourceAccount" : data.aws_caller_identity.current.account_id
+          },
+          "ArnLike" : {
+            "aws:SourceArn" : local.sns_topic_arn
+          }
+        }
+      },
+      {
+        "Sid" : "AllowAccountPublishViaSNS",
+        "Effect" : "Allow",
+        "Principal" : {
+          "AWS" : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+        },
+        "Action" : [
+          "kms:Decrypt",
+          "kms:GenerateDataKey*"
+        ],
+        "Resource" : "*",
+        "Condition" : {
+          "StringEquals" : {
+            "kms:ViaService" : "sns.${data.aws_region.current.region}.amazonaws.com",
+            "kms:CallerAccount" : data.aws_caller_identity.current.account_id
+          }
+        }
       },
       {
         "Sid" : "AllowCloudWatchAlarmsToUseKey",
@@ -119,7 +141,7 @@ resource "aws_kms_key_policy" "sns_cmk_policy" {
           "kms:Decrypt",
           "kms:GenerateDataKey*"
         ],
-        "Resource" : aws_kms_key.sns_cmk[0].arn,
+        "Resource" : "*",
         "Condition" : {
           "StringEquals" : {
             "aws:SourceAccount" : data.aws_caller_identity.current.account_id
@@ -132,7 +154,7 @@ resource "aws_kms_key_policy" "sns_cmk_policy" {
 
 # Creates/manages KMS CMK for the us-east-1 region (Availability SNS Topic)
 resource "aws_kms_key" "sns_availability_topic_key" {
-  count = var.enable_sns_kms_key ? 1 : 0
+  count = local.create_sns_availability_cmk ? 1 : 0
 
   provider                 = aws.useast1
   is_enabled               = var.key_enabled
@@ -144,7 +166,7 @@ resource "aws_kms_key" "sns_availability_topic_key" {
 
 # Add an alias to the key
 resource "aws_kms_alias" "sns_availability_cmk_alias" {
-  count = var.enable_sns_kms_key ? 1 : 0
+  count = local.create_sns_availability_cmk ? 1 : 0
 
   provider      = aws.useast1
   name          = var.cmk_availability_key_alias
@@ -153,42 +175,32 @@ resource "aws_kms_alias" "sns_availability_cmk_alias" {
 
 resource "aws_kms_key_policy" "sns_availability_cmk_policy" {
   provider = aws.useast1
-  count    = var.enable_sns_kms_key ? 1 : 0
+  count    = local.create_sns_availability_cmk ? 1 : 0
   key_id   = aws_kms_key.sns_availability_topic_key[0].id
 
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
       {
-        Sid       = "EnableIAMUserPermissions",
+        Sid       = "AllowAccountKeyManagement",
         Effect    = "Allow",
-        Principal = { AWS = data.aws_caller_identity.current.arn },
-        Action    = "kms:*",
+        Principal = { AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root" },
+        Action    = local.sns_kms_key_management_actions,
         Resource  = "*"
       },
       {
-        Sid    = "AllowAccessForKeyAdministrators",
-        Effect = "Allow",
-        Principal = {
-          AWS = length(trimspace(var.sns_key_admin_arn)) > 0 ? split(",", var.sns_key_admin_arn) : [aws_iam_role.sns_key_admin_role.arn]
-        },
-        Action = [
-          "kms:DescribeKey",
-          "kms:EnableKeyRotation",
-          "kms:GetKeyPolicy",
-          "kms:PutKeyPolicy",
-          "kms:List*"
-        ],
-        Resource = aws_kms_key.sns_availability_topic_key[0].arn
+        Sid       = "AllowKeyAdministrators",
+        Effect    = "Allow",
+        Principal = { AWS = local.sns_kms_key_admin_principals },
+        Action    = local.sns_kms_key_management_actions,
+        Resource  = "*"
       },
       {
         Sid       = "AllowSNSServiceToUseKey",
         Effect    = "Allow",
         Principal = { Service = "sns.amazonaws.com" },
         Action = [
-          "kms:Encrypt",
           "kms:Decrypt",
-          "kms:ReEncrypt*",
           "kms:GenerateDataKey*",
           "kms:DescribeKey"
         ],
@@ -198,7 +210,23 @@ resource "aws_kms_key_policy" "sns_availability_cmk_policy" {
             "aws:SourceAccount" = data.aws_caller_identity.current.account_id
           },
           ArnLike = {
-            "aws:SourceArn" = "arn:aws:sns:us-east-1:${data.aws_caller_identity.current.account_id}:${var.resource_name_prefix}-route53-sns-notifications"
+            "aws:SourceArn" = local.sns_availability_topic_arn
+          }
+        }
+      },
+      {
+        Sid       = "AllowAccountPublishViaSNS",
+        Effect    = "Allow",
+        Principal = { AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root" },
+        Action = [
+          "kms:Decrypt",
+          "kms:GenerateDataKey*"
+        ],
+        Resource = "*",
+        Condition = {
+          StringEquals = {
+            "kms:ViaService"    = "sns.${data.aws_region.availability.region}.amazonaws.com",
+            "kms:CallerAccount" = data.aws_caller_identity.current.account_id
           }
         }
       },
@@ -210,7 +238,12 @@ resource "aws_kms_key_policy" "sns_availability_cmk_policy" {
           "kms:Decrypt",
           "kms:GenerateDataKey*"
         ],
-        Resource = "*"
+        Resource = "*",
+        Condition = {
+          StringEquals = {
+            "aws:SourceAccount" = data.aws_caller_identity.current.account_id
+          }
+        }
       }
     ]
   })

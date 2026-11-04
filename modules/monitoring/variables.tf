@@ -140,7 +140,13 @@ variable "sns_key_admin_arn" {
 }
 
 variable "sns_external_kms_key" {
-  description = "ARN of the external KMS key that will be used for encryption of SNS topics"
+  description = "ARN of an external KMS key in aws_region for the main SNS notifications topic"
+  type        = string
+  default     = ""
+}
+
+variable "sns_availability_external_kms_key" {
+  description = "ARN of an external KMS key in the availability tests region for the availability SNS topic"
   type        = string
   default     = ""
 }
@@ -215,4 +221,10 @@ variable "cmk_availability_key_alias" {
 variable "lb_context_path" {
   description = "(Optional) Context path for GraphDB (e.g., /graphdb). Leave empty for no context path."
   type        = string
+}
+
+variable "assume_role_principal_arn" {
+  description = "Principal allowed to assume the SNS key administrator role. Defaults to the account root (IAM-delegated)."
+  type        = string
+  default     = null
 }

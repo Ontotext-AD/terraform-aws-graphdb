@@ -48,10 +48,11 @@ module "backup" {
 
   count = var.deploy_backup ? 1 : 0
 
-  resource_name_prefix  = var.resource_name_prefix
-  iam_role_id           = module.graphdb.iam_role_id
-  iam_role_arn          = module.graphdb.iam_role_arn
-  s3_enable_access_logs = var.s3_enable_access_logs
+  resource_name_prefix      = var.resource_name_prefix
+  assume_role_principal_arn = var.assume_role_principal_arn
+  iam_role_id               = module.graphdb.iam_role_id
+  iam_role_arn              = module.graphdb.iam_role_arn
+  s3_enable_access_logs     = var.s3_enable_access_logs
   s3_access_logs_bucket_name = var.deploy_logging_module && var.s3_enable_access_logs ? (
     module.logging[0].graphdb_logging_bucket_name
   ) : null
@@ -166,8 +167,9 @@ module "monitoring" {
 
   count = var.deploy_monitoring ? 1 : 0
 
-  resource_name_prefix = var.resource_name_prefix
-  aws_region           = var.aws_region
+  resource_name_prefix      = var.resource_name_prefix
+  aws_region                = var.aws_region
+  assume_role_principal_arn = var.assume_role_principal_arn
 
   sns_topic_endpoint                     = var.deploy_monitoring ? var.monitoring_sns_topic_endpoint : null
   sns_endpoint_auto_confirms             = var.monitoring_endpoint_auto_confirms
@@ -176,6 +178,7 @@ module "monitoring" {
   sns_key_admin_arn                      = local.sns_key_admin_arn_joined
   enable_sns_kms_key                     = var.create_sns_kms_key
   sns_external_kms_key                   = var.sns_external_kms_key
+  sns_availability_external_kms_key      = var.sns_availability_external_kms_key
   rotation_enabled                       = var.sns_rotation_enabled
   deletion_window_in_days                = var.deletion_window_in_days
   key_enabled                            = var.sns_key_enabled
@@ -205,6 +208,15 @@ module "monitoring" {
   # Alarms Threshold
   cloudwatch_cpu_utilization_threshold = var.monitoring_cpu_utilization_threshold
   graphdb_memory_utilization_threshold = var.monitoring_memory_utilization_threshold
+}
+
+# AWS managed key policies cannot be changed to allow cloudwatch.amazonaws.com, so alarms cannot publish to a topic encrypted with alias/aws/sns.
+check "sns_key_allows_cloudwatch_alarms" {
+  assert {
+    # Built from inputs only: the module key ARN is unknown on a fresh deploy, and that key is never AWS managed.
+    condition     = !var.deploy_monitoring || !strcontains(var.create_sns_kms_key ? var.sns_external_kms_key : var.sns_default_kms_key, "alias/aws/")
+    error_message = "The SNS topic is encrypted with the AWS managed key ${var.create_sns_kms_key ? var.sns_external_kms_key : var.sns_default_kms_key}. CloudWatch alarms cannot publish to it, so no alarm notifications will be delivered. Set create_sns_kms_key = true to use a customer managed key."
+  }
 }
 
 module "graphdb" {
@@ -313,6 +325,7 @@ module "graphdb" {
 
   graphdb_backup_bucket_name             = var.deploy_backup ? module.backup[0].bucket_name : ""
   graphdb_backup_replication_bucket_name = var.deploy_backup && var.backup_enable_bucket_replication ? (module.backup_replication[0].graphdb_backup_replication_bucket_name) : ""
+  graphdb_backup_replica_kms_key_arn     = var.deploy_backup && var.backup_enable_bucket_replication ? module.backup_replication[0].replica_kms_key_arn : ""
 
   # Variables for Logging Bucket IAM Policy
 
