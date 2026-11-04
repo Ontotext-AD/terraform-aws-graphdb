@@ -11,9 +11,10 @@ locals {
   # and Terraform will update the corresponding SSM parameter.
   graphdb_ssm_versions = {
     cloudwatch_agent_config = parseint(
-      substr(md5(templatefile("${path.module}/cloudwatch_agent_config.json.tpl", {
+      # The KMS key ID is part of the hash so a key_id change alone re-sends the write-only value.
+      substr(md5("${templatefile("${path.module}/cloudwatch_agent_config.json.tpl", {
         name = var.resource_name_prefix
-      })), 0, 12),
+      })}${var.parameter_store_kms_key_arn}"), 0, 12),
       16
     )
   }

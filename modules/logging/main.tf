@@ -44,7 +44,8 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "graphdb_logging_s
   bucket = aws_s3_bucket.graphdb_logging_bucket.id
 
   rule {
-    bucket_key_enabled = true
+    bucket_key_enabled       = true
+    blocked_encryption_types = ["SSE-C"]
 
     apply_server_side_encryption_by_default {
       sse_algorithm = "AES256"

@@ -1,5 +1,10 @@
+locals {
+  # Kept while create_*_kms_key is true even if an external key is set, so data already encrypted with it stays readable.
+  create_ebs_cmk = var.create_ebs_kms_key
+}
+
 resource "aws_kms_key" "ebs_cmk" {
-  count = var.create_ebs_kms_key ? 1 : 0
+  count = local.create_ebs_cmk ? 1 : 0
 
   is_enabled               = var.ebs_key_enabled
   description              = var.ebs_cmk_description
@@ -10,14 +15,44 @@ resource "aws_kms_key" "ebs_cmk" {
 }
 
 resource "aws_kms_alias" "ebs_cmk_alias" {
-  count = var.create_ebs_kms_key ? 1 : 0
+  count = local.create_ebs_cmk ? 1 : 0
 
   name          = var.ebs_cmk_alias
   target_key_id = aws_kms_key.ebs_cmk[0].key_id
 }
 
+locals {
+  # Key management only. Data-plane (Encrypt/Decrypt/GenerateDataKey) and grant creation are granted separately.
+  # Shared with the Parameter Store CMK policy.
+  kms_key_management_actions = [
+    "kms:CancelKeyDeletion",
+    "kms:CreateAlias",
+    "kms:DeleteAlias",
+    "kms:DescribeKey",
+    "kms:DisableKey",
+    "kms:DisableKeyRotation",
+    "kms:EnableKey",
+    "kms:EnableKeyRotation",
+    "kms:GetKeyPolicy",
+    "kms:GetKeyRotationStatus",
+    "kms:ListGrants",
+    "kms:ListKeyPolicies",
+    "kms:ListKeyRotations",
+    "kms:ListResourceTags",
+    "kms:PutKeyPolicy",
+    "kms:RevokeGrant",
+    "kms:RotateKeyOnDemand",
+    "kms:ScheduleKeyDeletion",
+    "kms:TagResource",
+    "kms:UntagResource",
+    "kms:UpdateAlias",
+    "kms:UpdateKeyDescription"
+  ]
+
+}
+
 resource "aws_kms_key_policy" "ebs_cmk_policy" {
-  count = var.create_ebs_kms_key ? 1 : 0
+  count = local.create_ebs_cmk ? 1 : 0
 
   key_id = aws_kms_key.ebs_cmk[0].id
 
@@ -26,100 +61,56 @@ resource "aws_kms_key_policy" "ebs_cmk_policy" {
     "Id" : "graphdb-ebs-key-policy",
     "Statement" : [
       {
-        "Sid" : "Enable IAM User Permissions",
+        # The module admin role has no IAM policy, so it stays a key administrator next to any custom admins.
+        "Sid" : "AllowKeyManagement",
         "Effect" : "Allow",
         "Principal" : {
-          "AWS" : data.aws_caller_identity.current.arn
+          "AWS" : distinct(concat(
+            ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root", aws_iam_role.ebs_key_admin_role.arn],
+            length(trimspace(var.ebs_key_admin_arn)) > 0 ? split(",", var.ebs_key_admin_arn) : []
+          ))
         },
-        "Action" : [
-          "kms:CreateAlias",
-          "kms:CreateKey",
-          "kms:Encrypt",
-          "kms:Decrypt",
-          "kms:DeleteAlias",
-          "kms:DescribeKey",
-          "kms:GetKeyPolicy",
-          "kms:GetKeyRotationStatus",
-          "kms:ListAliases",
-          "kms:ListGrants",
-          "kms:ListKeyPolicies",
-          "kms:ListKeys",
-          "kms:PutKeyPolicy",
-          "kms:UpdateAlias",
-          "kms:EnableKeyRotation",
-          "kms:ListResourceTags",
-          "kms:ScheduleKeyDeletion",
-          "kms:DisableKeyRotation",
-          "kms:GenerateDataKey"
-        ],
+        "Action" : local.kms_key_management_actions,
         "Resource" : "*"
       },
       {
-        "Sid" : "Allow access to the key for Key Administrators",
+        # The actions EBS needs to create, attach and snapshot encrypted volumes.
+        "Sid" : "AllowUseViaEC2",
         "Effect" : "Allow",
         "Principal" : {
-          "AWS" = length(trimspace(var.ebs_key_admin_arn)) > 0 ? split(",", var.ebs_key_admin_arn) : [aws_iam_role.ebs_key_admin_role.arn]
+          "AWS" : ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root", aws_iam_role.graphdb_iam_role.arn]
         },
         "Action" : [
-          "kms:Create*",
-          "kms:Describe*",
-          "kms:Enable*",
-          "kms:List*",
-          "kms:Put*",
-          "kms:Update*",
-          "kms:Revoke*",
-          "kms:Disable*",
-          "kms:Get*",
-          "kms:Delete*",
-          "kms:ListResourceTags",
-          "kms:ScheduleKeyDeletion",
-          "kms:CancelKeyDeletion",
-          "kms:GetKeyRotationStatus"
-        ],
-        "Resource" : aws_kms_key.ebs_cmk[0].arn
-      },
-      {
-        "Sid" : "Allow use of the key for EBS",
-        "Effect" : "Allow",
-        "Principal" : {
-          "Service" : "ec2.amazonaws.com"
-        },
-        "Action" : [
-          "kms:Encrypt*",
-          "kms:Decrypt*",
-          "kms:ReEncrypt*",
-          "kms:GenerateDataKey*",
-          "kms:GenerateDataKeyWithoutPlaintext*",
-          "kms:DescribeKey*"
-        ],
-        "Resource" : aws_kms_key.ebs_cmk[0].arn
-      },
-      {
-        "Sid" : "Allow the GraphDB IAM Role to have access to the EBS key",
-        "Effect" : "Allow",
-        "Principal" : {
-          "AWS" : aws_iam_role.graphdb_iam_role.arn
-        },
-        "Action" : [
-          "kms:Encrypt",
           "kms:Decrypt",
-          "kms:GenerateDataKey",
-          "kms:GenerateDataKeyWithoutPlaintext",
-          "kms:CreateGrant",
           "kms:DescribeKey",
-          "kms:ListGrants",
-          "kms:ReEncrypt*",
-          "kms:GetKeyPolicy",
-          "kms:ListAliases",
-          "kms:ListKeys",
-          "kms:RetireGrant",
-          "kms:RevokeGrant",
-          "kms:TagResource",
-          "kms:UntagResource",
-          "kms:EnableKey",
-          "kms:DisableKey"
+          "kms:GenerateDataKeyWithoutPlaintext",
+          "kms:ReEncrypt*"
         ],
-        "Resource" : aws_kms_key.ebs_cmk[0].arn
+        "Resource" : "*",
+        "Condition" : {
+          "StringEquals" : {
+            "kms:ViaService" : "ec2.${var.aws_region}.amazonaws.com",
+            "kms:CallerAccount" : data.aws_caller_identity.current.account_id
+          }
+        }
+      },
+      {
+        "Sid" : "AllowGrantsViaEC2",
+        "Effect" : "Allow",
+        "Principal" : {
+          "AWS" : ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root", aws_iam_role.graphdb_iam_role.arn]
+        },
+        "Action" : "kms:CreateGrant",
+        "Resource" : "*",
+        "Condition" : {
+          "StringEquals" : {
+            "kms:ViaService" : "ec2.${var.aws_region}.amazonaws.com",
+            "kms:CallerAccount" : data.aws_caller_identity.current.account_id
+          },
+          "Bool" : {
+            "kms:GrantIsForAWSResource" : "true"
+          }
+        }
       }
     ]
   })

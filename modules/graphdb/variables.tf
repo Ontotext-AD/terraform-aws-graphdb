@@ -31,7 +31,7 @@ variable "override_owner_id" {
 }
 
 variable "assume_role_principal_arn" {
-  description = "Define IAM Role principal for the policies"
+  description = "Principal allowed to assume the EBS and Parameter Store key administrator roles. Defaults to the account root (IAM-delegated)."
   type        = string
 }
 
@@ -283,6 +283,12 @@ variable "graphdb_backup_replication_bucket_name" {
   type        = string
 }
 
+variable "graphdb_backup_replica_kms_key_arn" {
+  description = "ARN of the KMS key that encrypts the backup replicas"
+  type        = string
+  default     = ""
+}
+
 variable "logging_enable_replication" {
   description = "Enable or disable logging bucket replication"
   type        = bool
@@ -340,10 +346,6 @@ variable "create_parameter_store_kms_key" {
   type        = bool
 }
 
-variable "parameter_store_external_kms_key" {
-  description = "Externally provided KMS CMK"
-  type        = string
-}
 
 variable "parameter_store_key_arn" {
   description = "Deifne the ARN for the KMS Key"
@@ -397,10 +399,6 @@ variable "ebs_cmk_description" {
   type        = string
 }
 
-variable "ebs_external_kms_key" {
-  description = "Externally provided KMS CMK"
-  type        = string
-}
 
 variable "ebs_default_kms_key" {
   description = "Define default KMS key"

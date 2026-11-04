@@ -25,6 +25,29 @@
 * Fixed `ResourceAlreadyExistsException` for per-node CloudWatch log groups after scaling or `terraform destroy`. The CloudWatch agent on a terminating node recreated log groups Terraform had just deleted; the instance role now denies `logs:CreateLogGroup` for the deployment's log groups
   * The deny policy is kept until the Auto Scaling Group is gone on `terraform destroy`
   * A node whose per-node log group does not exist (e.g. a node name outside `node-1..node-N` after scaling) ships its GraphDB log to the shared `{prefix}` log group instead. The check runs at boot, so it applies to instances launched after the upgrade
+* Hardened the KMS key policies (EBS, Parameter Store, S3 backup, SNS)
+  * The key policies no longer name the deployer's caller ARN, so other principals can manage a deployment someone else created. The account root gets key management; account principals can use the keys only through the owning service (`kms:ViaService`)
+  * Key administrators no longer get data permissions
+  * The GraphDB instance role can use the keys only through EC2, S3 and SSM, scoped to the backup bucket and the `/<prefix>/graphdb/*` parameters. Removed its key management, grant and tagging permissions
+  * SNS and CloudWatch statements require `aws:SourceAccount`, SNS statements also `aws:SourceArn`. Removed the unused `ec2`/`ssm` service principals
+  * The availability SNS key policy uses the availability region instead of a hardcoded `us-east-1`
+* Key admin roles trust `assume_role_principal_arn`, or the account root when unset, instead of the deployer's caller ARN. Removed their inline policies that granted KMS actions on `*`
+* An external EBS, Parameter Store, S3 or SNS key is now used even when the matching `create_*_kms_key` is `false`. Previously it was silently ignored and the AWS managed key was used
+  * Existing deployments that set an external key with `create_*_kms_key = false` switch from the AWS managed key to the external key. For EBS this applies to new volumes only, see "Changing the EBS key on an existing deployment" in the README
+  * A module-created key is kept while `create_*_kms_key = true`, even if an external key is set, so older backups and existing EBS data volumes stay readable. Set `create_*_kms_key = false` to remove it
+* Added `sns_availability_external_kms_key` for the availability SNS topic. `sns_external_kms_key` now applies only to the main notifications topic
+  * Existing deployments that set `sns_external_kms_key` get a module-created key on the availability topic when `create_sns_kms_key = true`, or the AWS managed key (`sns_default_kms_key`) when it is `false`. CloudWatch alarms cannot publish to a topic on the AWS managed key, so set `sns_availability_external_kms_key` to a key in `monitoring_route53_health_check_aws_region` to keep availability alarm notifications
+  * The plan warns when either SNS topic would use an AWS managed key
+  * The plan fails if an external SNS key is in a different region than its topic
+* `ebs_external_kms_key`, `parameter_store_external_kms_key`, `s3_external_kms_key_arn`, `sns_external_kms_key` and `sns_availability_external_kms_key` default to `null`. Setting any of them to `""` now fails validation; remove it or set it to `null`
+* Documented the key policy statement an external SNS key needs for CloudWatch alarms
+* Added a plan-time warning when monitoring uses an SNS topic encrypted with `alias/aws/sns`, which CloudWatch alarms cannot publish to
+* Fixed `Invalid index` when `create_s3_kms_key` or `create_sns_kms_key` is `true` and `deploy_backup` or `deploy_monitoring` is `false`
+* Documented the KMS permissions the deployer needs. See "KMS Deployer Permissions" in the README
+* Fixed backup bucket replication, which never replicated the SSE-KMS encrypted backups. Replicas are encrypted with `aws/s3` in the destination region
+* Fixed perpetual drift on the replication buckets' encryption configuration
+* Fixed `ValidationException: Value at 'value' failed to satisfy constraint` when changing the KMS key of the SSM parameters. Existing deployments rewrite the parameters once on upgrade, with unchanged values
+* Replaced tfsec with Trivy in CI. tfsec is no longer developed and cannot parse `check` blocks. The tfsec exclusions moved to `.trivyignore`
 
 ## 3.4.0
 

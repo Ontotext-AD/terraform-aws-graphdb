@@ -1,5 +1,10 @@
+locals {
+  # Kept while create_*_kms_key is true even if an external key is set, so data already encrypted with it stays readable.
+  create_parameter_store_cmk = var.create_parameter_store_kms_key
+}
+
 resource "aws_kms_key" "parameter_store_cmk" {
-  count = var.create_parameter_store_kms_key ? 1 : 0
+  count = local.create_parameter_store_cmk ? 1 : 0
 
   is_enabled               = var.parameter_store_key_enabled
   description              = var.parameter_store_cmk_description
@@ -10,14 +15,14 @@ resource "aws_kms_key" "parameter_store_cmk" {
 }
 
 resource "aws_kms_alias" "graphdb_parameter_store_cmk_alias" {
-  count = var.create_parameter_store_kms_key ? 1 : 0
+  count = local.create_parameter_store_cmk ? 1 : 0
 
   name          = var.parameter_store_cmk_alias
   target_key_id = aws_kms_key.parameter_store_cmk[0].key_id
 }
 
 resource "aws_kms_key_policy" "parameter_store_cmk_policy" {
-  count = var.create_parameter_store_kms_key ? 1 : 0
+  count = local.create_parameter_store_cmk ? 1 : 0
 
   key_id = aws_kms_key.parameter_store_cmk[0].id
 
@@ -26,106 +31,56 @@ resource "aws_kms_key_policy" "parameter_store_cmk_policy" {
     "Id" : "graphdb-parameter-store-key-policy",
     "Statement" : [
       {
-        "Sid" : "Enable IAM User Permissions",
+        # The module admin role has no IAM policy, so it stays a key administrator next to any custom admins.
+        "Sid" : "AllowKeyManagement",
         "Effect" : "Allow",
         "Principal" : {
-          "AWS" : data.aws_caller_identity.current.arn
+          "AWS" : distinct(concat(
+            ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root", aws_iam_role.param_store_key_admin_role.arn],
+            length(trimspace(var.parameter_store_key_admin_arn)) > 0 ? split(",", var.parameter_store_key_admin_arn) : []
+          ))
         },
-        "Action" : [
-          "kms:CreateAlias",
-          "kms:CreateKey",
-          "kms:Encrypt",
-          "kms:Decrypt",
-          "kms:DeleteAlias",
-          "kms:DescribeKey",
-          "kms:GetKeyPolicy",
-          "kms:GetKeyRotationStatus",
-          "kms:ListAliases",
-          "kms:ListGrants",
-          "kms:ListKeyPolicies",
-          "kms:ListKeys",
-          "kms:PutKeyPolicy",
-          "kms:UpdateAlias",
-          "kms:EnableKeyRotation",
-          "kms:ListResourceTags",
-          "kms:ScheduleKeyDeletion",
-          "kms:DisableKeyRotation",
-          "kms:GenerateDataKey"
-        ],
+        "Action" : local.kms_key_management_actions,
         "Resource" : "*"
       },
       {
-        "Sid" : "Allow access for Key Administrators",
+        "Sid" : "AllowAccountUseViaSSM",
         "Effect" : "Allow",
         "Principal" : {
-          "AWS" = length(trimspace(var.parameter_store_key_admin_arn)) > 0 ? split(",", var.parameter_store_key_admin_arn) : [aws_iam_role.param_store_key_admin_role.arn]
+          "AWS" : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
         },
+        # Standard parameters use Encrypt, advanced-tier parameters use GenerateDataKey, reads use Decrypt.
         "Action" : [
-          "kms:CreateAlias",
-          "kms:CreateKey",
           "kms:Encrypt",
           "kms:Decrypt",
-          "kms:DeleteAlias",
-          "kms:DescribeKey",
-          "kms:GetKeyPolicy",
-          "kms:GetKeyRotationStatus",
-          "kms:ListAliases",
-          "kms:ListGrants",
-          "kms:ListKeyPolicies",
-          "kms:ListKeys",
-          "kms:PutKeyPolicy",
-          "kms:UpdateAlias",
-          "kms:EnableKeyRotation",
-          "kms:ListResourceTags",
-          "kms:ScheduleKeyDeletion",
-          "kms:DisableKeyRotation",
           "kms:GenerateDataKey",
-          "kms:ReEncrypt",
-          "kms:CancelKeyDeletion",
-          "kms:List*",
-          "kms:Enable*",
-          "kms:Put*",
-          "kms:Update*",
-          "kms:Revoke*",
-          "kms:Disable*",
-          "kms:Get*",
-          "kms:Delete*",
-          "tag:GetResources"
+          "kms:DescribeKey"
         ],
-        "Resource" : aws_kms_key.parameter_store_cmk[0].id
+        "Resource" : "*",
+        "Condition" : {
+          "StringEquals" : {
+            "kms:ViaService" : "ssm.${var.aws_region}.amazonaws.com",
+            "kms:CallerAccount" : data.aws_caller_identity.current.account_id
+          }
+        }
       },
       {
-        "Sid" : "Allow use of the key for Parameter Store",
-        "Effect" : "Allow",
-        "Principal" : {
-          "Service" : [
-            "ssm.amazonaws.com",
-            "ec2.amazonaws.com"
-          ]
-        },
-        "Action" : [
-          "kms:GenerateDataKeyWithoutPlaintext",
-          "kms:GenerateDataKey",
-          "kms:DescribeKey",
-          "kms:Encrypt",
-          "kms:Decrypt",
-          "kms:ReEncrypt"
-        ],
-        "Resource" : aws_kms_key.parameter_store_cmk[0].arn
-      },
-      {
-        "Sid" : "Allow GraphDB IAM Role to use the key",
+        "Sid" : "AllowGraphDBRoleToDecryptParametersViaSSM",
         "Effect" : "Allow",
         "Principal" : {
           "AWS" : aws_iam_role.graphdb_iam_role.arn
         },
-        "Action" : [
-          "kms:Decrypt",
-          "kms:DescribeKey"
-        ],
-        "Resource" : aws_kms_key.parameter_store_cmk[0].arn
+        "Action" : "kms:Decrypt",
+        "Resource" : "*",
+        "Condition" : {
+          "StringEquals" : {
+            "kms:ViaService" : "ssm.${var.aws_region}.amazonaws.com"
+          },
+          "StringLike" : {
+            "kms:EncryptionContext:PARAMETER_ARN" : "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/${var.resource_name_prefix}/graphdb/*"
+          }
+        }
       }
     ]
   })
 }
-

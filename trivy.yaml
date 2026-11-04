@@ -1,0 +1,7 @@
+# Trivy settings shared by CI and local runs.
+# Run locally from the repository root with: trivy config .
+severity:
+  - MEDIUM
+  - HIGH
+  - CRITICAL
+ignorefile: .trivyignore

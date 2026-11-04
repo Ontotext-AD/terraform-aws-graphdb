@@ -70,12 +70,14 @@ variable "s3_cmk_description" {
   type        = string
 }
 
-variable "s3_external_kms_key" {
-  description = "Externally provided KMS CMK"
-  type        = string
-}
 
 variable "iam_role_arn" {
   description = "Define IAM Role ARN to use in the KMS Key Policy"
   type        = string
+}
+
+variable "assume_role_principal_arn" {
+  description = "Principal allowed to assume the S3 key administrator role. Defaults to the account root (IAM-delegated)."
+  type        = string
+  default     = null
 }
