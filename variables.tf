@@ -63,7 +63,7 @@ variable "assume_role_external_id" {
 }
 
 variable "assume_role_principal_arn" {
-  description = "(Optional) Principal for the IAM role assume policies"
+  description = "(Optional) Principal trusted by the EBS, Parameter Store, S3 and SNS KMS key administrator roles, i.e. who may assume them. Not related to the provider assume_role_arn. Defaults to the account root, which delegates to IAM."
   type        = string
   default     = null
 }
@@ -800,7 +800,7 @@ variable "enable_asg_wait" {
 # S3 bucket encryption
 
 variable "create_s3_kms_key" {
-  description = "Enable creation of KMS key for S3 bucket encryption"
+  description = "Create a KMS key for S3 bucket encryption. Used unless s3_external_kms_key_arn is set; kept while true so older backups stay readable."
   type        = bool
   default     = false
 }
@@ -856,7 +856,11 @@ variable "s3_cmk_description" {
 variable "s3_external_kms_key_arn" {
   description = "Externally provided KMS CMK"
   type        = string
-  default     = ""
+  default     = null
+  validation {
+    condition     = var.s3_external_kms_key_arn == null ? true : trimspace(var.s3_external_kms_key_arn) != ""
+    error_message = "s3_external_kms_key_arn must be a KMS key ARN or null, not an empty string."
+  }
 }
 
 # Parameter store KMS encryption
@@ -916,7 +920,7 @@ variable "parameter_store_cmk_description" {
 }
 
 variable "create_parameter_store_kms_key" {
-  description = "Enable creation of KMS key for Parameter Store encryption"
+  description = "Create a KMS key for Parameter Store encryption. Used unless parameter_store_external_kms_key is set."
   type        = bool
   default     = false
 }
@@ -924,7 +928,11 @@ variable "create_parameter_store_kms_key" {
 variable "parameter_store_external_kms_key" {
   description = "Externally provided KMS CMK"
   type        = string
-  default     = ""
+  default     = null
+  validation {
+    condition     = var.parameter_store_external_kms_key == null ? true : trimspace(var.parameter_store_external_kms_key) != ""
+    error_message = "parameter_store_external_kms_key must be a KMS key ARN or null, not an empty string."
+  }
 }
 
 # GraphDB EBS KMS encryption
@@ -980,7 +988,11 @@ variable "ebs_cmk_description" {
 variable "ebs_external_kms_key" {
   description = "Externally provided KMS CMK"
   type        = string
-  default     = ""
+  default     = null
+  validation {
+    condition     = var.ebs_external_kms_key == null ? true : trimspace(var.ebs_external_kms_key) != ""
+    error_message = "ebs_external_kms_key must be a KMS key ARN or null, not an empty string."
+  }
 }
 
 variable "ebs_key_enabled" {
@@ -990,7 +1002,7 @@ variable "ebs_key_enabled" {
 }
 
 variable "create_ebs_kms_key" {
-  description = "Creates KMS key for the EBS volumes"
+  description = "Create a KMS key for the EBS volumes. Used unless ebs_external_kms_key is set; kept while true so existing data volumes stay attachable."
   type        = bool
   default     = false
 }
@@ -998,7 +1010,7 @@ variable "create_ebs_kms_key" {
 # SNS Encryption
 
 variable "create_sns_kms_key" {
-  description = "Enable Customer managed keys for encryption. If set to false it will use AWS managed key."
+  description = "Create a KMS key for each SNS topic. Used for topics without an external key (sns_external_kms_key, sns_availability_external_kms_key). If false, those topics use the AWS managed key."
   type        = bool
   default     = false
 }
@@ -1022,9 +1034,23 @@ variable "deletion_window_in_days" {
 }
 
 variable "sns_external_kms_key" {
-  description = "ARN of the external KMS key that will be used for encryption of SNS topics"
+  description = "ARN of an external KMS key in aws_region for the main SNS notifications topic. Null uses the module key when create_sns_kms_key is true, else sns_default_kms_key."
   type        = string
-  default     = ""
+  default     = null
+  validation {
+    condition     = var.sns_external_kms_key == null ? true : trimspace(var.sns_external_kms_key) != ""
+    error_message = "sns_external_kms_key must be a KMS key ARN or null, not an empty string."
+  }
+}
+
+variable "sns_availability_external_kms_key" {
+  description = "ARN of an external KMS key in monitoring_route53_health_check_aws_region for the availability SNS topic. sns_external_kms_key does not apply to this topic. Null uses the module key when create_sns_kms_key is true, else sns_default_kms_key."
+  type        = string
+  default     = null
+  validation {
+    condition     = var.sns_availability_external_kms_key == null ? true : trimspace(var.sns_availability_external_kms_key) != ""
+    error_message = "sns_availability_external_kms_key must be a KMS key ARN or null, not an empty string."
+  }
 }
 
 variable "sns_cmk_key_alias" {

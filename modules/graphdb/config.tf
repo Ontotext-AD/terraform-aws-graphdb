@@ -14,53 +14,57 @@ locals {
   graphdb_cluster_token  = var.graphdb_cluster_token != null ? var.graphdb_cluster_token : random_password.graphdb_cluster_token[0].result
   graphdb_admin_password = var.graphdb_admin_password != null ? var.graphdb_admin_password : random_password.graphdb_admin_password[0].result
 
+  # Part of every SSM version hash: value_wo is only sent when value_wo_version changes, so a key_id change
+  # alone (e.g. switching to the Parameter Store CMK) would send an empty value and fail with a ValidationException.
+  graphdb_ssm_key_id = var.parameter_store_key_arn
+
   # The "graphdb_ssm_versions" map stores dynamically computed version numbers
   # for various SSM parameters based on their content. This version number changes
   # automatically when the content changes (forcing an update to the parameter).
   # The version is computed as follows:
   #   1. The content (secret string or file content) is encoded (using base64encode() for strings or filebase64() for files),
   #      ensuring the data is in a consistent format.
-  #   2. The MD5 hash of the encoded value is calculated. This produces a 32-character hexadecimal string.
+  #   2. The MD5 hash of the encoded value and the KMS key ID is calculated, so changing either forces an update.
   #   3. The first 12 characters of the MD5 hash are extracted with substr(..., 0, 12). This substring acts as a fingerprint.
   #   4. parseint(..., 16) converts the hexadecimal substring to a decimal number.
   graphdb_ssm_versions = {
     admin_password = var.graphdb_admin_password != "" ? parseint(
-      substr(md5(base64encode(local.graphdb_admin_password)), 0, 12),
+      substr(md5("${base64encode(local.graphdb_admin_password)}${local.graphdb_ssm_key_id}"), 0, 12),
       16
     ) : 1
 
     cluster_token = var.graphdb_cluster_token != "" ? parseint(
-      substr(md5(base64encode(local.graphdb_cluster_token)), 0, 12),
+      substr(md5("${base64encode(local.graphdb_cluster_token)}${local.graphdb_ssm_key_id}"), 0, 12),
       16
     ) : 1
 
     license = var.graphdb_license_path != "" ? parseint(
-      substr(md5(filebase64(var.graphdb_license_path)), 0, 12),
+      substr(md5("${filebase64(var.graphdb_license_path)}${local.graphdb_ssm_key_id}"), 0, 12),
       16
     ) : 1
 
     properties = (var.graphdb_properties_path != null && var.graphdb_properties_path != "") ? parseint(
-      substr(md5(filebase64(var.graphdb_properties_path)), 0, 12),
+      substr(md5("${filebase64(var.graphdb_properties_path)}${local.graphdb_ssm_key_id}"), 0, 12),
       16
     ) : 1
 
     java_options = (var.graphdb_java_options != null && var.graphdb_java_options != "") ? parseint(
-      substr(md5(var.graphdb_java_options), 0, 12),
+      substr(md5("${var.graphdb_java_options}${local.graphdb_ssm_key_id}"), 0, 12),
       16
     ) : 1
 
     m2m_client_secret = (var.m2m_app_registration_client_secret != null && var.m2m_app_registration_client_secret != "") ? parseint(
-      substr(md5(base64encode(var.m2m_app_registration_client_secret)), 0, 12),
+      substr(md5("${base64encode(var.m2m_app_registration_client_secret)}${local.graphdb_ssm_key_id}"), 0, 12),
       16
     ) : 1
 
     keystore = trimspace(var.graphdb_data_encryption_keystore_filepath) != "" && fileexists(var.graphdb_data_encryption_keystore_filepath) ? parseint(
-      substr(md5(filebase64(var.graphdb_data_encryption_keystore_filepath)), 0, 12),
+      substr(md5("${filebase64(var.graphdb_data_encryption_keystore_filepath)}${local.graphdb_ssm_key_id}"), 0, 12),
       16
     ) : 1
 
     master_key = trimspace(var.graphdb_data_encryption_master_key_filepath) != "" && fileexists(var.graphdb_data_encryption_master_key_filepath) ? parseint(
-      substr(md5(filebase64(var.graphdb_data_encryption_master_key_filepath)), 0, 12),
+      substr(md5("${filebase64(var.graphdb_data_encryption_master_key_filepath)}${local.graphdb_ssm_key_id}"), 0, 12),
       16
     ) : 1
   }

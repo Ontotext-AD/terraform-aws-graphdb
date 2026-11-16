@@ -1,5 +1,10 @@
+locals {
+  # Kept while create_*_kms_key is true even if an external key is set, so data already encrypted with it stays readable.
+  create_s3_cmk = var.create_s3_kms_key
+}
+
 resource "aws_kms_key" "s3_cmk" {
-  count = var.create_s3_kms_key ? 1 : 0
+  count = local.create_s3_cmk ? 1 : 0
 
   is_enabled               = var.s3_kms_key_enabled
   description              = var.s3_cmk_description
@@ -9,116 +14,87 @@ resource "aws_kms_key" "s3_cmk" {
 }
 
 resource "aws_kms_alias" "s3_cmk_alias" {
-  count = var.create_s3_kms_key ? 1 : 0
+  count = local.create_s3_cmk ? 1 : 0
 
   name          = var.s3_cmk_alias
   target_key_id = aws_kms_key.s3_cmk[0].key_id
 }
 
 resource "aws_kms_key_policy" "s3_cmk_policy" {
-  count = var.create_s3_kms_key ? 1 : 0
+  count = local.create_s3_cmk ? 1 : 0
 
   key_id = aws_kms_key.s3_cmk[0].id
 
   policy = jsonencode({
     "Version" : "2012-10-17",
+    "Id" : "graphdb-s3-key-policy",
     "Statement" : [
       {
-        "Sid" : "Enable IAM User Permissions",
+        # Key management only. Data-plane (Encrypt/Decrypt/GenerateDataKey) and grant creation are granted separately.
+        # The module admin role has no IAM policy, so it stays a key administrator next to any custom admins.
+        "Sid" : "AllowKeyManagement",
         "Effect" : "Allow",
         "Principal" : {
-          "AWS" : data.aws_caller_identity.current.arn
+          "AWS" : distinct(concat(
+            ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root", aws_iam_role.graphdb_s3_key_admin_role.arn],
+            length(trimspace(var.s3_kms_key_admin_arn)) > 0 ? split(",", var.s3_kms_key_admin_arn) : []
+          ))
         },
         "Action" : [
+          "kms:CancelKeyDeletion",
           "kms:CreateAlias",
-          "kms:CreateKey",
-          "kms:Encrypt",
-          "kms:Decrypt",
           "kms:DeleteAlias",
           "kms:DescribeKey",
-          "kms:GetKeyPolicy",
-          "kms:GetKeyRotationStatus",
-          "kms:ListAliases",
-          "kms:ListGrants",
-          "kms:ListKeyPolicies",
-          "kms:ListKeys",
-          "kms:PutKeyPolicy",
-          "kms:UpdateAlias",
-          "kms:EnableKeyRotation",
-          "kms:ListResourceTags",
-          "kms:ScheduleKeyDeletion",
-          "kms:DisableKeyRotation"
-        ],
-        "Resource" : aws_kms_key.s3_cmk[0].arn
-      },
-      {
-        "Sid" : "Allow Key Administrators",
-        "Effect" : "Allow",
-        "Principal" : {
-          "AWS" = length(trimspace(var.s3_kms_key_admin_arn)) > 0 ? split(",", var.s3_kms_key_admin_arn) : [aws_iam_role.graphdb_s3_key_admin_role.arn]
-        },
-        "Action" : [
-          "kms:Create*",
-          "kms:Describe*",
-          "kms:Enable*",
-          "kms:List*",
-          "kms:Put*",
-          "kms:Update*",
-          "kms:Revoke*",
-          "kms:Disable*",
-          "kms:Get*",
-          "kms:Delete*",
-          "kms:ListResourceTags",
-          "kms:ScheduleKeyDeletion",
-          "kms:CancelKeyDeletion"
-        ],
-        "Resource" : aws_kms_key.s3_cmk[0].arn
-      },
-      {
-        "Sid" : "Allow S3 Use of the Key",
-        "Effect" : "Allow",
-        "Principal" : {
-          "AWS" = length(trimspace(var.s3_kms_key_admin_arn)) > 0 ? split(",", var.s3_kms_key_admin_arn) : [aws_iam_role.graphdb_s3_key_admin_role.arn]
-        },
-        "Action" : [
-          "kms:Encrypt",
-          "kms:Decrypt",
-          "kms:ReEncrypt*",
-          "kms:GenerateDataKey*",
-          "kms:DescribeKey"
-        ],
-        "Resource" : aws_kms_key.s3_cmk[0].arn
-      },
-      {
-        "Sid" : "Allow the GraphDB IAM role to have permissions",
-        "Effect" : "Allow",
-        "Principal" : {
-          "AWS" : "${var.iam_role_arn}"
-        },
-        "Action" : [
-          "kms:CreateAlias",
-          "kms:CreateKey",
-          "kms:Encrypt",
-          "kms:Decrypt",
-          "kms:DeleteAlias",
-          "kms:DescribeKey",
-          "kms:GetKeyPolicy",
-          "kms:GetKeyRotationStatus",
-          "kms:ListAliases",
-          "kms:ListGrants",
-          "kms:ListKeyPolicies",
-          "kms:ListKeys",
-          "kms:PutKeyPolicy",
-          "kms:UpdateAlias",
-          "kms:EnableKeyRotation",
-          "kms:ListResourceTags",
-          "kms:ScheduleKeyDeletion",
+          "kms:DisableKey",
           "kms:DisableKeyRotation",
-          "kms:GenerateDataKey"
+          "kms:EnableKey",
+          "kms:EnableKeyRotation",
+          "kms:GetKeyPolicy",
+          "kms:GetKeyRotationStatus",
+          "kms:ListGrants",
+          "kms:ListKeyPolicies",
+          "kms:ListKeyRotations",
+          "kms:ListResourceTags",
+          "kms:PutKeyPolicy",
+          "kms:RevokeGrant",
+          "kms:RotateKeyOnDemand",
+          "kms:ScheduleKeyDeletion",
+          "kms:TagResource",
+          "kms:UntagResource",
+          "kms:UpdateAlias",
+          "kms:UpdateKeyDescription"
         ],
-        "Resource" : aws_kms_key.s3_cmk[0].arn
+        "Resource" : "*"
+      },
+      {
+        # S3 needs GenerateDataKey for writes and Decrypt for reads. Bucket Keys are enabled, so the encryption
+        # context is the bucket ARN; the object ARN pattern covers objects written without a Bucket Key.
+        "Sid" : "AllowUseViaS3",
+        "Effect" : "Allow",
+        "Principal" : {
+          "AWS" : [
+            "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root",
+            var.iam_role_arn
+          ]
+        },
+        "Action" : [
+          "kms:GenerateDataKey",
+          "kms:Decrypt"
+        ],
+        "Resource" : "*",
+        "Condition" : {
+          "StringEquals" : {
+            "kms:ViaService" : "s3.${data.aws_region.current.region}.amazonaws.com",
+            "kms:CallerAccount" : data.aws_caller_identity.current.account_id
+          },
+          "StringLike" : {
+            "kms:EncryptionContext:aws:s3:arn" : [
+              aws_s3_bucket.graphdb_backup.arn,
+              "${aws_s3_bucket.graphdb_backup.arn}/*"
+            ]
+          }
+        }
       }
     ]
   })
 }
-

@@ -1,29 +1,27 @@
 
 locals {
   # KMS Key ARNs
-  calculated_parameter_store_kms_key_arn = var.create_parameter_store_kms_key ? (
-    var.parameter_store_external_kms_key != "" ? var.parameter_store_external_kms_key :
-    module.graphdb.parameter_store_cmk_arn != "" ? module.graphdb.parameter_store_cmk_arn :
-    var.parameter_store_default_key
-  ) : var.parameter_store_default_key
+  # An external key always wins. Otherwise use the module key when create_*_kms_key is true, else the AWS managed key.
+  # try() covers the backup and monitoring modules not being deployed.
+  calculated_parameter_store_kms_key_arn = (
+    var.parameter_store_external_kms_key != null ? var.parameter_store_external_kms_key :
+    var.create_parameter_store_kms_key ? module.graphdb.parameter_store_cmk_arn : var.parameter_store_default_key
+  )
 
-  calculated_ebs_kms_key_arn = var.create_ebs_kms_key ? (
-    var.ebs_external_kms_key != "" ? var.ebs_external_kms_key :
-    module.graphdb.ebs_kms_key_arn != "" ? module.graphdb.ebs_kms_key_arn :
-    var.ebs_default_kms_key
-  ) : var.ebs_default_kms_key
+  calculated_ebs_kms_key_arn = (
+    var.ebs_external_kms_key != null ? var.ebs_external_kms_key :
+    var.create_ebs_kms_key ? module.graphdb.ebs_kms_key_arn : var.ebs_default_kms_key
+  )
 
-  calculated_s3_kms_key_arn = var.create_s3_kms_key ? (
-    var.s3_external_kms_key_arn != "" ? var.s3_external_kms_key_arn :
-    module.backup[0].s3_cmk_arn != "" ? module.backup[0].s3_cmk_arn :
-    var.s3_kms_default_key
-  ) : var.s3_kms_default_key
+  calculated_s3_kms_key_arn = (
+    var.s3_external_kms_key_arn != null ? var.s3_external_kms_key_arn :
+    var.create_s3_kms_key ? try(module.backup[0].s3_cmk_arn, var.s3_kms_default_key) : var.s3_kms_default_key
+  )
 
-  calculated_sns_kms_key_arn = var.create_sns_kms_key ? (
-    var.sns_external_kms_key != "" ? var.sns_external_kms_key :
-    module.monitoring[0].sns_cmk_arn != "" ? module.monitoring[0].sns_cmk_arn :
-    var.sns_default_kms_key
-  ) : var.sns_default_kms_key
+  calculated_sns_kms_key_arn = (
+    var.sns_external_kms_key != null ? var.sns_external_kms_key :
+    var.create_sns_kms_key ? try(module.monitoring[0].sns_cmk_arn, var.sns_default_kms_key) : var.sns_default_kms_key
+  )
 
   cmk_key_alias = var.deploy_monitoring ? (
     var.app_name != "" && var.environment_name != ""
