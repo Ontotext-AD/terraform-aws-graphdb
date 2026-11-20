@@ -394,7 +394,7 @@ Note: The options mention above will be appended to the ones set in the user dat
 **Customize GraphDB Version**
 
 ```hcl
-graphdb_version = "11.5.2"
+graphdb_version = "11.5.3"
 ```
 
 **Purge Protection**
@@ -973,7 +973,7 @@ app_name             = "graphdb"
 # ============================================
 # GraphDB Configuration
 # ============================================
-graphdb_version        = "11.5.2"
+graphdb_version        = "11.5.3"
 graphdb_node_count     = 3
 ec2_instance_type      = "r6i.2xlarge"
 graphdb_admin_password = "your-secure-password"  # Use secrets manager in production
