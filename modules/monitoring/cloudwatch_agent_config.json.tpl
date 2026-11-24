@@ -87,7 +87,9 @@
             "graphdb_nodes_disconnected": "Count",
             "graphdb_nodes_syncing": "Count",
             "graphdb_leader_elections_count": "Count",
-            "graphdb_failure_recoveries_count": "Count"
+            "graphdb_failure_recoveries_count": "Count",
+            "graphdb_active_transactions": "Count",
+            "graphdb_open_connections": "Count"
           },
           "metric_declaration": [
             {

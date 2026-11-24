@@ -30,7 +30,7 @@
           "type": "metric",
           "properties": {
               "metrics": [
-                  [ { "expression": "SELECT MAX(CPUUtilization) FROM \"AWS/EC2\" GROUP BY AutoScalingGroupName", "label": "Query1", "id": "q1", "region": "${aws_region}" } ]
+                  [ { "expression": "SELECT MAX(CPUUtilization) FROM \"AWS/EC2\" WHERE AutoScalingGroupName = '${resource_name_prefix}' GROUP BY AutoScalingGroupName", "label": "Query1", "id": "q1", "region": "${aws_region}" } ]
               ],
               "region": "${aws_region}",
               "stacked": false,
@@ -59,7 +59,7 @@
         "type": "metric",
         "properties": {
             "metrics": [
-                [ { "expression": "SELECT MAX(mem_used_percent) FROM \"CWAgent\" GROUP BY AutoScalingGroupName", "label": "Query1", "id": "q1", "region": "${aws_region}" } ]
+                [ { "expression": "SELECT MAX(mem_used_percent) FROM \"CWAgent\" WHERE AutoScalingGroupName = '${resource_name_prefix}' GROUP BY AutoScalingGroupName", "label": "Query1", "id": "q1", "region": "${aws_region}" } ]
             ],
             "region": "${aws_region}",
             "stacked": false,
