@@ -87,7 +87,10 @@
             "graphdb_nodes_disconnected": "Count",
             "graphdb_nodes_syncing": "Count",
             "graphdb_leader_elections_count": "Count",
-            "graphdb_failure_recoveries_count": "Count"
+            "graphdb_failure_recoveries_count": "Count",
+            "graphdb_active_transactions": "Count",
+            "graphdb_open_connections": "Count",
+            "graphdb_cluster_node_role": "None"
           },
           "metric_declaration": [
             {
@@ -140,6 +143,36 @@
                 "^graphdb_nodes_syncing$",
                 "^graphdb_leader_elections_count$",
                 "^graphdb_failure_recoveries_count$"
+              ]
+            },
+            {
+              "source_labels": [
+                "job"
+              ],
+              "label_matcher": "graphdb_repository_monitor",
+              "dimensions": [
+                [
+                  "host",
+                  "repo"
+                ]
+              ],
+              "metric_selectors": [
+                "^graphdb_active_transactions$",
+                "^graphdb_open_connections$"
+              ]
+            },
+            {
+              "source_labels": [
+                "job"
+              ],
+              "label_matcher": "graphdb_repository_monitor",
+              "dimensions": [
+                [
+                  "host"
+                ]
+              ],
+              "metric_selectors": [
+                "^graphdb_cluster_node_role$"
               ]
             }
           ]

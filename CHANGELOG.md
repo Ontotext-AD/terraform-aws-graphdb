@@ -25,6 +25,12 @@
 * Fixed `ResourceAlreadyExistsException` for per-node CloudWatch log groups after scaling or `terraform destroy`. The CloudWatch agent on a terminating node recreated log groups Terraform had just deleted; the instance role now denies `logs:CreateLogGroup` for the deployment's log groups
   * The deny policy is kept until the Auto Scaling Group is gone on `terraform destroy`
   * A node whose per-node log group does not exist (e.g. a node name outside `node-1..node-N` after scaling) ships its GraphDB log to the shared `{prefix}` log group instead. The check runs at boot, so it applies to instances launched after the upgrade
+* Added per-repository `graphdb_active_transactions` and `graphdb_open_connections` metrics and the `graphdb_cluster_node_role` metric to the CloudWatch agent configuration
+* Added "Active transactions", "Open connections" and "Open repositories" widgets to the CloudWatch dashboard
+  * Single node: values per repository. Cluster: values of the current leader node only
+* Fixed the CloudWatch dashboard CPU and memory widgets to show only the current deployment's instances
+* Cluster-only dashboard widgets (failure recoveries, nodes disconnected, nodes out of sync) are no longer shown when `graphdb_node_count` is `1`
+* The CloudWatch dashboard period now uses the monitoring module's `cloudwatch_period` (default `60` seconds) instead of a fixed `300` seconds
 
 ## 3.4.0
 
