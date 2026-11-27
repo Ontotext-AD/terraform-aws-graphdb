@@ -4,13 +4,40 @@
           "height": 6,
           "width": 6,
           "y": 0,
+          "x": 18,
+          "type": "metric",
+          "properties": {
+              "metrics": ${open_repositories_metrics},
+              "region": "${aws_region}",
+              "stacked": false,
+              "view": "timeSeries",
+              "period": ${dashboard_period},
+              "stat": "Maximum",
+              "yAxis": {
+                  "left": {
+                      "min": 0,
+                      "label": "Count",
+                      "showUnits": false
+                  },
+                  "right": {
+                      "label": "",
+                      "showUnits": false
+                  }
+              },
+              "title": "%{ if graphdb_node_count > 1 }GraphDB leader open repositories%{ else }GraphDB open repositories%{ endif }"
+          }
+      },
+      {
+          "height": 6,
+          "width": 6,
+          "y": 0,
           "x": 0,
           "type": "metric",
           "properties": {
               "metrics": [
                   [ "AWS/Route53", "HealthCheckPercentageHealthy", "HealthCheckId", "${health_check_id}", { "id": "m1", "region": "${route53_availability_check_region}" } ]
               ],
-              "period": 300,
+              "period": ${dashboard_period},
               "stat": "Average",
               "region": "${route53_availability_check_region}",
               "title": "Availability Tests",
@@ -35,7 +62,7 @@
               "region": "${aws_region}",
               "stacked": false,
               "view": "timeSeries",
-              "period": 300,
+              "period": ${dashboard_period},
               "stat": "Average",
               "yAxis": {
                   "left": {
@@ -64,7 +91,7 @@
             "region": "${aws_region}",
             "stacked": false,
             "view": "timeSeries",
-            "period": 300,
+            "period": ${dashboard_period},
             "stat": "Average",
             "yAxis": {
                 "left": {
@@ -93,7 +120,7 @@
            "region": "${aws_region}",
            "stacked": false,
            "view": "timeSeries",
-           "period": 300,
+           "period": ${dashboard_period},
            "stat": "Average",
            "yAxis": {
                "left": {
@@ -122,7 +149,7 @@
            "region": "${aws_region}",
            "stacked": false,
            "view": "timeSeries",
-           "period": 300,
+           "period": ${dashboard_period},
            "stat": "Average",
            "yAxis": {
                "left": {
@@ -138,11 +165,65 @@
            "title": "GraphDB Data Dir Used per instance"
        }
      },
+     {
+         "height": 6,
+         "width": 6,
+         "y": 6,
+         "x": 12,
+         "type": "metric",
+         "properties": {
+             "metrics": ${active_transactions_metrics},
+             "region": "${aws_region}",
+             "stacked": false,
+             "view": "timeSeries",
+             "period": ${dashboard_period},
+             "stat": "Maximum",
+             "yAxis": {
+                 "left": {
+                     "min": 0,
+                     "label": "Count",
+                     "showUnits": false
+                 },
+                 "right": {
+                     "label": "",
+                     "showUnits": false
+                 }
+             },
+             "title": "%{ if graphdb_node_count > 1 }GraphDB leader active transactions%{ else }GraphDB active transactions per repository%{ endif }"
+         }
+     },
+     {
+         "height": 6,
+         "width": 6,
+         "y": 6,
+         "x": 18,
+         "type": "metric",
+         "properties": {
+             "metrics": ${open_connections_metrics},
+             "region": "${aws_region}",
+             "stacked": false,
+             "view": "timeSeries",
+             "period": ${dashboard_period},
+             "stat": "Maximum",
+             "yAxis": {
+                 "left": {
+                     "min": 0,
+                     "label": "Count",
+                     "showUnits": false
+                 },
+                 "right": {
+                     "label": "",
+                     "showUnits": false
+                 }
+             },
+             "title": "%{ if graphdb_node_count > 1 }GraphDB leader open connections%{ else }GraphDB open connections per repository%{ endif }"
+         }
+     }%{ if graphdb_node_count > 1 },
       {
           "height": 6,
-          "width": 6,
-          "y": 0,
-          "x": 18,
+          "width": 8,
+          "y": 12,
+          "x": 0,
           "type": "metric",
           "properties": {
               "metrics": [
@@ -151,7 +232,7 @@
               "region": "${aws_region}",
               "stacked": false,
               "view": "timeSeries",
-              "period": 300,
+              "period": ${dashboard_period},
               "stat": "Average",
               "yAxis": {
                   "left": {
@@ -169,9 +250,9 @@
       },
       {
           "height": 6,
-          "width": 6,
-          "y": 6,
-          "x": 18,
+          "width": 8,
+          "y": 12,
+          "x": 8,
           "type": "metric",
           "properties": {
               "metrics": [
@@ -180,7 +261,7 @@
               "region": "${aws_region}",
               "stacked": false,
               "view": "timeSeries",
-              "period": 300,
+              "period": ${dashboard_period},
               "stat": "Average",
               "yAxis": {
                   "left": {
@@ -197,9 +278,9 @@
       },
       {
         "height": 6,
-        "width": 6,
-        "y": 6,
-        "x": 12,
+        "width": 8,
+        "y": 12,
+        "x": 16,
         "type": "metric",
         "properties": {
             "metrics": [
@@ -208,7 +289,7 @@
             "region": "${aws_region}",
             "stacked": false,
             "view": "timeSeries",
-            "period": 300,
+            "period": ${dashboard_period},
             "stat": "Average",
             "yAxis": {
                 "left": {
@@ -222,6 +303,6 @@
             },
             "title": "GraphDB nodes out of sync"
         }
-    }
+    }%{ endif }
   ]
 }

@@ -27,6 +27,10 @@ if [ ${deploy_monitoring} == "true" ]; then
   tmp=$(mktemp)
   jq '.logs.metrics_collected.prometheus.log_group_name = "${name}"' /etc/graphdb/cloudwatch-agent-config.json >"$tmp" && mv "$tmp" /etc/graphdb/cloudwatch-agent-config.json
   jq '.logs.metrics_collected.prometheus.emf_processor.metric_namespace = "${name}"' /etc/graphdb/cloudwatch-agent-config.json >"$tmp" && mv "$tmp" /etc/graphdb/cloudwatch-agent-config.json
+  # Scrape per-repository metrics (graphdb_active_transactions, graphdb_open_connections) and the cluster node role from the aggregated metrics endpoint
+  if ! yq -e '.scrape_configs[] | select(.job_name == "graphdb_repository_monitor")' /etc/prometheus/prometheus.yaml >/dev/null 2>&1; then
+    cat /etc/prometheus/prometheus.yaml | yq '.scrape_configs += [{"job_name": "graphdb_repository_monitor", "metrics_path": "/rest/monitor/metrics", "scrape_interval": "10s", "params": {"include": ["graphdb_active_transactions*", "graphdb_open_connections*", "graphdb_cluster_node_role*"]}, "static_configs": [{"targets": ["localhost:7201"]}]}]' >"$tmp" && mv "$tmp" /etc/prometheus/prometheus.yaml
+  fi
   cat /etc/prometheus/prometheus.yaml | yq '.scrape_configs[].static_configs[].targets = ["localhost:7201"]' >"$tmp" && mv "$tmp" /etc/prometheus/prometheus.yaml
   cat /etc/prometheus/prometheus.yaml | yq '.scrape_configs[].basic_auth.username = "admin"' | yq ".scrape_configs[].basic_auth.password = \"$${GRAPHDB_ADMIN_PASSWORD}\"" >"$tmp" && mv "$tmp" /etc/prometheus/prometheus.yaml
 

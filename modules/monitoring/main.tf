@@ -18,6 +18,77 @@ locals {
     )
   }
 
+  # Repository widgets. Cluster: leader only. graphdb_cluster_node_role is 1 (leader), 0 (follower), -1 (other);
+  # (r + r*r)/2 turns it into a 1/0 leader flag (the console does not render `==` here).
+  # Open repositories = number of (host, repo) series of graphdb_open_connections (only running repos report it).
+  graphdb_node_indexes = range(1, var.graphdb_node_count + 1)
+  graphdb_leader_role_metrics = concat(
+    [for i in local.graphdb_node_indexes : [{
+      expression = "SEARCH('{\"${var.resource_name_prefix}\",host} MetricName=\"graphdb_cluster_node_role\" host=\"${local.instance_hostnames[i - 1]}\"', 'Maximum', ${var.cloudwatch_period})"
+      id         = "r${i}"
+      visible    = false
+      region     = var.aws_region
+    }]],
+    [for i in local.graphdb_node_indexes : [{
+      expression = "(MAX(r${i}) + MAX(r${i}) * MAX(r${i})) / 2"
+      id         = "f${i}"
+      visible    = false
+      region     = var.aws_region
+    }]]
+  )
+  graphdb_repository_widgets = {
+    active_transactions = { metric = "graphdb_active_transactions", per_node = "SUM(%s)", label = "Active transactions" }
+    open_connections    = { metric = "graphdb_open_connections", per_node = "SUM(%s)", label = "Open connections" }
+    open_repositories   = { metric = "graphdb_open_connections", per_node = "SUM(%s*0+1)", label = "Open repositories" }
+  }
+  graphdb_cluster_widget_metrics = {
+    for k, w in local.graphdb_repository_widgets : k => jsonencode(concat(
+      local.graphdb_leader_role_metrics,
+      [for i in local.graphdb_node_indexes : [{
+        expression = "SEARCH('{\"${var.resource_name_prefix}\",host,repo} MetricName=\"${w.metric}\" host=\"${local.instance_hostnames[i - 1]}\"', 'Maximum', ${var.cloudwatch_period})"
+        id         = "s${i}"
+        visible    = false
+        region     = var.aws_region
+      }]],
+      [for i in local.graphdb_node_indexes : [{
+        expression = format("${w.per_node}*f${i}", "s${i}")
+        id         = "l${i}"
+        visible    = false
+        region     = var.aws_region
+      }]],
+      [[{
+        expression = "SUM([${join(",", [for i in local.graphdb_node_indexes : "l${i}"])}])"
+        id         = "leader"
+        label      = w.label
+        region     = var.aws_region
+      }]]
+    ))
+  }
+  graphdb_single_node_widget_metrics = {
+    for k, w in local.graphdb_repository_widgets : k => k == "open_repositories" ? jsonencode([
+      [{
+        expression = "SEARCH('{\"${var.resource_name_prefix}\",host,repo} MetricName=\"${w.metric}\"', 'Maximum', ${var.cloudwatch_period})"
+        id         = "s1"
+        visible    = false
+        region     = var.aws_region
+      }],
+      [{
+        expression = "SUM(s1*0+1)"
+        id         = "n1"
+        label      = w.label
+        region     = var.aws_region
+      }]
+      ]) : jsonencode([
+      [{
+        expression = "SELECT MAX(${w.metric}) FROM \"${var.resource_name_prefix}\" GROUP BY host, repo"
+        id         = "q1"
+        label      = "Query1"
+        region     = var.aws_region
+      }]
+    ])
+  }
+  graphdb_repository_widget_metrics = var.graphdb_node_count > 1 ? local.graphdb_cluster_widget_metrics : local.graphdb_single_node_widget_metrics
+
   graphdb_availability_base_path     = var.graphdb_node_count == 1 ? "/protocol" : "/rest/cluster/node/status"
   graphdb_context_prefix             = var.lb_context_path != "" ? "/${trim(var.lb_context_path, "/")}" : ""
   graphdb_availability_resource_path = "${local.graphdb_context_prefix}${local.graphdb_availability_base_path}"
@@ -63,9 +134,19 @@ resource "aws_cloudwatch_dashboard" "graphdb_dashboard" {
     resource_name_prefix              = var.resource_name_prefix
     aws_region                        = var.aws_region
     route53_availability_check_region = var.route53_availability_check_region
+    graphdb_node_count                = var.graphdb_node_count
+    dashboard_period                  = var.cloudwatch_period
+    open_repositories_metrics         = local.graphdb_repository_widget_metrics.open_repositories
+    active_transactions_metrics       = local.graphdb_repository_widget_metrics.active_transactions
+    open_connections_metrics          = local.graphdb_repository_widget_metrics.open_connections
     }) : templatefile("${path.module}/graphdb_dashboard_no_availability.json", {
-    resource_name_prefix = var.resource_name_prefix
-    aws_region           = var.aws_region
+    resource_name_prefix        = var.resource_name_prefix
+    aws_region                  = var.aws_region
+    graphdb_node_count          = var.graphdb_node_count
+    dashboard_period            = var.cloudwatch_period
+    open_repositories_metrics   = local.graphdb_repository_widget_metrics.open_repositories
+    active_transactions_metrics = local.graphdb_repository_widget_metrics.active_transactions
+    open_connections_metrics    = local.graphdb_repository_widget_metrics.open_connections
   })
 }
 
